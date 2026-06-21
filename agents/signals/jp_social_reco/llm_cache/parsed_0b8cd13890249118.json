@@ -1,0 +1,58 @@
+{
+  "recommendations": [
+    {
+      "code": "7203",
+      "moomoo_code": "JP.7203",
+      "yfinance_code": "7203.T",
+      "company_name": "トヨタ自動車",
+      "side": "buy",
+      "conviction": 6,
+      "horizon": "swing",
+      "thesis": "押し目買いの好機として注目",
+      "risks": [
+        "個人の短期目線",
+        "ポジショントークの可能性"
+      ],
+      "evidence": "今日は7203 トヨタを押し目買いで注目です",
+      "creator": "tester",
+      "source_type": "test",
+      "source_url": "",
+      "published_at": "2026-06-15T00:00:00Z",
+      "item_id": "t1",
+      "extraction_method": "llm_Claude",
+      "opend_verified": false,
+      "opend_error": "",
+      "last_price": null,
+      "volume": null,
+      "turnover": null,
+      "score": 0
+    },
+    {
+      "code": "8035",
+      "moomoo_code": "JP.8035",
+      "yfinance_code": "8035.T",
+      "company_name": "東京エレクトロン",
+      "side": "avoid",
+      "conviction": 5,
+      "horizon": "swing",
+      "thesis": "過熱感があり現時点では買い控えが妥当",
+      "risks": [
+        "主観的な過熱判断",
+        "具体的指標の提示なし"
+      ],
+      "evidence": "8035 東京エレクトロンは過熱感があるので今は買い控え",
+      "creator": "tester",
+      "source_type": "test",
+      "source_url": "",
+      "published_at": "2026-06-15T00:00:00Z",
+      "item_id": "t1",
+      "extraction_method": "llm_Claude",
+      "opend_verified": false,
+      "opend_error": "",
+      "last_price": null,
+      "volume": null,
+      "turnover": null,
+      "score": 0
+    }
+  ]
+}

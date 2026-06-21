@@ -1,0 +1,8 @@
+{
+  "name": "private-equity",
+  "version": "0.1.0",
+  "description": "Private equity workflows: deal screening, IC memos, returns analysis, and unit economics",
+  "author": {
+    "name": "Anthropic FSI"
+  }
+}

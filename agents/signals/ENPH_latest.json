@@ -1,0 +1,141 @@
+{
+  "ts": "2026-06-10T16:50:58.828300",
+  "market": {
+    "ticker": "ENPH",
+    "ts": "2026-06-10 16:50",
+    "price": 53.51,
+    "pct_chg": -5.92,
+    "rsi_14": 53.2,
+    "cci_20": -24.3,
+    "cci_zone": "neutral",
+    "ma20": 57.6,
+    "ma50": 43.52,
+    "vol_ratio": 1.31,
+    "is_new_52w_high": false,
+    "dist_from_high": -27.43,
+    "trend": "down",
+    "ma_stack": "bull",
+    "rsi_zone": "neutral",
+    "vol_zone": "expand",
+    "pct_chg_zone": "crash",
+    "pre_price": 57.11,
+    "pre_pct": 0.404,
+    "pre_volume": 53136.0,
+    "pre_date": "2026-06-09",
+    "pre_label": "昨日盘前(已结束)",
+    "after_price": 53.5819,
+    "after_pct": 0.134,
+    "after_volume": 437701.0,
+    "after_date": "2026-06-09",
+    "after_label": "昨日盘后(已结束)",
+    "overnight_price": 53.15,
+    "overnight_pct": -0.672,
+    "overnight_volume": 12578.0,
+    "overnight_date": "2026-06-09",
+    "overnight_label": "昨夜夜盘(进行中)",
+    "now_et": "2026-06-10 03:50 ET",
+    "prev_session": {
+      "date": "2026-06-05",
+      "open": 66.55,
+      "close": 56.07,
+      "high": 66.61,
+      "low": 56.0,
+      "pct": -15.75
+    },
+    "today_session": null,
+    "today_not_yet_opened": "2026-06-10 今日尚未开盘（距 9:30 ET 还有 5h40m）",
+    "ma_cross": "none",
+    "rsi_cross": "none",
+    "cci_cross": "none",
+    "bb_pct": 0.41,
+    "bb_zone": "normal",
+    "bb_upper": 80.31,
+    "bb_lower": 34.9,
+    "psar_trend": -1,
+    "psar_signal": "none",
+    "macd_dif": 6.004,
+    "macd_dea": 7.2,
+    "macd_hist": -1.196,
+    "macd_zone": "bull",
+    "macd_signal": "none",
+    "adx_14": 64.9,
+    "adx_zone": "extreme"
+  },
+  "events": {
+    "ts": "2026-06-10 16:50",
+    "next_event": "CPI Release (2026-06-10)",
+    "next_event_name": "CPI Release",
+    "next_event_date": "2026-06-10",
+    "next_event_impact": "high",
+    "event_verify_src": "checked",
+    "days_to_event": 0,
+    "breaking_news": false,
+    "breaking_evidence": "",
+    "top_headlines": [
+      {
+        "title": "S&P 500, Dow, Nasdaq Futures Decline As US Launches Fresh ‘Self-Defense Strikes’ On Iran: SMCI, TLRY, DKNG, CBRL In Focus",
+        "url": "https://stocktwits.com/news-articles/markets/equity/sp500-dow-nasdaq-futures-decline-as-us-launches-fresh-self-defense-strikes-on-iran/cZ062FHR7Rx?.tsrc=rss",
+        "desc": "The U.S. launched fresh strikes on Iran late Tuesday in retaliation for the downing of an American combat helicopter near the Strait of Hormuz."
+      },
+      {
+        "title": "Rob Arnott: Will SpaceX Create The Biggest Bubble Ever?",
+        "url": "http://www.etf.com/sections/conferences/rob-arnott-will-spacex-create-biggest-bubble-ever?utm_source=yahoo-finance&utm_medium=rss&utm_campaign=yahoo-finance-rss&.tsrc=rss",
+        "desc": "<p>The SpaceX IPO is almost here and will bring significant change with it for retail and institutional investors alike. Research Affiliate’s Rob Arnott offers his thoughts on the impact of SpaceX on passive portfolios, the bubble it will likely create, and ways advisors and investors can navigate the opportunities and pitfalls. </p>"
+      }
+    ],
+    "risk_level": "high",
+    "trump_signal": {
+      "direction": "bearish",
+      "magnitude": "medium",
+      "score": -23,
+      "tariff_alert": false,
+      "silence_signal": false,
+      "posts_count": 10,
+      "n_signals_medium_plus": 1,
+      "fallback": false
+    }
+  },
+  "decision": {
+    "action": "REDUCE",
+    "confidence": 6,
+    "reason": "downtrend confirmed",
+    "stop_ref": null,
+    "score_breakdown": {
+      "tech": 3,
+      "macro": 0,
+      "event": 2,
+      "quant": 0,
+      "raw": 5
+    },
+    "engine": "rules",
+    "regime": "crisis",
+    "quant": {
+      "buy_hits": [],
+      "sell_hits": [],
+      "buy_score": 0,
+      "sell_score": 0,
+      "n_rules": 0,
+      "regime_bucket": "neutral",
+      "ts": null
+    },
+    "session": "closed",
+    "confluence": {
+      "bull_signals": [
+        "均线多排(MA20=57.60 > MA50=43.52)"
+      ],
+      "bear_signals": [
+        "价格跌破MA20(价格53.51 < MA20=57.60)",
+        "放量下跌(量比=1.31，>1.5为放量，恐慌抛售)",
+        "当日暴跌(-5.9%，<-5%，恐慌信号，历史规则不适用)"
+      ],
+      "bull_count": 1,
+      "bear_count": 3,
+      "net": -2,
+      "strength": "空头共振",
+      "stars": "▼▼"
+    },
+    "h1_context": "最新K线@13:30  趋势:向下  RSI:30.4",
+    "m15_context": "[最新15m K线@2026-06-09 20:00:00] 短线无信号",
+    "m15_direction": "neutral"
+  }
+}

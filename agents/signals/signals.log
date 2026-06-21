@@ -1,0 +1,3408 @@
+2026-05-09 18:05:35 [TQQQ] 76.28  RSI:84.5  VOL:0.89  | CPI Release (2026-05-13)(4d) break=False  → ⚠️ REDUCE conf=3/5  "RSI overbought"  [rules]
+2026-05-09 18:05:35 [SOXL] 176.94  RSI:83.6  VOL:0.69  | CPI Release (2026-05-13)(4d) break=False  → ⚠️ REDUCE conf=4/5  "RSI extreme overbought + vol shrink"  [rules]
+2026-05-11 16:43:05 ================================================================
+2026-05-11 16:43:05 Trading Agents started
+2026-05-11 16:43:05   ETF tickers : ['US.TQQQ', 'US.SOXL']
+2026-05-11 16:43:05   Gold ticker : US.GLD
+2026-05-11 16:43:05   Interval    : 15 min
+2026-05-11 16:43:05 ================================================================
+2026-05-11 16:43:06 [TQQQ] 76.28  RSI:83.2  VOL:0.91  | CPI Release (2026-05-13)(2d) break=False  → ⚠️ REDUCE conf=3/5  "RSI overbought"  [rules]
+2026-05-11 16:43:06 [SOXL] 176.94  RSI:82.8  VOL:0.71  | CPI Release (2026-05-13)(2d) break=False  → ⚠️ REDUCE conf=4/5  "RSI extreme + vol shrink"  [rules]
+2026-05-11 16:43:07 [GOLD:US.GLD] error: cannot convert float NaN to integer
+2026-05-11 16:43:46 ================================================================
+2026-05-11 16:43:46 Trading Agents started
+2026-05-11 16:43:46   ETF tickers : ['US.TQQQ', 'US.SOXL']
+2026-05-11 16:43:46   Gold ticker : US.GLD
+2026-05-11 16:43:46   Interval    : 15 min
+2026-05-11 16:43:46 ================================================================
+2026-05-11 16:43:47 [TQQQ] 76.28  RSI:83.2  VOL:0.91  | CPI Release (2026-05-13)(2d) break=False  → ⚠️ REDUCE conf=3/5  "RSI overbought"  [rules]
+2026-05-11 16:43:47 [SOXL] 176.94  RSI:82.8  VOL:0.71  | CPI Release (2026-05-13)(2d) break=False  → ⚠️ REDUCE conf=4/5  "RSI extreme + vol shrink"  [rules]
+2026-05-11 16:43:48 [GLD] 433.77  RSI:42.3  VOL:0.8  | CPI Release (2026-05-13)(2d) break=True  → 🟢 BUY conf=5/5  "breaking bullish catalyst for gold"  [rules]
+2026-05-11 16:50:44 ================================================================
+2026-05-11 16:50:44 Trading Agents started
+2026-05-11 16:50:44   ETF tickers : ['US.TQQQ', 'US.SOXL']
+2026-05-11 16:50:44   Gold ticker : US.GLD
+2026-05-11 16:50:44   Interval    : 15 min
+2026-05-11 16:50:44 ================================================================
+2026-05-11 16:50:45 [TQQQ] 76.28  RSI:83.2  VOL:0.91  | CPI Release (2026-05-13)(2d) break=False  → ⚠️ REDUCE conf=3/5  "RSI overbought"  [rules]
+2026-05-11 16:50:45 [SOXL] 176.94  RSI:82.8  VOL:0.71  | CPI Release (2026-05-13)(2d) break=False  → ⚠️ REDUCE conf=4/5  "RSI extreme + vol shrink"  [rules]
+2026-05-11 16:50:46 [GLD] 433.77  RSI:42.3  VOL:0.8  | CPI Release (2026-05-13)(2d) break=True  → 🟢 BUY conf=5/5  "breaking bullish catalyst for gold"  [rules]
+2026-05-11 16:53:44 ================================================================
+2026-05-11 16:53:44 Trading Agents started
+2026-05-11 16:53:44   ETF tickers : ['US.TQQQ', 'US.SOXL']
+2026-05-11 16:53:44   Gold ticker : US.GLD
+2026-05-11 16:53:44   Interval    : 15 min
+2026-05-11 16:53:44 ================================================================
+2026-05-11 16:53:45 【TQQQ】价格:76.28  RSI:83.2  量比:0.91  趋势:up
+2026-05-11 16:53:45   事件: CPI Release (2026-05-13)（2天后）
+2026-05-11 16:53:45   信号: ⚠️ 减仓  置信度:3/5  依据:RSI超买  [rules]
+2026-05-11 16:53:45   解释: RSI(14)=83.2 > 78，动能过热，历史上此区间回调概率较高
+2026-05-11 16:53:45 
+2026-05-11 16:53:45 【SOXL】价格:176.94  RSI:82.8  量比:0.71  趋势:up
+2026-05-11 16:53:45   事件: CPI Release (2026-05-13)（2天后）
+2026-05-11 16:53:45   信号: ⚠️ 减仓  置信度:4/5  依据:RSI极度超买 + 成交量萎缩  [rules]
+2026-05-11 16:53:45   解释: RSI(14)=82.8 > 82 且量比=0.71 < 0.80，新高缩量=量价背离，主力分发信号
+2026-05-11 16:53:45 
+2026-05-11 16:53:46 【GLD】价格:433.77  RSI:42.3  量比:0.8  趋势:up
+2026-05-11 16:53:46   事件: CPI Release (2026-05-13)（2天后）  ⚡突发新闻  黄金偏向:bullish
+2026-05-11 16:53:46   信号: 🟢 买入  置信度:5/5  依据:突发黄金看涨催化剂  [rules]
+2026-05-11 16:53:46   解释: RSS检测到黄金看涨关键词（地缘风险/通胀/避险），事件驱动优先于技术面
+2026-05-11 16:53:46   📰 Exchange-Traded Funds, Equity Futures Higher Pre-Bell Friday Amid Employment Data
+2026-05-11 16:53:46      🔗 https://finance.yahoo.com/markets/stocks/articles/exchange-traded-funds-equity-futures-125303923.html?.tsrc=rss
+2026-05-11 16:53:46   📰 Jeffrey Gundlach’s Debt Restructure Trade: 2 Stocks and 2 ETFs Built for the Storm
+2026-05-11 16:53:46      🔗 https://247wallst.com/investing/2026/05/08/jeffrey-gundlachs-debt-restructure-trade-2-stocks-and-2-etfs-built-for-the-storm/?.tsrc=rss
+2026-05-11 16:53:46 
+2026-05-11 17:08:47 【TQQQ】价格:76.28  RSI:83.2  量比:0.91  趋势:up
+2026-05-11 17:08:47   事件: CPI Release (2026-05-13)（2天后）
+2026-05-11 17:08:47   信号: ⚠️ 减仓  置信度:3/5  依据:RSI超买  [rules]
+2026-05-11 17:08:47   解释: RSI(14)=83.2 > 78，动能过热，历史上此区间回调概率较高
+2026-05-11 17:08:47 
+2026-05-11 17:08:47 【SOXL】价格:176.94  RSI:82.8  量比:0.71  趋势:up
+2026-05-11 17:08:47   事件: CPI Release (2026-05-13)（2天后）
+2026-05-11 17:08:47   信号: ⚠️ 减仓  置信度:4/5  依据:RSI极度超买 + 成交量萎缩  [rules]
+2026-05-11 17:08:47   解释: RSI(14)=82.8 > 82 且量比=0.71 < 0.80，新高缩量=量价背离，主力分发信号
+2026-05-11 17:08:47 
+2026-05-11 17:08:47 【GLD】价格:433.77  RSI:42.3  量比:0.8  趋势:up
+2026-05-11 17:08:47   事件: CPI Release (2026-05-13)（2天后）  ⚡突发新闻  黄金偏向:bullish
+2026-05-11 17:08:47   信号: 🟢 买入  置信度:5/5  依据:突发黄金看涨催化剂  [rules]
+2026-05-11 17:08:47   解释: RSS检测到黄金看涨关键词（地缘风险/通胀/避险），事件驱动优先于技术面
+2026-05-11 17:08:47   📰 Exchange-Traded Funds, Equity Futures Higher Pre-Bell Friday Amid Employment Data
+2026-05-11 17:08:47      🔗 https://finance.yahoo.com/markets/stocks/articles/exchange-traded-funds-equity-futures-125303923.html?.tsrc=rss
+2026-05-11 17:08:47   📰 Jeffrey Gundlach’s Debt Restructure Trade: 2 Stocks and 2 ETFs Built for the Storm
+2026-05-11 17:08:47      🔗 https://247wallst.com/investing/2026/05/08/jeffrey-gundlachs-debt-restructure-trade-2-stocks-and-2-etfs-built-for-the-storm/?.tsrc=rss
+2026-05-11 17:08:47 
+2026-05-11 17:17:22 ================================================================
+2026-05-11 17:17:22 Trading Agents 启动
+2026-05-11 17:17:22   ETF 标的 : ['US.TQQQ', 'US.SOXL']
+2026-05-11 17:17:22   黄金标的 : US.GLD
+2026-05-11 17:17:22   信号间隔 : 每 15 分钟
+2026-05-11 17:17:22   报告时间 : 开盘后 + 收盘后（ET 9:30 / 16:00）
+2026-05-11 17:17:22 ================================================================
+2026-05-11 17:17:23 【TQQQ】价格:76.28  RSI:83.2  量比:0.91  趋势:up
+2026-05-11 17:17:23   事件: CPI Release (2026-05-13)（2天后）
+2026-05-11 17:17:23   信号: ⚠️ 减仓  置信度:3/5  依据:RSI超买  [rules]
+2026-05-11 17:17:23   解释: RSI(14)=83.2 > 78，动能过热，历史上此区间回调概率较高
+2026-05-11 17:17:23 
+2026-05-11 17:17:24 【SOXL】价格:176.94  RSI:82.8  量比:0.71  趋势:up
+2026-05-11 17:17:24   事件: CPI Release (2026-05-13)（2天后）
+2026-05-11 17:17:24   信号: ⚠️ 减仓  置信度:4/5  依据:RSI极度超买 + 成交量萎缩  [rules]
+2026-05-11 17:17:24   解释: RSI(14)=82.8 > 82 且量比=0.71 < 0.80，新高缩量=量价背离，主力分发信号
+2026-05-11 17:17:24 
+2026-05-11 17:17:25 【GLD】价格:433.77  RSI:42.3  量比:0.8  趋势:up
+2026-05-11 17:17:25   事件: CPI Release (2026-05-13)（2天后）  ⚡突发新闻  黄金偏向:bullish
+2026-05-11 17:17:25   信号: 🟢 买入  置信度:5/5  依据:突发黄金看涨催化剂  [rules]
+2026-05-11 17:17:25   解释: RSS检测到黄金看涨关键词（地缘风险/通胀/避险），事件驱动优先于技术面
+2026-05-11 17:17:25   📰 Exchange-Traded Funds, Equity Futures Higher Pre-Bell Friday Amid Employment Data
+2026-05-11 17:17:25      🔗 https://finance.yahoo.com/markets/stocks/articles/exchange-traded-funds-equity-futures-125303923.html?.tsrc=rss
+2026-05-11 17:17:25   📰 Jeffrey Gundlach’s Debt Restructure Trade: 2 Stocks and 2 ETFs Built for the Storm
+2026-05-11 17:17:25      🔗 https://247wallst.com/investing/2026/05/08/jeffrey-gundlachs-debt-restructure-trade-2-stocks-and-2-etfs-built-for-the-storm/?.tsrc=rss
+2026-05-11 17:17:25 
+2026-05-11 17:42:59 ================================================================
+2026-05-11 17:42:59 Trading Agents 启动
+2026-05-11 17:42:59   ETF 标的 : ['US.TQQQ', 'US.SOXL']
+2026-05-11 17:42:59   黄金标的 : US.GLD
+2026-05-11 17:42:59   信号间隔 : 每 15 分钟
+2026-05-11 17:42:59   报告时间 : 开盘后 + 收盘后（ET 9:30 / 16:00）
+2026-05-11 17:42:59 ================================================================
+2026-05-11 17:43:01   [宏观] VIX:18.15999984741211  F&G:None  T10Y2Y:0.48  FEDFUNDS:3.64
+2026-05-11 17:43:02 【TQQQ】价格:76.28  RSI:83.2  量比:0.91  趋势:up
+2026-05-11 17:43:02   事件: CPI Release (2026-05-13)（2天后）
+2026-05-11 17:43:02   信号: 🟡 关注买入  置信度:3/5  依据:强趋势 + 动能延续  [rules]
+2026-05-11 17:43:02 
+2026-05-11 17:43:02 【SOXL】价格:176.94  RSI:82.8  量比:0.71  趋势:up
+2026-05-11 17:43:02   事件: CPI Release (2026-05-13)（2天后）
+2026-05-11 17:43:02   信号: 🟡 关注买入  置信度:3/5  依据:强趋势 + 动能延续  [rules]
+2026-05-11 17:43:02 
+2026-05-11 17:43:03 【GLD】价格:433.77  RSI:42.3  量比:0.8  趋势:up
+2026-05-11 17:43:03   事件: CPI Release (2026-05-13)（2天后）  ⚡突发新闻  黄金偏向:bullish
+2026-05-11 17:43:03   信号: 🟢 买入  置信度:4/5  依据:突发黄金看涨催化剂  [rules]
+2026-05-11 17:43:03   解释: RSS检测到黄金看涨关键词（地缘风险/通胀/避险），事件驱动优先于技术面
+2026-05-11 17:43:03   📰 Exchange-Traded Funds, Equity Futures Higher Pre-Bell Friday Amid Employment Data
+2026-05-11 17:43:03      🔗 https://finance.yahoo.com/markets/stocks/articles/exchange-traded-funds-equity-futures-125303923.html?.tsrc=rss
+2026-05-11 17:43:03   📰 Jeffrey Gundlach’s Debt Restructure Trade: 2 Stocks and 2 ETFs Built for the Storm
+2026-05-11 17:43:03      🔗 https://247wallst.com/investing/2026/05/08/jeffrey-gundlachs-debt-restructure-trade-2-stocks-and-2-etfs-built-for-the-storm/?.tsrc=rss
+2026-05-11 17:43:03 
+2026-05-11 17:58:04   [宏观] VIX:18.15999984741211  F&G:None  T10Y2Y:0.48  FEDFUNDS:3.64
+2026-05-11 17:58:05 【TQQQ】价格:76.28  RSI:83.2  量比:0.91  趋势:up
+2026-05-11 17:58:05   事件: CPI Release (2026-05-13)（2天后）
+2026-05-11 17:58:05   信号: 🟡 关注买入  置信度:3/5  依据:强趋势 + 动能延续  [rules]
+2026-05-11 17:58:05 
+2026-05-11 17:58:05 【SOXL】价格:176.94  RSI:82.8  量比:0.71  趋势:up
+2026-05-11 17:58:05   事件: CPI Release (2026-05-13)（2天后）
+2026-05-11 17:58:05   信号: 🟡 关注买入  置信度:3/5  依据:强趋势 + 动能延续  [rules]
+2026-05-11 17:58:05 
+2026-05-11 17:58:06 【GLD】价格:433.77  RSI:42.3  量比:0.8  趋势:up
+2026-05-11 17:58:06   事件: CPI Release (2026-05-13)（2天后）  ⚡突发新闻  黄金偏向:bullish
+2026-05-11 17:58:06   信号: 🟢 买入  置信度:4/5  依据:突发黄金看涨催化剂  [rules]
+2026-05-11 17:58:06   解释: RSS检测到黄金看涨关键词（地缘风险/通胀/避险），事件驱动优先于技术面
+2026-05-11 17:58:06   📰 Exchange-Traded Funds, Equity Futures Higher Pre-Bell Friday Amid Employment Data
+2026-05-11 17:58:06      🔗 https://finance.yahoo.com/markets/stocks/articles/exchange-traded-funds-equity-futures-125303923.html?.tsrc=rss
+2026-05-11 17:58:06   📰 Jeffrey Gundlach’s Debt Restructure Trade: 2 Stocks and 2 ETFs Built for the Storm
+2026-05-11 17:58:06      🔗 https://247wallst.com/investing/2026/05/08/jeffrey-gundlachs-debt-restructure-trade-2-stocks-and-2-etfs-built-for-the-storm/?.tsrc=rss
+2026-05-11 17:58:06 
+2026-05-11 18:13:07   [宏观] VIX:18.15999984741211  F&G:None  T10Y2Y:0.48  FEDFUNDS:3.64
+2026-05-11 18:13:08 【TQQQ】价格:76.28  RSI:83.2  量比:0.91  趋势:up
+2026-05-11 18:13:08   事件: CPI Release (2026-05-13)（2天后）
+2026-05-11 18:13:08   信号: 🟡 关注买入  置信度:3/5  依据:强趋势 + 动能延续  [rules]
+2026-05-11 18:13:08 
+2026-05-11 18:13:08 【SOXL】价格:176.94  RSI:82.8  量比:0.71  趋势:up
+2026-05-11 18:13:08   事件: CPI Release (2026-05-13)（2天后）
+2026-05-11 18:13:08   信号: 🟡 关注买入  置信度:3/5  依据:强趋势 + 动能延续  [rules]
+2026-05-11 18:13:08 
+2026-05-11 18:13:09 【GLD】价格:433.77  RSI:42.3  量比:0.8  趋势:up
+2026-05-11 18:13:09   事件: CPI Release (2026-05-13)（2天后）  ⚡突发新闻  黄金偏向:bullish
+2026-05-11 18:13:09   信号: 🟢 买入  置信度:4/5  依据:突发黄金看涨催化剂  [rules]
+2026-05-11 18:13:09   解释: RSS检测到黄金看涨关键词（地缘风险/通胀/避险），事件驱动优先于技术面
+2026-05-11 18:13:09   📰 Exchange-Traded Funds, Equity Futures Higher Pre-Bell Friday Amid Employment Data
+2026-05-11 18:13:09      🔗 https://finance.yahoo.com/markets/stocks/articles/exchange-traded-funds-equity-futures-125303923.html?.tsrc=rss
+2026-05-11 18:13:09   📰 Jeffrey Gundlach’s Debt Restructure Trade: 2 Stocks and 2 ETFs Built for the Storm
+2026-05-11 18:13:09      🔗 https://247wallst.com/investing/2026/05/08/jeffrey-gundlachs-debt-restructure-trade-2-stocks-and-2-etfs-built-for-the-storm/?.tsrc=rss
+2026-05-11 18:13:09 
+2026-05-11 18:16:11 ================================================================
+2026-05-11 18:16:11 Trading Agents 启动
+2026-05-11 18:16:11   ETF 标的 : ['US.TQQQ', 'US.SOXL']
+2026-05-11 18:16:11   黄金标的 : US.GLD
+2026-05-11 18:16:11   信号间隔 : 每 15 分钟
+2026-05-11 18:16:11   报告时间 : 开盘后 + 收盘后（ET 9:30 / 16:00）
+2026-05-11 18:16:11 ================================================================
+2026-05-11 18:16:13   [宏观] VIX:18.18000030517578  F&G:None  T10Y2Y:0.48  FEDFUNDS:3.64
+2026-05-11 18:16:14 【TQQQ】价格:76.28  RSI:83.2  量比:0.91  趋势:up
+2026-05-11 18:16:14   事件: CPI Release (2026-05-13)（2天后）
+2026-05-11 18:16:14   信号: 🟡 关注买入  置信度:3/5  依据:强趋势 + 动能延续  [rules]
+2026-05-11 18:16:14 
+2026-05-11 18:16:14 【SOXL】价格:176.94  RSI:82.8  量比:0.71  趋势:up
+2026-05-11 18:16:14   事件: CPI Release (2026-05-13)（2天后）
+2026-05-11 18:16:14   信号: 🟡 关注买入  置信度:3/5  依据:强趋势 + 动能延续  [rules]
+2026-05-11 18:16:14 
+2026-05-11 18:16:15 【GLD】价格:433.77  RSI:42.3  量比:0.8  趋势:up
+2026-05-11 18:16:15   事件: CPI Release (2026-05-13)（2天后）  ⚡突发新闻  黄金偏向:bullish
+2026-05-11 18:16:15   信号: 🟢 买入  置信度:4/5  依据:突发黄金看涨催化剂  [rules]
+2026-05-11 18:16:15   解释: RSS检测到黄金看涨关键词（地缘风险/通胀/避险），事件驱动优先于技术面
+2026-05-11 18:16:15   📰 Exchange-Traded Funds, Equity Futures Higher Pre-Bell Friday Amid Employment Data
+2026-05-11 18:16:15      🔗 https://finance.yahoo.com/markets/stocks/articles/exchange-traded-funds-equity-futures-125303923.html?.tsrc=rss
+2026-05-11 18:16:15   📰 Jeffrey Gundlach’s Debt Restructure Trade: 2 Stocks and 2 ETFs Built for the Storm
+2026-05-11 18:16:15      🔗 https://247wallst.com/investing/2026/05/08/jeffrey-gundlachs-debt-restructure-trade-2-stocks-and-2-etfs-built-for-the-storm/?.tsrc=rss
+2026-05-11 18:16:15 
+2026-05-11 18:31:16   [宏观] VIX:18.170000076293945  F&G:None  T10Y2Y:0.48  FEDFUNDS:3.64
+2026-05-11 18:31:17 【TQQQ】价格:76.28  RSI:83.2  量比:0.91  趋势:up
+2026-05-11 18:31:17   事件: CPI Release (2026-05-13)（2天后）
+2026-05-11 18:31:17   信号: 🟡 关注买入  置信度:3/5  依据:强趋势 + 动能延续  [rules]
+2026-05-11 18:31:17 
+2026-05-11 18:31:17 【SOXL】价格:176.94  RSI:82.8  量比:0.71  趋势:up
+2026-05-11 18:31:17   事件: CPI Release (2026-05-13)（2天后）
+2026-05-11 18:31:17   信号: 🟡 关注买入  置信度:3/5  依据:强趋势 + 动能延续  [rules]
+2026-05-11 18:31:17 
+2026-05-11 18:31:18 【GLD】价格:433.77  RSI:42.3  量比:0.8  趋势:up
+2026-05-11 18:31:18   事件: CPI Release (2026-05-13)（2天后）  ⚡突发新闻  黄金偏向:bullish
+2026-05-11 18:31:18   信号: 🟢 买入  置信度:4/5  依据:突发黄金看涨催化剂  [rules]
+2026-05-11 18:31:18   解释: RSS检测到黄金看涨关键词（地缘风险/通胀/避险），事件驱动优先于技术面
+2026-05-11 18:31:18   📰 Exchange-Traded Funds, Equity Futures Higher Pre-Bell Friday Amid Employment Data
+2026-05-11 18:31:18      🔗 https://finance.yahoo.com/markets/stocks/articles/exchange-traded-funds-equity-futures-125303923.html?.tsrc=rss
+2026-05-11 18:31:18   📰 Jeffrey Gundlach’s Debt Restructure Trade: 2 Stocks and 2 ETFs Built for the Storm
+2026-05-11 18:31:18      🔗 https://247wallst.com/investing/2026/05/08/jeffrey-gundlachs-debt-restructure-trade-2-stocks-and-2-etfs-built-for-the-storm/?.tsrc=rss
+2026-05-11 18:31:18 
+2026-05-11 18:46:19   [宏观] VIX:18.1200008392334  F&G:None  T10Y2Y:0.48  FEDFUNDS:3.64
+2026-05-11 18:46:20 【TQQQ】价格:76.28  RSI:83.2  量比:0.91  趋势:up
+2026-05-11 18:46:20   事件: CPI Release (2026-05-13)（2天后）
+2026-05-11 18:46:20   信号: 🟡 关注买入  置信度:3/5  依据:强趋势 + 动能延续  [rules]
+2026-05-11 18:46:20 
+2026-05-11 18:46:20 【SOXL】价格:176.94  RSI:82.8  量比:0.71  趋势:up
+2026-05-11 18:46:20   事件: CPI Release (2026-05-13)（2天后）
+2026-05-11 18:46:20   信号: 🟡 关注买入  置信度:3/5  依据:强趋势 + 动能延续  [rules]
+2026-05-11 18:46:20 
+2026-05-11 18:46:21 【GLD】价格:433.77  RSI:42.3  量比:0.8  趋势:up
+2026-05-11 18:46:21   事件: CPI Release (2026-05-13)（2天后）  ⚡突发新闻  黄金偏向:bullish
+2026-05-11 18:46:21   信号: 🟢 买入  置信度:4/5  依据:突发黄金看涨催化剂  [rules]
+2026-05-11 18:46:21   解释: RSS检测到黄金看涨关键词（地缘风险/通胀/避险），事件驱动优先于技术面
+2026-05-11 18:46:21   📰 Exchange-Traded Funds, Equity Futures Higher Pre-Bell Friday Amid Employment Data
+2026-05-11 18:46:21      🔗 https://finance.yahoo.com/markets/stocks/articles/exchange-traded-funds-equity-futures-125303923.html?.tsrc=rss
+2026-05-11 18:46:21   📰 Jeffrey Gundlach’s Debt Restructure Trade: 2 Stocks and 2 ETFs Built for the Storm
+2026-05-11 18:46:21      🔗 https://247wallst.com/investing/2026/05/08/jeffrey-gundlachs-debt-restructure-trade-2-stocks-and-2-etfs-built-for-the-storm/?.tsrc=rss
+2026-05-11 18:46:21 
+2026-05-11 19:01:24   [宏观] VIX:18.079999923706055  F&G:None  T10Y2Y:0.48  FEDFUNDS:3.64
+2026-05-11 19:01:25 【TQQQ】价格:76.28  RSI:83.2  量比:0.91  趋势:up
+2026-05-11 19:01:25   事件: CPI Release (2026-05-13)（2天后）
+2026-05-11 19:01:25   信号: 🟡 关注买入  置信度:3/5  依据:强趋势 + 动能延续  [rules]
+2026-05-11 19:01:25 
+2026-05-11 19:01:25 【SOXL】价格:176.94  RSI:82.8  量比:0.71  趋势:up
+2026-05-11 19:01:25   事件: CPI Release (2026-05-13)（2天后）
+2026-05-11 19:01:25   信号: 🟡 关注买入  置信度:3/5  依据:强趋势 + 动能延续  [rules]
+2026-05-11 19:01:25 
+2026-05-11 19:01:26 【GLD】价格:433.77  RSI:42.3  量比:0.8  趋势:up
+2026-05-11 19:01:26   事件: CPI Release (2026-05-13)（2天后）  ⚡突发新闻  黄金偏向:bullish
+2026-05-11 19:01:26   信号: 🟢 买入  置信度:4/5  依据:突发黄金看涨催化剂  [rules]
+2026-05-11 19:01:26   解释: RSS检测到黄金看涨关键词（地缘风险/通胀/避险），事件驱动优先于技术面
+2026-05-11 19:01:26   📰 Exchange-Traded Funds, Equity Futures Higher Pre-Bell Friday Amid Employment Data
+2026-05-11 19:01:26      🔗 https://finance.yahoo.com/markets/stocks/articles/exchange-traded-funds-equity-futures-125303923.html?.tsrc=rss
+2026-05-11 19:01:26   📰 Jeffrey Gundlach’s Debt Restructure Trade: 2 Stocks and 2 ETFs Built for the Storm
+2026-05-11 19:01:26      🔗 https://247wallst.com/investing/2026/05/08/jeffrey-gundlachs-debt-restructure-trade-2-stocks-and-2-etfs-built-for-the-storm/?.tsrc=rss
+2026-05-11 19:01:26 
+2026-05-11 19:16:27   [宏观] VIX:18.1299991607666  F&G:None  T10Y2Y:0.48  FEDFUNDS:3.64
+2026-05-11 19:16:27 【TQQQ】价格:76.28  RSI:83.2  量比:0.91  趋势:up
+2026-05-11 19:16:27   事件: CPI Release (2026-05-13)（2天后）
+2026-05-11 19:16:27   信号: 🟡 关注买入  置信度:3/5  依据:强趋势 + 动能延续  [rules]
+2026-05-11 19:16:27 
+2026-05-11 19:16:28 【SOXL】价格:176.94  RSI:82.8  量比:0.71  趋势:up
+2026-05-11 19:16:28   事件: CPI Release (2026-05-13)（2天后）
+2026-05-11 19:16:28   信号: 🟡 关注买入  置信度:3/5  依据:强趋势 + 动能延续  [rules]
+2026-05-11 19:16:28 
+2026-05-11 19:16:28 【GLD】价格:433.77  RSI:42.3  量比:0.8  趋势:up
+2026-05-11 19:16:28   事件: CPI Release (2026-05-13)（2天后）  ⚡突发新闻  黄金偏向:bullish
+2026-05-11 19:16:28   信号: 🟢 买入  置信度:4/5  依据:突发黄金看涨催化剂  [rules]
+2026-05-11 19:16:28   解释: RSS检测到黄金看涨关键词（地缘风险/通胀/避险），事件驱动优先于技术面
+2026-05-11 19:16:28   📰 Exchange-Traded Funds, Equity Futures Higher Pre-Bell Friday Amid Employment Data
+2026-05-11 19:16:28      🔗 https://finance.yahoo.com/markets/stocks/articles/exchange-traded-funds-equity-futures-125303923.html?.tsrc=rss
+2026-05-11 19:16:28   📰 Jeffrey Gundlach’s Debt Restructure Trade: 2 Stocks and 2 ETFs Built for the Storm
+2026-05-11 19:16:28      🔗 https://247wallst.com/investing/2026/05/08/jeffrey-gundlachs-debt-restructure-trade-2-stocks-and-2-etfs-built-for-the-storm/?.tsrc=rss
+2026-05-11 19:16:28 
+2026-05-11 19:31:29   [宏观] VIX:18.139999389648438  F&G:None  T10Y2Y:0.48  FEDFUNDS:3.64
+2026-05-11 19:31:30 【TQQQ】价格:76.28  RSI:83.2  量比:0.91  趋势:up
+2026-05-11 19:31:30   事件: CPI Release (2026-05-13)（2天后）
+2026-05-11 19:31:30   信号: 🟡 关注买入  置信度:3/5  依据:强趋势 + 动能延续  [rules]
+2026-05-11 19:31:30 
+2026-05-11 19:31:30 【SOXL】价格:176.94  RSI:82.8  量比:0.71  趋势:up
+2026-05-11 19:31:30   事件: CPI Release (2026-05-13)（2天后）
+2026-05-11 19:31:30   信号: 🟡 关注买入  置信度:3/5  依据:强趋势 + 动能延续  [rules]
+2026-05-11 19:31:30 
+2026-05-11 19:31:31 【GLD】价格:433.77  RSI:42.3  量比:0.8  趋势:up
+2026-05-11 19:31:31   事件: CPI Release (2026-05-13)（2天后）  ⚡突发新闻  黄金偏向:bullish
+2026-05-11 19:31:31   信号: 🟢 买入  置信度:4/5  依据:突发黄金看涨催化剂  [rules]
+2026-05-11 19:31:31   解释: RSS检测到黄金看涨关键词（地缘风险/通胀/避险），事件驱动优先于技术面
+2026-05-11 19:31:31   📰 Exchange-Traded Funds, Equity Futures Higher Pre-Bell Friday Amid Employment Data
+2026-05-11 19:31:31      🔗 https://finance.yahoo.com/markets/stocks/articles/exchange-traded-funds-equity-futures-125303923.html?.tsrc=rss
+2026-05-11 19:31:31   📰 Jeffrey Gundlach’s Debt Restructure Trade: 2 Stocks and 2 ETFs Built for the Storm
+2026-05-11 19:31:31      🔗 https://247wallst.com/investing/2026/05/08/jeffrey-gundlachs-debt-restructure-trade-2-stocks-and-2-etfs-built-for-the-storm/?.tsrc=rss
+2026-05-11 19:31:31 
+2026-05-11 19:46:33   [宏观] VIX:18.15999984741211  F&G:None  T10Y2Y:0.48  FEDFUNDS:3.64
+2026-05-11 19:46:33 【TQQQ】价格:76.28  RSI:83.2  量比:0.91  趋势:up
+2026-05-11 19:46:33   事件: CPI Release (2026-05-13)（2天后）
+2026-05-11 19:46:33   信号: 🟡 关注买入  置信度:3/5  依据:强趋势 + 动能延续  [rules]
+2026-05-11 19:46:33 
+2026-05-11 19:46:34 【SOXL】价格:176.94  RSI:82.8  量比:0.71  趋势:up
+2026-05-11 19:46:34   事件: CPI Release (2026-05-13)（2天后）
+2026-05-11 19:46:34   信号: 🟡 关注买入  置信度:3/5  依据:强趋势 + 动能延续  [rules]
+2026-05-11 19:46:34 
+2026-05-11 19:46:34 【GLD】价格:433.77  RSI:42.3  量比:0.8  趋势:up
+2026-05-11 19:46:34   事件: CPI Release (2026-05-13)（2天后）  ⚡突发新闻  黄金偏向:bullish
+2026-05-11 19:46:34   信号: 🟢 买入  置信度:4/5  依据:突发黄金看涨催化剂  [rules]
+2026-05-11 19:46:34   解释: RSS检测到黄金看涨关键词（地缘风险/通胀/避险），事件驱动优先于技术面
+2026-05-11 19:46:34   📰 Exchange-Traded Funds, Equity Futures Higher Pre-Bell Friday Amid Employment Data
+2026-05-11 19:46:34      🔗 https://finance.yahoo.com/markets/stocks/articles/exchange-traded-funds-equity-futures-125303923.html?.tsrc=rss
+2026-05-11 19:46:34   📰 Jeffrey Gundlach’s Debt Restructure Trade: 2 Stocks and 2 ETFs Built for the Storm
+2026-05-11 19:46:34      🔗 https://247wallst.com/investing/2026/05/08/jeffrey-gundlachs-debt-restructure-trade-2-stocks-and-2-etfs-built-for-the-storm/?.tsrc=rss
+2026-05-11 19:46:34 
+2026-05-11 20:01:36   [宏观] VIX:18.170000076293945  F&G:None  T10Y2Y:N/A  FEDFUNDS:3.64
+2026-05-11 20:01:37 【TQQQ】价格:76.28  RSI:83.2  量比:0.91  趋势:up
+2026-05-11 20:01:37   事件: CPI Release (2026-05-13)（2天后）
+2026-05-11 20:01:37   信号: 🟡 关注买入  置信度:3/5  依据:强趋势 + 动能延续  [rules]
+2026-05-11 20:01:37 
+2026-05-11 20:01:37 【SOXL】价格:176.94  RSI:82.8  量比:0.71  趋势:up
+2026-05-11 20:01:37   事件: CPI Release (2026-05-13)（2天后）
+2026-05-11 20:01:37   信号: 🟡 关注买入  置信度:3/5  依据:强趋势 + 动能延续  [rules]
+2026-05-11 20:01:37 
+2026-05-11 20:01:38 【GLD】价格:433.77  RSI:42.3  量比:0.8  趋势:up
+2026-05-11 20:01:38   事件: CPI Release (2026-05-13)（2天后）  ⚡突发新闻  黄金偏向:bullish
+2026-05-11 20:01:38   信号: 🟢 买入  置信度:4/5  依据:突发黄金看涨催化剂  [rules]
+2026-05-11 20:01:38   解释: RSS检测到黄金看涨关键词（地缘风险/通胀/避险），事件驱动优先于技术面
+2026-05-11 20:01:38   📰 Exchange-Traded Funds, Equity Futures Higher Pre-Bell Friday Amid Employment Data
+2026-05-11 20:01:38      🔗 https://finance.yahoo.com/markets/stocks/articles/exchange-traded-funds-equity-futures-125303923.html?.tsrc=rss
+2026-05-11 20:01:38   📰 Jeffrey Gundlach’s Debt Restructure Trade: 2 Stocks and 2 ETFs Built for the Storm
+2026-05-11 20:01:38      🔗 https://247wallst.com/investing/2026/05/08/jeffrey-gundlachs-debt-restructure-trade-2-stocks-and-2-etfs-built-for-the-storm/?.tsrc=rss
+2026-05-11 20:01:38 
+2026-05-11 20:16:39   [宏观] VIX:18.15999984741211  F&G:None  T10Y2Y:0.48  FEDFUNDS:3.64
+2026-05-11 20:16:40 【TQQQ】价格:76.28  RSI:83.2  量比:0.91  趋势:up
+2026-05-11 20:16:40   事件: CPI Release (2026-05-13)（2天后）
+2026-05-11 20:16:40   信号: 🟡 关注买入  置信度:3/5  依据:强趋势 + 动能延续  [rules]
+2026-05-11 20:16:40 
+2026-05-11 20:16:40 【SOXL】价格:176.94  RSI:82.8  量比:0.71  趋势:up
+2026-05-11 20:16:40   事件: CPI Release (2026-05-13)（2天后）
+2026-05-11 20:16:40   信号: 🟡 关注买入  置信度:3/5  依据:强趋势 + 动能延续  [rules]
+2026-05-11 20:16:40 
+2026-05-11 20:16:41 【GLD】价格:433.77  RSI:42.3  量比:0.8  趋势:up
+2026-05-11 20:16:41   事件: CPI Release (2026-05-13)（2天后）  ⚡突发新闻  黄金偏向:bullish
+2026-05-11 20:16:41   信号: 🟢 买入  置信度:4/5  依据:突发黄金看涨催化剂  [rules]
+2026-05-11 20:16:41   解释: RSS检测到黄金看涨关键词（地缘风险/通胀/避险），事件驱动优先于技术面
+2026-05-11 20:16:41   📰 Exchange-Traded Funds, Equity Futures Higher Pre-Bell Friday Amid Employment Data
+2026-05-11 20:16:41      🔗 https://finance.yahoo.com/markets/stocks/articles/exchange-traded-funds-equity-futures-125303923.html?.tsrc=rss
+2026-05-11 20:16:41   📰 Jeffrey Gundlach’s Debt Restructure Trade: 2 Stocks and 2 ETFs Built for the Storm
+2026-05-11 20:16:41      🔗 https://247wallst.com/investing/2026/05/08/jeffrey-gundlachs-debt-restructure-trade-2-stocks-and-2-etfs-built-for-the-storm/?.tsrc=rss
+2026-05-11 20:16:41 
+2026-05-11 20:31:42   [宏观] VIX:18.170000076293945  F&G:None  T10Y2Y:0.48  FEDFUNDS:3.64
+2026-05-11 20:31:43 【TQQQ】价格:76.28  RSI:83.2  量比:0.91  趋势:up
+2026-05-11 20:31:43   事件: CPI Release (2026-05-13)（2天后）
+2026-05-11 20:31:43   信号: 🟡 关注买入  置信度:3/5  依据:强趋势 + 动能延续  [rules]
+2026-05-11 20:31:43 
+2026-05-11 20:31:43 【SOXL】价格:176.94  RSI:82.8  量比:0.71  趋势:up
+2026-05-11 20:31:43   事件: CPI Release (2026-05-13)（2天后）
+2026-05-11 20:31:43   信号: 🟡 关注买入  置信度:3/5  依据:强趋势 + 动能延续  [rules]
+2026-05-11 20:31:43 
+2026-05-11 20:31:44 【GLD】价格:433.77  RSI:42.3  量比:0.8  趋势:up
+2026-05-11 20:31:44   事件: CPI Release (2026-05-13)（2天后）  ⚡突发新闻  黄金偏向:bullish
+2026-05-11 20:31:44   信号: 🟢 买入  置信度:4/5  依据:突发黄金看涨催化剂  [rules]
+2026-05-11 20:31:44   解释: RSS检测到黄金看涨关键词（地缘风险/通胀/避险），事件驱动优先于技术面
+2026-05-11 20:31:44   📰 Exchange-Traded Funds, Equity Futures Higher Pre-Bell Friday Amid Employment Data
+2026-05-11 20:31:44      🔗 https://finance.yahoo.com/markets/stocks/articles/exchange-traded-funds-equity-futures-125303923.html?.tsrc=rss
+2026-05-11 20:31:44   📰 Jeffrey Gundlach’s Debt Restructure Trade: 2 Stocks and 2 ETFs Built for the Storm
+2026-05-11 20:31:44      🔗 https://247wallst.com/investing/2026/05/08/jeffrey-gundlachs-debt-restructure-trade-2-stocks-and-2-etfs-built-for-the-storm/?.tsrc=rss
+2026-05-11 20:31:44 
+2026-05-11 20:46:48   [宏观] VIX:18.110000610351562  F&G:None  T10Y2Y:0.48  FEDFUNDS:3.64
+2026-05-11 20:46:49 【TQQQ】价格:76.28  RSI:83.2  量比:0.91  趋势:up
+2026-05-11 20:46:49   事件: CPI Release (2026-05-13)（2天后）
+2026-05-11 20:46:49   信号: 🟡 关注买入  置信度:3/5  依据:强趋势 + 动能延续  [rules]
+2026-05-11 20:46:49 
+2026-05-11 20:46:49 【SOXL】价格:176.94  RSI:82.8  量比:0.71  趋势:up
+2026-05-11 20:46:49   事件: CPI Release (2026-05-13)（2天后）
+2026-05-11 20:46:49   信号: 🟡 关注买入  置信度:3/5  依据:强趋势 + 动能延续  [rules]
+2026-05-11 20:46:49 
+2026-05-11 20:46:50 【GLD】价格:433.77  RSI:42.3  量比:0.8  趋势:up
+2026-05-11 20:46:50   事件: CPI Release (2026-05-13)（2天后）  ⚡突发新闻  黄金偏向:bullish
+2026-05-11 20:46:50   信号: 🟢 买入  置信度:4/5  依据:突发黄金看涨催化剂  [rules]
+2026-05-11 20:46:50   解释: RSS检测到黄金看涨关键词（地缘风险/通胀/避险），事件驱动优先于技术面
+2026-05-11 20:46:50   📰 Exchange-Traded Funds, Equity Futures Higher Pre-Bell Friday Amid Employment Data
+2026-05-11 20:46:50      🔗 https://finance.yahoo.com/markets/stocks/articles/exchange-traded-funds-equity-futures-125303923.html?.tsrc=rss
+2026-05-11 20:46:50   📰 Jeffrey Gundlach’s Debt Restructure Trade: 2 Stocks and 2 ETFs Built for the Storm
+2026-05-11 20:46:50      🔗 https://247wallst.com/investing/2026/05/08/jeffrey-gundlachs-debt-restructure-trade-2-stocks-and-2-etfs-built-for-the-storm/?.tsrc=rss
+2026-05-11 20:46:50 
+2026-05-11 21:01:54   [宏观] VIX:18.1299991607666  F&G:None  T10Y2Y:0.48  FEDFUNDS:3.64
+2026-05-11 21:01:54 【TQQQ】价格:76.28  RSI:83.2  量比:0.91  趋势:up
+2026-05-11 21:01:54   事件: CPI Release (2026-05-13)（2天后）
+2026-05-11 21:01:54   信号: 🟡 关注买入  置信度:3/5  依据:强趋势 + 动能延续  [rules]
+2026-05-11 21:01:54 
+2026-05-11 21:01:55 【SOXL】价格:176.94  RSI:82.8  量比:0.71  趋势:up
+2026-05-11 21:01:55   事件: CPI Release (2026-05-13)（2天后）
+2026-05-11 21:01:55   信号: 🟡 关注买入  置信度:3/5  依据:强趋势 + 动能延续  [rules]
+2026-05-11 21:01:55 
+2026-05-11 21:01:55 【GLD】价格:433.77  RSI:42.3  量比:0.8  趋势:up
+2026-05-11 21:01:55   事件: CPI Release (2026-05-13)（2天后）  ⚡突发新闻  黄金偏向:bullish
+2026-05-11 21:01:55   信号: 🟢 买入  置信度:4/5  依据:突发黄金看涨催化剂  [rules]
+2026-05-11 21:01:55   解释: RSS检测到黄金看涨关键词（地缘风险/通胀/避险），事件驱动优先于技术面
+2026-05-11 21:01:55   📰 Exchange-Traded Funds, Equity Futures Higher Pre-Bell Friday Amid Employment Data
+2026-05-11 21:01:55      🔗 https://finance.yahoo.com/markets/stocks/articles/exchange-traded-funds-equity-futures-125303923.html?.tsrc=rss
+2026-05-11 21:01:55   📰 Jeffrey Gundlach’s Debt Restructure Trade: 2 Stocks and 2 ETFs Built for the Storm
+2026-05-11 21:01:55      🔗 https://247wallst.com/investing/2026/05/08/jeffrey-gundlachs-debt-restructure-trade-2-stocks-and-2-etfs-built-for-the-storm/?.tsrc=rss
+2026-05-11 21:01:55 
+2026-05-11 21:16:57   [宏观] VIX:18.139999389648438  F&G:None  T10Y2Y:0.48  FEDFUNDS:3.64
+2026-05-11 21:16:57 【TQQQ】价格:76.28  RSI:83.2  量比:0.91  趋势:up
+2026-05-11 21:16:57   事件: CPI Release (2026-05-13)（2天后）
+2026-05-11 21:16:57   信号: 🟡 关注买入  置信度:3/5  依据:强趋势 + 动能延续  [rules]
+2026-05-11 21:16:57 
+2026-05-11 21:16:58 【SOXL】价格:176.94  RSI:82.8  量比:0.71  趋势:up
+2026-05-11 21:16:58   事件: CPI Release (2026-05-13)（2天后）
+2026-05-11 21:16:58   信号: 🟡 关注买入  置信度:3/5  依据:强趋势 + 动能延续  [rules]
+2026-05-11 21:16:58 
+2026-05-11 21:16:58 【GLD】价格:433.77  RSI:42.3  量比:0.8  趋势:up
+2026-05-11 21:16:58   事件: CPI Release (2026-05-13)（2天后）  ⚡突发新闻  黄金偏向:bullish
+2026-05-11 21:16:58   信号: 🟢 买入  置信度:4/5  依据:突发黄金看涨催化剂  [rules]
+2026-05-11 21:16:58   解释: RSS检测到黄金看涨关键词（地缘风险/通胀/避险），事件驱动优先于技术面
+2026-05-11 21:16:58   📰 Exchange-Traded Funds, Equity Futures Higher Pre-Bell Friday Amid Employment Data
+2026-05-11 21:16:58      🔗 https://finance.yahoo.com/markets/stocks/articles/exchange-traded-funds-equity-futures-125303923.html?.tsrc=rss
+2026-05-11 21:16:58   📰 Jeffrey Gundlach’s Debt Restructure Trade: 2 Stocks and 2 ETFs Built for the Storm
+2026-05-11 21:16:58      🔗 https://247wallst.com/investing/2026/05/08/jeffrey-gundlachs-debt-restructure-trade-2-stocks-and-2-etfs-built-for-the-storm/?.tsrc=rss
+2026-05-11 21:16:58 
+2026-05-11 21:32:00   [宏观] VIX:18.190000534057617  F&G:None  T10Y2Y:0.48  FEDFUNDS:3.64
+2026-05-11 21:32:00 【TQQQ】价格:76.28  RSI:83.2  量比:0.91  趋势:up
+2026-05-11 21:32:00   事件: CPI Release (2026-05-13)（2天后）
+2026-05-11 21:32:00   信号: 🟡 关注买入  置信度:3/5  依据:强趋势 + 动能延续  [rules]
+2026-05-11 21:32:00 
+2026-05-11 21:32:01 【SOXL】价格:176.94  RSI:82.8  量比:0.71  趋势:up
+2026-05-11 21:32:01   事件: CPI Release (2026-05-13)（2天后）
+2026-05-11 21:32:01   信号: 🟡 关注买入  置信度:3/5  依据:强趋势 + 动能延续  [rules]
+2026-05-11 21:32:01 
+2026-05-11 21:32:01 【GLD】价格:433.77  RSI:42.3  量比:0.8  趋势:up
+2026-05-11 21:32:01   事件: CPI Release (2026-05-13)（2天后）  ⚡突发新闻  黄金偏向:bullish
+2026-05-11 21:32:01   信号: 🟢 买入  置信度:4/5  依据:突发黄金看涨催化剂  [rules]
+2026-05-11 21:32:01   解释: RSS检测到黄金看涨关键词（地缘风险/通胀/避险），事件驱动优先于技术面
+2026-05-11 21:32:01   📰 Exchange-Traded Funds, Equity Futures Higher Pre-Bell Friday Amid Employment Data
+2026-05-11 21:32:01      🔗 https://finance.yahoo.com/markets/stocks/articles/exchange-traded-funds-equity-futures-125303923.html?.tsrc=rss
+2026-05-11 21:32:01   📰 Jeffrey Gundlach’s Debt Restructure Trade: 2 Stocks and 2 ETFs Built for the Storm
+2026-05-11 21:32:01      🔗 https://247wallst.com/investing/2026/05/08/jeffrey-gundlachs-debt-restructure-trade-2-stocks-and-2-etfs-built-for-the-storm/?.tsrc=rss
+2026-05-11 21:32:01 
+2026-05-11 21:47:03   [宏观] VIX:18.15999984741211  F&G:None  T10Y2Y:0.48  FEDFUNDS:3.64
+2026-05-11 21:47:03 【TQQQ】价格:76.28  RSI:83.2  量比:0.91  趋势:up
+2026-05-11 21:47:03   事件: CPI Release (2026-05-13)（2天后）
+2026-05-11 21:47:03   信号: 🟡 关注买入  置信度:3/5  依据:强趋势 + 动能延续  [rules]
+2026-05-11 21:47:03 
+2026-05-11 21:47:04 【SOXL】价格:176.94  RSI:82.8  量比:0.71  趋势:up
+2026-05-11 21:47:04   事件: CPI Release (2026-05-13)（2天后）
+2026-05-11 21:47:04   信号: 🟡 关注买入  置信度:3/5  依据:强趋势 + 动能延续  [rules]
+2026-05-11 21:47:04 
+2026-05-11 21:47:04 【GLD】价格:433.77  RSI:42.3  量比:0.8  趋势:up
+2026-05-11 21:47:04   事件: CPI Release (2026-05-13)（2天后）  ⚡突发新闻  黄金偏向:bullish
+2026-05-11 21:47:04   信号: 🟢 买入  置信度:4/5  依据:突发黄金看涨催化剂  [rules]
+2026-05-11 21:47:04   解释: RSS检测到黄金看涨关键词（地缘风险/通胀/避险），事件驱动优先于技术面
+2026-05-11 21:47:04   📰 Exchange-Traded Funds, Equity Futures Higher Pre-Bell Friday Amid Employment Data
+2026-05-11 21:47:04      🔗 https://finance.yahoo.com/markets/stocks/articles/exchange-traded-funds-equity-futures-125303923.html?.tsrc=rss
+2026-05-11 21:47:04   📰 Jeffrey Gundlach’s Debt Restructure Trade: 2 Stocks and 2 ETFs Built for the Storm
+2026-05-11 21:47:04      🔗 https://247wallst.com/investing/2026/05/08/jeffrey-gundlachs-debt-restructure-trade-2-stocks-and-2-etfs-built-for-the-storm/?.tsrc=rss
+2026-05-11 21:47:04 
+2026-05-11 22:02:06   [宏观] VIX:18.15999984741211  F&G:None  T10Y2Y:0.48  FEDFUNDS:3.64
+2026-05-11 22:02:06 【TQQQ】价格:76.28  RSI:83.2  量比:0.91  趋势:up
+2026-05-11 22:02:06   事件: CPI Release (2026-05-13)（2天后）
+2026-05-11 22:02:06   信号: 🟡 关注买入  置信度:3/5  依据:强趋势 + 动能延续  [rules]
+2026-05-11 22:02:06 
+2026-05-11 22:02:07 【SOXL】价格:176.94  RSI:82.8  量比:0.71  趋势:up
+2026-05-11 22:02:07   事件: CPI Release (2026-05-13)（2天后）
+2026-05-11 22:02:07   信号: 🟡 关注买入  置信度:3/5  依据:强趋势 + 动能延续  [rules]
+2026-05-11 22:02:07 
+2026-05-11 22:02:07 【GLD】价格:433.77  RSI:42.3  量比:0.8  趋势:up
+2026-05-11 22:02:07   事件: CPI Release (2026-05-13)（2天后）  ⚡突发新闻  黄金偏向:bullish
+2026-05-11 22:02:07   信号: 🟢 买入  置信度:4/5  依据:突发黄金看涨催化剂  [rules]
+2026-05-11 22:02:07   解释: RSS检测到黄金看涨关键词（地缘风险/通胀/避险），事件驱动优先于技术面
+2026-05-11 22:02:07   📰 Exchange-Traded Funds, Equity Futures Higher Pre-Bell Friday Amid Employment Data
+2026-05-11 22:02:07      🔗 https://finance.yahoo.com/markets/stocks/articles/exchange-traded-funds-equity-futures-125303923.html?.tsrc=rss
+2026-05-11 22:02:07   📰 Jeffrey Gundlach’s Debt Restructure Trade: 2 Stocks and 2 ETFs Built for the Storm
+2026-05-11 22:02:07      🔗 https://247wallst.com/investing/2026/05/08/jeffrey-gundlachs-debt-restructure-trade-2-stocks-and-2-etfs-built-for-the-storm/?.tsrc=rss
+2026-05-11 22:02:07 
+2026-05-11 22:17:09   [宏观] VIX:18.280000686645508  F&G:None  T10Y2Y:0.48  FEDFUNDS:3.64
+2026-05-11 22:17:10 【TQQQ】价格:76.28  RSI:83.2  量比:0.91  趋势:up
+2026-05-11 22:17:10   事件: CPI Release (2026-05-13)（2天后）
+2026-05-11 22:17:10   信号: 🟡 关注买入  置信度:3/5  依据:强趋势 + 动能延续  [rules]
+2026-05-11 22:17:10 
+2026-05-11 22:17:10 【SOXL】价格:176.94  RSI:82.8  量比:0.71  趋势:up
+2026-05-11 22:17:10   事件: CPI Release (2026-05-13)（2天后）
+2026-05-11 22:17:10   信号: 🟡 关注买入  置信度:3/5  依据:强趋势 + 动能延续  [rules]
+2026-05-11 22:17:10 
+2026-05-11 22:17:11 【GLD】价格:433.77  RSI:42.3  量比:0.8  趋势:up
+2026-05-11 22:17:11   事件: CPI Release (2026-05-13)（2天后）  ⚡突发新闻  黄金偏向:mixed
+2026-05-11 22:17:11   信号: ⬜ 持仓观望  置信度:7/5  依据:突发新闻，等待方向确认  [rules]
+2026-05-11 22:17:11   📰 Gold Falls as the U.S. Dismisses Iran's Peace Demands, Boosting the Dollar and Yields
+2026-05-11 22:17:11      🔗 https://finance.yahoo.com/markets/commodities/articles/gold-falls-u-dismisses-iran-130838820.html?.tsrc=rss
+2026-05-11 22:17:11   📰 Exchange-Traded Funds, Equity Futures Higher Pre-Bell Friday Amid Employment Data
+2026-05-11 22:17:11      🔗 https://finance.yahoo.com/markets/stocks/articles/exchange-traded-funds-equity-futures-125303923.html?.tsrc=rss
+2026-05-11 22:17:11 
+2026-05-11 22:32:12   [宏观] VIX:18.239999771118164  F&G:None  T10Y2Y:0.48  FEDFUNDS:3.64
+2026-05-11 22:32:12 【TQQQ】价格:76.69  RSI:83.5  量比:0.09  趋势:up
+2026-05-11 22:32:12   事件: CPI Release (2026-05-13)（2天后）
+2026-05-11 22:32:12   信号: ⚠️ 减仓  置信度:4/5  依据:创新高 + 量价背离 + RSI极值  [rules]
+2026-05-11 22:32:12   解释: 价格创52周新高，但成交量仅为均值9%，RSI=83.5 极度超买，三重顶部信号
+2026-05-11 22:32:12 
+2026-05-11 22:32:13 【SOXL】价格:186.45  RSI:84.0  量比:0.13  趋势:up
+2026-05-11 22:32:13   事件: CPI Release (2026-05-13)（2天后）
+2026-05-11 22:32:13   信号: ⚠️ 减仓  置信度:4/5  依据:创新高 + 量价背离 + RSI极值  [rules]
+2026-05-11 22:32:13   解释: 价格创52周新高，但成交量仅为均值13%，RSI=84.0 极度超买，三重顶部信号
+2026-05-11 22:32:13 
+2026-05-11 22:32:13 【GLD】价格:434.81  RSI:43.0  量比:0.1  趋势:up
+2026-05-11 22:32:13   事件: CPI Release (2026-05-13)（2天后）  ⚡突发新闻  黄金偏向:mixed
+2026-05-11 22:32:13   信号: ⬜ 持仓观望  置信度:7/5  依据:突发新闻，等待方向确认  [rules]
+2026-05-11 22:32:13   📰 Gold Falls as the U.S. Dismisses Iran's Peace Demands, Boosting the Dollar and Yields
+2026-05-11 22:32:13      🔗 https://finance.yahoo.com/markets/commodities/articles/gold-falls-u-dismisses-iran-130838820.html?.tsrc=rss
+2026-05-11 22:32:13   📰 Exchange-Traded Funds, Equity Futures Mixed Pre-Bell Monday as Trump Rejects Reported Iran Proposal
+2026-05-11 22:32:13      🔗 https://finance.yahoo.com/markets/stocks/articles/exchange-traded-funds-equity-futures-130725999.html?.tsrc=rss
+2026-05-11 22:32:13 
+2026-05-11 22:32:13 
+================================================================
+2026-05-11 22:32:13 生成open报告...
+2026-05-11 22:32:16 +================================================================+
+|  📊 美股市场综合报告  |  开盘报告                                           |
++================================================================+
+  生成时间: 2026-05-11 09:32 ET
+
+【一、核心标的行情】
+----------------------------------------------------------------
+  标的         名称               价格        涨跌     量比
+  ---------- ---------- --------  --------  -----
+  TQQQ       3x纳指         $76.71   ▲ 0.56%   0.10
+  SOXL       3x半导体       $186.48   ▲ 5.39%   0.14
+  GLD        黄金ETF       $434.80   ▲ 0.24%   0.11
+  QQQ        纳斯达克100     $712.53   ▲ 0.18%   0.05
+  SPY        标普500       $737.44   ▼ 0.02%   0.03
+
+【二、市场情绪】
+----------------------------------------------------------------
+  VIX 恐慌指数     18.24   → 平静
+  CNN 贪婪指数   获取失败
+  比特币 BTC     $81,023  ▼ 1.36%
+
+【三、宏观指标】
+----------------------------------------------------------------
+  10Y美债收益率  4.38%  ▲ 0.32%
+  解读: 偏高，压制高估值股⚠️
+  美元指数 DXY   97.9  ▲ 0.08%
+  WTI 原油       $96.9  ▲ 1.55%
+
+  -- FRED 宏观数据 --
+  10Y-2Y利差      +0.48%  趋于平坦
+
+【四、近期重大事件】
+----------------------------------------------------------------
+  ⚡ 最近事件: CPI Release (2026-05-13)（2天后）
+  风险等级: ELEVATED
+  ⚡  2天后  CPI Release (2026-05-13)
+  📋 17天后  NVDA Earnings (est) (2026-05-28)
+
+【五、风险提示】
+----------------------------------------------------------------
+  ⚠️ 10Y美债 4.38% 处于高位，持续压制成长股估值
+  ⚠️ 重大事件 'CPI Release (2026-05-13)' 仅2天后，建议降低杠杆仓位
+
+==================================================================
+  数据来源: moomoo OpenD + Yahoo Finance + CNN Money
+  生成时间: 2026-05-11 09:32 ET  |  仅供参考，不构成投资建议
+==================================================================
+2026-05-11 22:32:16 报告已保存: F:\fsi-skills\agents\signals\report_20260511_0932.txt
+2026-05-11 22:32:16 运行策略回测...
+2026-05-11 22:32:17 +==================================================================+
+|  策略回测报告  |  2026-05-11 22:32                                     |
++==================================================================+
+
+【TQQQ 回测结果】
+--------------------------------------------------------------------
+  规则             动作         训练     测试         训练胜率     测试胜率     平均收益  评级
+  -------------- ---------- ------ ------ -------- -------- --------  ----
+  [进化]正常量+CCI中性+均线 WATCH_BUY  34     3         91.2%    100.0%   +12.97%  ★★★
+  [进化]RSI中性+CCI超买+ WATCH_BUY  9      4         88.9%    100.0%   +21.39%  ★★★
+  [进化]CCI中性+上升趋势+均 WATCH_BUY  44     3         86.4%    100.0%   +12.97%  ★★★
+  [进化]正常量+CCI中性+均线 WATCH_BUY  34     2         85.3%    100.0%   +20.38%  ★★★
+  [进化]CCI中性+均线多排 WATCH_BUY  59     3         84.7%    100.0%   +12.97%  ★★★
+  [进化]RSI超卖      WATCH_BUY  6      4         83.3%    100.0%    +7.53%  ★★★
+  [进化]RSI超卖      WATCH_BUY  6      4         83.3%    100.0%   +23.35%  ★★★
+
+  最佳买入规则: [[进化]正常量+CCI中性+均线]  持5天  测试胜率 100.0%  平均 +12.97%
+  最佳减仓规则: [[进化]RSI中性+CCI超卖]  持5天  测试胜率 69.2%  平均 -1.76%
+
+【SOXL 回测结果】
+--------------------------------------------------------------------
+  规则             动作         训练     测试         训练胜率     测试胜率     平均收益  评级
+  -------------- ---------- ------ ------ -------- -------- --------  ----
+  [进化]RSI>75+上升趋势 WATCH_BUY  5      7        100.0%    100.0%   +41.58%  ★★★
+  [进化]RSI>75+牛排列 WATCH_BUY  5      7        100.0%    100.0%   +41.58%  ★★★
+  [进化]RSI>70+RSI>7 WATCH_BUY  5      7        100.0%    100.0%   +41.58%  ★★★
+  [进化]RSI>70+RSI>7 WATCH_BUY  5      7        100.0%    100.0%   +41.58%  ★★★
+  [进化]RSI>75+上升趋势+ WATCH_BUY  5      7        100.0%    100.0%   +41.58%  ★★★
+  [进化]RSI>75+上升趋势+ WATCH_BUY  5      7        100.0%    100.0%   +41.58%  ★★★
+  [进化]RSI>75+牛排列+5 WATCH_BUY  5      7        100.0%    100.0%   +41.58%  ★★★
+
+  最佳买入规则: [[进化]RSI>75+上升趋势]  持10天  测试胜率 100.0%  平均 +41.58%
+  最佳减仓规则: [[进化]RSI>80+52周新高]  持3天  测试胜率 66.7%  平均 +1.96%
+
+【GLD 回测结果】
+--------------------------------------------------------------------
+  规则             动作         训练     测试         训练胜率     测试胜率     平均收益  评级
+  -------------- ---------- ------ ------ -------- -------- --------  ----
+  [进化]量比>1.1+下降趋势+ WATCH_BUY  6      5        100.0%     80.0%    +3.40%  ★★★
+  [进化]量比>1.2+下降趋势 WATCH_BUY  6      4        100.0%     75.0%    +2.37%  ★★★
+  [进化]量比>1.1+量比>1. WATCH_BUY  6      4        100.0%     75.0%    +2.37%  ★★★
+  [进化]量比>1.2+下降趋势+ WATCH_BUY  5      4        100.0%     75.0%    +2.37%  ★★★
+  [进化]量比>1.2+量比>1. WATCH_BUY  6      4        100.0%     75.0%    +2.37%  ★★★
+  [进化]量比>1.1+下降趋势 WATCH_BUY  8      5         87.5%     80.0%    +3.40%  ★★★
+  [进化]量比>1.1+量比>1. WATCH_BUY  8      5         87.5%     80.0%    +3.40%  ★★★
+
+  最佳买入规则: [[进化]量比>1.1+下降趋势+]  持10天  测试胜率 80.0%  平均 +3.40%
+  最佳减仓规则: [[进化]量比<0.65+上升趋势]  持5天  测试胜率 77.8%  平均 -1.30%
+
+====================================================================
+  评级: ★★★ 测试胜率≥58%  ★★ ≥52%  ★ ≥47%
+  数据来源: moomoo OpenD 历史日K线（前复权）
+  方法: 80/20 train/test 分割，按规则持仓日历算收益
+====================================================================
+2026-05-11 22:32:17 运行规则进化器（约需30-60秒）...
+2026-05-11 22:32:28 +==================================================================+
+|  TQQQ 规则进化报告  |  2026-05-11 22:32                                |
++==================================================================+
+
+  穷举候选规则 : 10,560
+  暴力搜索存活 : 409  (train≥55.0% & test≥50.0%)
+  遗传进化新增 : 交叉+0  变异+0  蒸馏+0
+  最终存活规则 : 409
+  耗时         : 11.1秒
+
+  [WATCH_BUY] Top 6
+  规则                     持仓    训练     测试         训练胜率     测试胜率     均收益  来源
+  ---------------------- ----- ------ ------ -------- -------- -------  ----
+  正常量+CCI中性+均线多排         5     34     3         91.2%    100.0%  +12.97%  穷举
+  RSI中性+CCI超买+均线空排       10    9      4         88.9%    100.0%  +21.39%  穷举
+  CCI中性+上升趋势+均线多排        5     44     3         86.4%    100.0%  +12.97%  穷举
+  正常量+CCI中性+均线多排         7     34     3         85.3%    100.0%  +20.49%  穷举
+  CCI中性+均线多排             5     59     3         84.7%    100.0%  +12.97%  穷举
+  RSI超卖                  3     6      4         83.3%    100.0%   +7.53%  穷举
+
+  [REDUCE] Top 6
+  规则                     持仓    训练     测试         训练胜率     测试胜率     均收益  来源
+  ---------------------- ----- ------ ------ -------- -------- -------  ----
+  CCI下穿-100              5     8      5         75.0%     60.0%   -0.59%  穷举
+  CCI下穿-100              7     8      5         75.0%     60.0%   -3.75%  穷举
+  CCI超卖+CCI下穿-100        5     8      5         75.0%     60.0%   -0.59%  穷举
+  CCI超卖+CCI下穿-100        7     8      5         75.0%     60.0%   -3.75%  穷举
+  下降趋势+CCI下穿-100         5     8      5         75.0%     60.0%   -0.59%  穷举
+  下降趋势+CCI下穿-100         7     8      5         75.0%     60.0%   -3.75%  穷举
+
+====================================================================
+  存活规则已保存: evolved_rules_US-TQQQ.json
+  筛选标准: 训练胜率≥55.0%  测试胜率≥50.0%  训练样本≥5  测试样本≥2
+====================================================================
+2026-05-11 22:32:41 +==================================================================+
+|  SOXL 规则进化报告  |  2026-05-11 22:32                                |
++==================================================================+
+
+  穷举候选规则 : 10,560
+  暴力搜索存活 : 538  (train≥55.0% & test≥50.0%)
+  遗传进化新增 : 交叉+0  变异+0  蒸馏+0
+  最终存活规则 : 538
+  耗时         : 12.6秒
+
+  [WATCH_BUY] Top 6
+  规则                     持仓    训练     测试         训练胜率     测试胜率     均收益  来源
+  ---------------------- ----- ------ ------ -------- -------- -------  ----
+  RSI超买+缩量               7     9      10        88.9%    100.0%  +34.11%  穷举
+  RSI超买+缩量+上升趋势          7     9      10        88.9%    100.0%  +34.11%  穷举
+  RSI超买+缩量+均线多排          7     9      7         88.9%    100.0%  +32.64%  穷举
+  RSI超买+缩量+52周新高         7     9      8         88.9%    100.0%  +30.47%  穷举
+  RSI超买+缩量+CCI超买         7     8      9         87.5%    100.0%  +32.34%  穷举
+  RSI超买+缩量               5     9      12        77.8%    100.0%  +26.23%  穷举
+
+  [REDUCE] Top 6
+  规则                     持仓    训练     测试         训练胜率     测试胜率     均收益  来源
+  ---------------------- ----- ------ ------ -------- -------- -------  ----
+  CCI下穿-100              3     5      3         80.0%     66.7%   -1.08%  穷举
+  RSI中性+CCI下穿-100        3     5      3         80.0%     66.7%   -1.08%  穷举
+  CCI超卖+CCI下穿-100        3     5      3         80.0%     66.7%   -1.08%  穷举
+  下降趋势+CCI下穿-100         3     5      3         80.0%     66.7%   -1.08%  穷举
+  均线空排+CCI下穿-100         3     5      3         80.0%     66.7%   -1.08%  穷举
+  RSI中性+CCI超卖+CCI下穿-100  3     5      3         80.0%     66.7%   -1.08%  穷举
+
+====================================================================
+  存活规则已保存: evolved_rules_US-SOXL.json
+  筛选标准: 训练胜率≥55.0%  测试胜率≥50.0%  训练样本≥5  测试样本≥2
+====================================================================
+2026-05-11 22:32:53 +==================================================================+
+|  GLD 规则进化报告  |  2026-05-11 22:32                                 |
++==================================================================+
+
+  穷举候选规则 : 10,560
+  暴力搜索存活 : 265  (train≥55.0% & test≥50.0%)
+  遗传进化新增 : 交叉+0  变异+0  蒸馏+0
+  最终存活规则 : 265
+  耗时         : 11.5秒
+
+  [WATCH_BUY] Top 6
+  规则                     持仓    训练     测试         训练胜率     测试胜率     均收益  来源
+  ---------------------- ----- ------ ------ -------- -------- -------  ----
+  正常量+CCI超卖              7     6      6        100.0%    100.0%   +4.27%  穷举
+  正常量+CCI超卖              10    6      3        100.0%    100.0%   +7.27%  穷举
+  RSI中性+正常量+CCI超卖        7     6      4        100.0%    100.0%   +2.89%  穷举
+  正常量+CCI超卖+下降趋势         7     6      6        100.0%    100.0%   +4.27%  穷举
+  正常量+CCI超卖+下降趋势         10    6      3        100.0%    100.0%   +7.27%  穷举
+  正常量+CCI超卖+均线空排         7     5      6        100.0%    100.0%   +4.27%  穷举
+
+  [REDUCE] Top 6
+  规则                     持仓    训练     测试         训练胜率     测试胜率     均收益  来源
+  ---------------------- ----- ------ ------ -------- -------- -------  ----
+  缩量+CCI超买               2     9      2         77.8%    100.0%   -2.65%  穷举
+  缩量+CCI超买               3     9      2         77.8%    100.0%   -1.59%  穷举
+  缩量+CCI超买+上升趋势          2     9      2         77.8%    100.0%   -2.65%  穷举
+  缩量+CCI超买+上升趋势          3     9      2         77.8%    100.0%   -1.59%  穷举
+  RSI中性+缩量+CCI超买         2     7      2         71.4%    100.0%   -2.65%  穷举
+  RSI中性+缩量+CCI超买         3     7      2         71.4%    100.0%   -1.59%  穷举
+
+====================================================================
+  存活规则已保存: evolved_rules_US-GLD.json
+  筛选标准: 训练胜率≥55.0%  测试胜率≥50.0%  训练样本≥5  测试样本≥2
+====================================================================
+2026-05-11 22:47:55   [宏观] VIX:18.270000457763672  F&G:None  T10Y2Y:0.48  FEDFUNDS:3.64
+2026-05-11 22:47:55 【TQQQ】价格:76.78  RSI:83.5  量比:0.17  趋势:up
+2026-05-11 22:47:55   事件: CPI Release (2026-05-13)（2天后）
+2026-05-11 22:47:55   信号: 🟡 关注买入  置信度:3/5  依据:强趋势 + 动能延续  [rules]
+2026-05-11 22:47:55 
+2026-05-11 22:47:56 【SOXL】价格:185.35  RSI:83.9  量比:0.22  趋势:up
+2026-05-11 22:47:56   事件: CPI Release (2026-05-13)（2天后）
+2026-05-11 22:47:56   信号: 🟡 关注买入  置信度:3/5  依据:强趋势 + 动能延续  [rules]
+2026-05-11 22:47:56 
+2026-05-11 22:47:56 【GLD】价格:435.36  RSI:43.4  量比:0.18  趋势:up
+2026-05-11 22:47:56   事件: CPI Release (2026-05-13)（2天后）  黄金偏向:mixed
+2026-05-11 22:47:56   信号: 🔴 卖出  置信度:2/5  依据:RSI超买  [rules]
+2026-05-11 22:47:56   解释: RSI(14)=43.4 > 78，动能过热，历史上此区间回调概率较高
+2026-05-11 22:47:56 
+2026-05-11 23:02:59   [宏观] VIX:18.229999542236328  F&G:None  T10Y2Y:0.48  FEDFUNDS:N/A
+2026-05-11 23:02:59 【TQQQ】价格:76.30  RSI:83.2  量比:0.23  趋势:up
+2026-05-11 23:02:59   事件: CPI Release (2026-05-13)（2天后）
+2026-05-11 23:02:59   信号: 🟡 关注买入  置信度:3/5  依据:强趋势 + 动能延续  [rules]
+2026-05-11 23:02:59 
+2026-05-11 23:03:00 【SOXL】价格:182.03  RSI:83.4  量比:0.29  趋势:up
+2026-05-11 23:03:00   事件: CPI Release (2026-05-13)（2天后）
+2026-05-11 23:03:00   信号: 🟡 关注买入  置信度:3/5  依据:强趋势 + 动能延续  [rules]
+2026-05-11 23:03:00 
+2026-05-11 23:03:00 【GLD】价格:434.34  RSI:42.7  量比:0.28  趋势:up
+2026-05-11 23:03:00   事件: CPI Release (2026-05-13)（2天后）  黄金偏向:mixed
+2026-05-11 23:03:00   信号: 🔴 卖出  置信度:2/5  依据:RSI超买  [rules]
+2026-05-11 23:03:00   解释: RSI(14)=42.7 > 78，动能过热，历史上此区间回调概率较高
+2026-05-11 23:03:00 
+2026-05-11 23:18:01   [宏观] VIX:18.209999084472656  F&G:None  T10Y2Y:0.48  FEDFUNDS:3.64
+2026-05-11 23:18:02 【TQQQ】价格:76.77  RSI:83.5  量比:0.28  趋势:up
+2026-05-11 23:18:02   事件: CPI Release (2026-05-13)（2天后）
+2026-05-11 23:18:02   信号: 🟡 关注买入  置信度:3/5  依据:强趋势 + 动能延续  [rules]
+2026-05-11 23:18:02 
+2026-05-11 23:18:02 【SOXL】价格:185.60  RSI:83.9  量比:0.34  趋势:up
+2026-05-11 23:18:02   事件: CPI Release (2026-05-13)（2天后）
+2026-05-11 23:18:02   信号: 🟡 关注买入  置信度:3/5  依据:强趋势 + 动能延续  [rules]
+2026-05-11 23:18:02 
+2026-05-11 23:18:03 【GLD】价格:434.08  RSI:42.5  量比:0.33  趋势:up
+2026-05-11 23:18:03   事件: CPI Release (2026-05-13)（2天后）  黄金偏向:mixed
+2026-05-11 23:18:03   信号: 🔴 卖出  置信度:2/5  依据:RSI超买  [rules]
+2026-05-11 23:18:03   解释: RSI(14)=42.5 > 78，动能过热，历史上此区间回调概率较高
+2026-05-11 23:18:03 
+2026-05-11 23:33:06   [宏观] VIX:18.229999542236328  F&G:None  T10Y2Y:0.48  FEDFUNDS:3.64
+2026-05-11 23:33:07 【TQQQ】价格:75.77  RSI:82.9  量比:0.33  趋势:up
+2026-05-11 23:33:07   事件: CPI Release (2026-05-13)（2天后）
+2026-05-11 23:33:07   信号: 🟡 关注买入  置信度:3/5  依据:强趋势 + 动能延续  [rules]
+2026-05-11 23:33:07 
+2026-05-11 23:33:07 【SOXL】价格:180.69  RSI:83.3  量比:0.38  趋势:up
+2026-05-11 23:33:07   事件: CPI Release (2026-05-13)（2天后）
+2026-05-11 23:33:07   信号: 🟡 关注买入  置信度:3/5  依据:强趋势 + 动能延续  [rules]
+2026-05-11 23:33:07 
+2026-05-11 23:33:08 【GLD】价格:433.24  RSI:41.9  量比:0.35  趋势:up
+2026-05-11 23:33:08   事件: CPI Release (2026-05-13)（2天后）  黄金偏向:mixed
+2026-05-11 23:33:08   信号: 🔴 卖出  置信度:2/5  依据:RSI超买  [rules]
+2026-05-11 23:33:08   解释: RSI(14)=41.9 > 78，动能过热，历史上此区间回调概率较高
+2026-05-11 23:33:08 
+2026-05-11 23:48:09   [宏观] VIX:18.260000228881836  F&G:None  T10Y2Y:0.48  FEDFUNDS:3.64
+2026-05-11 23:48:09 【TQQQ】价格:76.54  RSI:83.4  量比:0.37  趋势:up
+2026-05-11 23:48:09   事件: CPI Release (2026-05-13)（2天后）
+2026-05-11 23:48:09   信号: 🟡 关注买入  置信度:3/5  依据:强趋势 + 动能延续  [rules]
+2026-05-11 23:48:09 
+2026-05-11 23:48:10 【SOXL】价格:184.78  RSI:83.8  量比:0.42  趋势:up
+2026-05-11 23:48:10   事件: CPI Release (2026-05-13)（2天后）
+2026-05-11 23:48:10   信号: 🟡 关注买入  置信度:3/5  依据:强趋势 + 动能延续  [rules]
+2026-05-11 23:48:10 
+2026-05-11 23:48:11 【GLD】价格:434.25  RSI:42.6  量比:0.38  趋势:up
+2026-05-11 23:48:11   事件: CPI Release (2026-05-13)（2天后）  黄金偏向:mixed
+2026-05-11 23:48:11   信号: 🔴 卖出  置信度:2/5  依据:RSI超买  [rules]
+2026-05-11 23:48:11   解释: RSI(14)=42.6 > 78，动能过热，历史上此区间回调概率较高
+2026-05-11 23:48:11 
+2026-05-12 00:03:12   [宏观] VIX:18.139999389648438  F&G:None  T10Y2Y:0.48  FEDFUNDS:3.64
+2026-05-12 00:03:12 【TQQQ】价格:76.67  RSI:84.5  量比:0.39  趋势:up
+2026-05-12 00:03:12   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 00:03:12   信号: ⬜ 持仓观望  置信度:4/5  依据:重大事件在即  [rules]
+2026-05-12 00:03:12   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 00:03:12 
+2026-05-12 00:03:13 【SOXL】价格:186.06  RSI:78.0  量比:0.45  趋势:up
+2026-05-12 00:03:13   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 00:03:13   信号: ⬜ 持仓观望  置信度:4/5  依据:重大事件在即  [rules]
+2026-05-12 00:03:13   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 00:03:13 
+2026-05-12 00:03:13 【GLD】价格:434.06  RSI:44.6  量比:0.42  趋势:up
+2026-05-12 00:03:13   事件: CPI Release (2026-05-13)（1天后）  黄金偏向:mixed
+2026-05-12 00:03:13   信号: 🔴 卖出  置信度:3/5  依据:RSI超买  [rules]
+2026-05-12 00:03:13   解释: RSI(14)=44.6 > 78，动能过热，历史上此区间回调概率较高
+2026-05-12 00:03:13 
+2026-05-12 00:18:14   [宏观] VIX:18.079999923706055  F&G:None  T10Y2Y:N/A  FEDFUNDS:3.64
+2026-05-12 00:18:15 【TQQQ】价格:76.63  RSI:84.4  量比:0.42  趋势:up
+2026-05-12 00:18:15   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 00:18:15   信号: ⬜ 持仓观望  置信度:4/5  依据:重大事件在即  [rules]
+2026-05-12 00:18:15   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 00:18:15 
+2026-05-12 00:18:15 【SOXL】价格:185.50  RSI:77.9  量比:0.47  趋势:up
+2026-05-12 00:18:15   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 00:18:15   信号: ⬜ 持仓观望  置信度:4/5  依据:重大事件在即  [rules]
+2026-05-12 00:18:15   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 00:18:15 
+2026-05-12 00:18:16 【GLD】价格:434.55  RSI:45.0  量比:0.44  趋势:up
+2026-05-12 00:18:16   事件: CPI Release (2026-05-13)（1天后）  黄金偏向:mixed
+2026-05-12 00:18:16   信号: 🔴 卖出  置信度:3/5  依据:RSI超买  [rules]
+2026-05-12 00:18:16   解释: RSI(14)=45.0 > 78，动能过热，历史上此区间回调概率较高
+2026-05-12 00:18:16 
+2026-05-12 00:33:17   [宏观] VIX:17.989999771118164  F&G:None  T10Y2Y:0.48  FEDFUNDS:3.64
+2026-05-12 00:33:18 【TQQQ】价格:76.84  RSI:84.6  量比:0.44  趋势:up
+2026-05-12 00:33:18   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 00:33:18   信号: ⬜ 持仓观望  置信度:4/5  依据:重大事件在即  [rules]
+2026-05-12 00:33:18   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 00:33:18 
+2026-05-12 00:33:18 【SOXL】价格:186.12  RSI:78.0  量比:0.48  趋势:up
+2026-05-12 00:33:18   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 00:33:18   信号: ⬜ 持仓观望  置信度:4/5  依据:重大事件在即  [rules]
+2026-05-12 00:33:18   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 00:33:18 
+2026-05-12 00:33:19 【GLD】价格:434.59  RSI:45.0  量比:0.46  趋势:up
+2026-05-12 00:33:19   事件: CPI Release (2026-05-13)（1天后）  黄金偏向:mixed
+2026-05-12 00:33:19   信号: 🔴 卖出  置信度:3/5  依据:RSI超买  [rules]
+2026-05-12 00:33:19   解释: RSI(14)=45.0 > 78，动能过热，历史上此区间回调概率较高
+2026-05-12 00:33:19 
+2026-05-12 00:48:20   [宏观] VIX:17.93000030517578  F&G:None  T10Y2Y:0.48  FEDFUNDS:3.64
+2026-05-12 00:48:21 【TQQQ】价格:76.98  RSI:84.6  量比:0.47  趋势:up
+2026-05-12 00:48:21   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 00:48:21   信号: ⚠️ 减仓  置信度:5/5  依据:创新高 + 量价背离 + RSI极值  [rules]
+2026-05-12 00:48:21   解释: 价格创52周新高，但成交量仅为均值47%，RSI=84.6 极度超买，三重顶部信号
+2026-05-12 00:48:21 
+2026-05-12 00:48:21 【SOXL】价格:187.30  RSI:78.2  量比:0.5  趋势:up
+2026-05-12 00:48:21   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 00:48:21   信号: ⬜ 持仓观望  置信度:4/5  依据:重大事件在即  [rules]
+2026-05-12 00:48:21   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 00:48:21 
+2026-05-12 00:48:22 【GLD】价格:434.19  RSI:44.7  量比:0.48  趋势:up
+2026-05-12 00:48:22   事件: CPI Release (2026-05-13)（1天后）  黄金偏向:mixed
+2026-05-12 00:48:22   信号: 🔴 卖出  置信度:3/5  依据:RSI超买  [rules]
+2026-05-12 00:48:22   解释: RSI(14)=44.7 > 78，动能过热，历史上此区间回调概率较高
+2026-05-12 00:48:22 
+2026-05-12 01:03:23   [宏观] VIX:17.940000534057617  F&G:None  T10Y2Y:0.48  FEDFUNDS:3.64
+2026-05-12 01:03:24 【TQQQ】价格:77.30  RSI:84.8  量比:0.5  趋势:up
+2026-05-12 01:03:24   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 01:03:24   信号: ⚠️ 减仓  置信度:5/5  依据:创新高 + 量价背离 + RSI极值  [rules]
+2026-05-12 01:03:24   解释: 价格创52周新高，但成交量仅为均值50%，RSI=84.8 极度超买，三重顶部信号
+2026-05-12 01:03:24 
+2026-05-12 01:03:24 【SOXL】价格:189.05  RSI:78.4  量比:0.52  趋势:up
+2026-05-12 01:03:24   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 01:03:24   信号: ⬜ 持仓观望  置信度:5/5  依据:重大事件在即  [rules]
+2026-05-12 01:03:24   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 01:03:24 
+2026-05-12 01:03:25 【GLD】价格:434.50  RSI:45.0  量比:0.5  趋势:up
+2026-05-12 01:03:25   事件: CPI Release (2026-05-13)（1天后）  黄金偏向:mixed
+2026-05-12 01:03:25   信号: 🔴 卖出  置信度:3/5  依据:RSI超买  [rules]
+2026-05-12 01:03:25   解释: RSI(14)=45.0 > 78，动能过热，历史上此区间回调概率较高
+2026-05-12 01:03:25 
+2026-05-12 01:18:30   [宏观] VIX:17.979999542236328  F&G:None  T10Y2Y:N/A  FEDFUNDS:3.64
+2026-05-12 01:18:30 【TQQQ】价格:77.23  RSI:84.8  量比:0.51  趋势:up
+2026-05-12 01:18:30   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 01:18:30   信号: ⚠️ 减仓  置信度:5/5  依据:创新高 + 量价背离 + RSI极值  [rules]
+2026-05-12 01:18:30   解释: 价格创52周新高，但成交量仅为均值51%，RSI=84.8 极度超买，三重顶部信号
+2026-05-12 01:18:30 
+2026-05-12 01:18:31 【SOXL】价格:189.03  RSI:78.4  量比:0.53  趋势:up
+2026-05-12 01:18:31   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 01:18:31   信号: ⬜ 持仓观望  置信度:4/5  依据:重大事件在即  [rules]
+2026-05-12 01:18:31   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 01:18:31 
+2026-05-12 01:18:31 【GLD】价格:433.81  RSI:44.5  量比:0.52  趋势:up
+2026-05-12 01:18:31   事件: CPI Release (2026-05-13)（1天后）  黄金偏向:mixed
+2026-05-12 01:18:31   信号: 🔴 卖出  置信度:3/5  依据:RSI超买  [rules]
+2026-05-12 01:18:31   解释: RSI(14)=44.5 > 78，动能过热，历史上此区间回调概率较高
+2026-05-12 01:18:31 
+2026-05-12 01:33:32   [宏观] VIX:17.969999313354492  F&G:None  T10Y2Y:0.48  FEDFUNDS:3.64
+2026-05-12 01:33:33 【TQQQ】价格:77.26  RSI:84.8  量比:0.52  趋势:up
+2026-05-12 01:33:33   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 01:33:33   信号: ⚠️ 减仓  置信度:5/5  依据:创新高 + 量价背离 + RSI极值  [rules]
+2026-05-12 01:33:33   解释: 价格创52周新高，但成交量仅为均值52%，RSI=84.8 极度超买，三重顶部信号
+2026-05-12 01:33:33 
+2026-05-12 01:33:34 【SOXL】价格:188.27  RSI:78.3  量比:0.54  趋势:up
+2026-05-12 01:33:34   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 01:33:34   信号: ⬜ 持仓观望  置信度:4/5  依据:重大事件在即  [rules]
+2026-05-12 01:33:34   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 01:33:34 
+2026-05-12 01:33:34 【GLD】价格:433.57  RSI:44.3  量比:0.54  趋势:up
+2026-05-12 01:33:34   事件: CPI Release (2026-05-13)（1天后）  黄金偏向:mixed
+2026-05-12 01:33:34   信号: 🔴 卖出  置信度:3/5  依据:RSI超买  [rules]
+2026-05-12 01:33:34   解释: RSI(14)=44.3 > 78，动能过热，历史上此区间回调概率较高
+2026-05-12 01:33:34 
+2026-05-12 01:48:36   [宏观] VIX:18.010000228881836  F&G:None  T10Y2Y:0.48  FEDFUNDS:3.64
+2026-05-12 01:48:37 【TQQQ】价格:76.92  RSI:84.6  量比:0.56  趋势:up
+2026-05-12 01:48:37   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 01:48:37   信号: ⬜ 持仓观望  置信度:4/5  依据:重大事件在即  [rules]
+2026-05-12 01:48:37   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 01:48:37 
+2026-05-12 01:48:37 【SOXL】价格:187.86  RSI:78.3  量比:0.56  趋势:up
+2026-05-12 01:48:37   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 01:48:37   信号: ⬜ 持仓观望  置信度:4/5  依据:重大事件在即  [rules]
+2026-05-12 01:48:37   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 01:48:37 
+2026-05-12 01:48:38 【GLD】价格:432.81  RSI:43.7  量比:0.57  趋势:up
+2026-05-12 01:48:38   事件: CPI Release (2026-05-13)（1天后）  黄金偏向:mixed
+2026-05-12 01:48:38   信号: 🔴 卖出  置信度:3/5  依据:RSI超买  [rules]
+2026-05-12 01:48:38   解释: RSI(14)=43.7 > 78，动能过热，历史上此区间回调概率较高
+2026-05-12 01:48:38 
+2026-05-12 02:03:39   [宏观] VIX:18.049999237060547  F&G:None  T10Y2Y:0.48  FEDFUNDS:3.64
+2026-05-12 02:03:40 【TQQQ】价格:76.89  RSI:84.6  量比:0.57  趋势:up
+2026-05-12 02:03:40   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 02:03:40   信号: ⬜ 持仓观望  置信度:4/5  依据:重大事件在即  [rules]
+2026-05-12 02:03:40   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 02:03:40 
+2026-05-12 02:03:40 【SOXL】价格:188.06  RSI:78.3  量比:0.58  趋势:up
+2026-05-12 02:03:40   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 02:03:40   信号: ⬜ 持仓观望  置信度:4/5  依据:重大事件在即  [rules]
+2026-05-12 02:03:40   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 02:03:40 
+2026-05-12 02:03:41 【GLD】价格:433.22  RSI:44.0  量比:0.58  趋势:up
+2026-05-12 02:03:41   事件: CPI Release (2026-05-13)（1天后）  黄金偏向:mixed
+2026-05-12 02:03:41   信号: 🔴 卖出  置信度:3/5  依据:RSI超买  [rules]
+2026-05-12 02:03:41   解释: RSI(14)=44.0 > 78，动能过热，历史上此区间回调概率较高
+2026-05-12 02:03:41 
+2026-05-12 02:18:42   [宏观] VIX:18.100000381469727  F&G:None  T10Y2Y:0.48  FEDFUNDS:3.64
+2026-05-12 02:18:43 【TQQQ】价格:76.63  RSI:84.4  量比:0.58  趋势:up
+2026-05-12 02:18:43   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 02:18:43   信号: ⬜ 持仓观望  置信度:4/5  依据:重大事件在即  [rules]
+2026-05-12 02:18:43   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 02:18:43 
+2026-05-12 02:18:43 【SOXL】价格:187.13  RSI:78.2  量比:0.58  趋势:up
+2026-05-12 02:18:43   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 02:18:43   信号: ⬜ 持仓观望  置信度:4/5  依据:重大事件在即  [rules]
+2026-05-12 02:18:43   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 02:18:43 
+2026-05-12 02:18:44 【GLD】价格:433.25  RSI:44.0  量比:0.6  趋势:up
+2026-05-12 02:18:44   事件: CPI Release (2026-05-13)（1天后）  黄金偏向:bearish
+2026-05-12 02:18:44   信号: 🔴 卖出  置信度:3/5  依据:RSI超买  [rules]
+2026-05-12 02:18:44   解释: RSI(14)=44.0 > 78，动能过热，历史上此区间回调概率较高
+2026-05-12 02:18:44 
+2026-05-12 02:33:45   [宏观] VIX:18.100000381469727  F&G:None  T10Y2Y:0.48  FEDFUNDS:3.64
+2026-05-12 02:33:46 【TQQQ】价格:77.09  RSI:84.7  量比:0.6  趋势:up
+2026-05-12 02:33:46   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 02:33:46   信号: ⬜ 持仓观望  置信度:4/5  依据:重大事件在即  [rules]
+2026-05-12 02:33:46   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 02:33:46 
+2026-05-12 02:33:46 【SOXL】价格:189.17  RSI:78.4  量比:0.6  趋势:up
+2026-05-12 02:33:46   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 02:33:46   信号: ⬜ 持仓观望  置信度:4/5  依据:重大事件在即  [rules]
+2026-05-12 02:33:46   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 02:33:46 
+2026-05-12 02:33:47 【GLD】价格:433.70  RSI:44.4  量比:0.61  趋势:up
+2026-05-12 02:33:47   事件: CPI Release (2026-05-13)（1天后）  黄金偏向:bearish
+2026-05-12 02:33:47   信号: 🔴 卖出  置信度:3/5  依据:RSI超买  [rules]
+2026-05-12 02:33:47   解释: RSI(14)=44.4 > 78，动能过热，历史上此区间回调概率较高
+2026-05-12 02:33:47 
+2026-05-12 02:48:48   [宏观] VIX:18.06999969482422  F&G:None  T10Y2Y:0.48  FEDFUNDS:3.64
+2026-05-12 02:48:49 【TQQQ】价格:77.31  RSI:84.8  量比:0.61  趋势:up
+2026-05-12 02:48:49   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 02:48:49   信号: ⚠️ 减仓  置信度:5/5  依据:创新高 + 量价背离 + RSI极值  [rules]
+2026-05-12 02:48:49   解释: 价格创52周新高，但成交量仅为均值61%，RSI=84.8 极度超买，三重顶部信号
+2026-05-12 02:48:49 
+2026-05-12 02:48:49 【SOXL】价格:190.31  RSI:78.6  量比:0.61  趋势:up
+2026-05-12 02:48:49   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 02:48:49   信号: ⬜ 持仓观望  置信度:5/5  依据:重大事件在即  [rules]
+2026-05-12 02:48:49   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 02:48:49 
+2026-05-12 02:48:50 【GLD】价格:433.69  RSI:44.4  量比:0.62  趋势:up
+2026-05-12 02:48:50   事件: CPI Release (2026-05-13)（1天后）  黄金偏向:bearish
+2026-05-12 02:48:50   信号: 🔴 卖出  置信度:3/5  依据:RSI超买  [rules]
+2026-05-12 02:48:50   解释: RSI(14)=44.4 > 78，动能过热，历史上此区间回调概率较高
+2026-05-12 02:48:50 
+2026-05-12 03:03:51   [宏观] VIX:18.149999618530273  F&G:None  T10Y2Y:0.48  FEDFUNDS:3.64
+2026-05-12 03:03:52 【TQQQ】价格:77.17  RSI:84.7  量比:0.62  趋势:up
+2026-05-12 03:03:52   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 03:03:52   信号: ⬜ 持仓观望  置信度:4/5  依据:重大事件在即  [rules]
+2026-05-12 03:03:52   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 03:03:52 
+2026-05-12 03:03:52 【SOXL】价格:188.68  RSI:78.4  量比:0.62  趋势:up
+2026-05-12 03:03:52   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 03:03:52   信号: ⬜ 持仓观望  置信度:4/5  依据:重大事件在即  [rules]
+2026-05-12 03:03:52   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 03:03:52 
+2026-05-12 03:03:53 【GLD】价格:433.77  RSI:44.4  量比:0.63  趋势:up
+2026-05-12 03:03:53   事件: CPI Release (2026-05-13)（1天后）  黄金偏向:bearish
+2026-05-12 03:03:53   信号: 🔴 卖出  置信度:3/5  依据:RSI超买  [rules]
+2026-05-12 03:03:53   解释: RSI(14)=44.4 > 78，动能过热，历史上此区间回调概率较高
+2026-05-12 03:03:53 
+2026-05-12 03:18:54   [宏观] VIX:18.139999389648438  F&G:None  T10Y2Y:0.48  FEDFUNDS:3.64
+2026-05-12 03:18:54 【TQQQ】价格:77.20  RSI:84.8  量比:0.63  趋势:up
+2026-05-12 03:18:54   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 03:18:54   信号: ⬜ 持仓观望  置信度:4/5  依据:重大事件在即  [rules]
+2026-05-12 03:18:54   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 03:18:54 
+2026-05-12 03:18:55 【SOXL】价格:190.09  RSI:78.6  量比:0.63  趋势:up
+2026-05-12 03:18:55   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 03:18:55   信号: ⬜ 持仓观望  置信度:4/5  依据:重大事件在即  [rules]
+2026-05-12 03:18:55   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 03:18:55 
+2026-05-12 03:18:55 【GLD】价格:433.73  RSI:44.4  量比:0.65  趋势:up
+2026-05-12 03:18:55   事件: CPI Release (2026-05-13)（1天后）  黄金偏向:bearish
+2026-05-12 03:18:55   信号: 🔴 卖出  置信度:3/5  依据:RSI超买  [rules]
+2026-05-12 03:18:55   解释: RSI(14)=44.4 > 78，动能过热，历史上此区间回调概率较高
+2026-05-12 03:18:55 
+2026-05-12 03:33:57   [宏观] VIX:18.139999389648438  F&G:None  T10Y2Y:0.48  FEDFUNDS:3.64
+2026-05-12 03:33:58 【TQQQ】价格:77.19  RSI:84.8  量比:0.64  趋势:up
+2026-05-12 03:33:58   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 03:33:58   信号: ⬜ 持仓观望  置信度:4/5  依据:重大事件在即  [rules]
+2026-05-12 03:33:58   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 03:33:58 
+2026-05-12 03:33:58 【SOXL】价格:190.34  RSI:78.6  量比:0.64  趋势:up
+2026-05-12 03:33:58   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 03:33:58   信号: ⬜ 持仓观望  置信度:5/5  依据:重大事件在即  [rules]
+2026-05-12 03:33:58   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 03:33:58 
+2026-05-12 03:33:59 【GLD】价格:434.06  RSI:44.6  量比:0.68  趋势:up
+2026-05-12 03:33:59   事件: CPI Release (2026-05-13)（1天后）  黄金偏向:bearish
+2026-05-12 03:33:59   信号: 🔴 卖出  置信度:3/5  依据:RSI超买  [rules]
+2026-05-12 03:33:59   解释: RSI(14)=44.6 > 78，动能过热，历史上此区间回调概率较高
+2026-05-12 03:33:59 
+2026-05-12 04:33:56   [宏观] VIX:N/A  F&G:None  T10Y2Y:N/A  FEDFUNDS:N/A
+2026-05-12 04:33:56 【US.TQQQ】价格:0.00  RSI:?  量比:1.0  趋势:?
+2026-05-12 04:33:56   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 04:33:56   信号: ⬜ 持仓观望  置信度:3/5  依据:重大事件在即  [rules]
+2026-05-12 04:33:56   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 04:33:56 
+2026-05-12 04:33:56 【US.SOXL】价格:0.00  RSI:?  量比:1.0  趋势:?
+2026-05-12 04:33:56   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 04:33:56   信号: ⬜ 持仓观望  置信度:3/5  依据:重大事件在即  [rules]
+2026-05-12 04:33:56   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 04:33:56 
+2026-05-12 04:33:56 【US.GLD】价格:0.00  RSI:?  量比:1.0  趋势:?
+2026-05-12 04:33:56   事件: CPI Release (2026-05-13)（1天后）  黄金偏向:neutral
+2026-05-12 04:33:56   信号: 🔴 卖出  置信度:2/5  依据:RSI超买  [rules]
+2026-05-12 04:33:56   解释: RSI(14)=? > 78，动能过热，历史上此区间回调概率较高
+2026-05-12 04:33:56 
+2026-05-12 04:48:57   [宏观] VIX:18.40999984741211  F&G:None  T10Y2Y:0.48  FEDFUNDS:3.64
+2026-05-12 04:48:58 【TQQQ】价格:76.67  RSI:84.5  量比:0.73  趋势:up
+2026-05-12 04:48:58   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 04:48:58   信号: ⬜ 持仓观望  置信度:3/5  依据:重大事件在即  [rules]
+2026-05-12 04:48:58   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 04:48:58 
+2026-05-12 04:48:58 【SOXL】价格:188.75  RSI:78.4  量比:0.72  趋势:up
+2026-05-12 04:48:58   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 04:48:58   信号: ⬜ 持仓观望  置信度:3/5  依据:重大事件在即  [rules]
+2026-05-12 04:48:58   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 04:48:58 
+2026-05-12 04:48:59 【GLD】价格:434.29  RSI:44.8  量比:0.77  趋势:up
+2026-05-12 04:48:59   事件: CPI Release (2026-05-13)（1天后）  黄金偏向:bearish
+2026-05-12 04:48:59   信号: 🔴 卖出  置信度:3/5  依据:RSI超买  [rules]
+2026-05-12 04:48:59   解释: RSI(14)=44.8 > 78，动能过热，历史上此区间回调概率较高
+2026-05-12 04:48:59 
+2026-05-12 05:04:00   [宏观] VIX:18.420000076293945  F&G:None  T10Y2Y:0.48  FEDFUNDS:3.64
+2026-05-12 05:04:01 【TQQQ】价格:76.96  RSI:84.6  量比:0.78  趋势:up
+2026-05-12 05:04:01   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 05:04:01   信号: ⬜ 持仓观望  置信度:3/5  依据:重大事件在即  [rules]
+2026-05-12 05:04:01   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 05:04:01 
+2026-05-12 05:04:01 【SOXL】价格:190.33  RSI:78.6  量比:0.75  趋势:up
+2026-05-12 05:04:01   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 05:04:01   信号: ⬜ 持仓观望  置信度:3/5  依据:重大事件在即  [rules]
+2026-05-12 05:04:01   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 05:04:01 
+2026-05-12 05:04:02 【GLD】价格:434.79  RSI:45.2  量比:0.82  趋势:up
+2026-05-12 05:04:02   事件: CPI Release (2026-05-13)（1天后）  黄金偏向:bearish
+2026-05-12 05:04:02   信号: 🔴 卖出  置信度:2/5  依据:RSI超买  [rules]
+2026-05-12 05:04:02   解释: RSI(14)=45.2 > 78，动能过热，历史上此区间回调概率较高
+2026-05-12 05:04:02 
+2026-05-12 05:04:02 
+================================================================
+2026-05-12 05:04:02 生成close报告...
+2026-05-12 05:04:04 +================================================================+
+|  📊 美股市场综合报告  |  收盘总结                                           |
++================================================================+
+  生成时间: 2026-05-11 16:04 ET
+
+【一、核心标的行情】
+----------------------------------------------------------------
+  标的         名称               价格        涨跌     量比
+  ---------- ---------- --------  --------  -----
+  TQQQ       3x纳指         $76.96   ▲ 0.89%   0.83
+  SOXL       3x半导体       $190.34   ▲ 7.57%   0.83
+  GLD        黄金ETF       $434.79   ▲ 0.24%   0.93
+  QQQ        纳斯达克100     $713.29   ▲ 0.29%   0.80
+  SPY        标普500       $739.26   ▲ 0.22%   0.84
+
+【二、市场情绪】
+----------------------------------------------------------------
+  VIX 恐慌指数     18.42   → 平静
+  CNN 贪婪指数   获取失败
+  比特币 BTC     $81,974  ▼ 0.20%
+
+【三、宏观指标】
+----------------------------------------------------------------
+  10Y美债收益率  4.41%  ▲ 1.05%
+  解读: 偏高，压制高估值股⚠️
+  美元指数 DXY   98.0  ▲ 0.13%
+  WTI 原油       $98.3  ▲ 2.98%
+
+  -- FRED 宏观数据 --
+  10Y-2Y利差      +0.48%  趋于平坦
+  盈亏平衡通胀率  2.45%  通胀预期中性
+  联邦基金利率    3.64%
+
+【四、近期重大事件】
+----------------------------------------------------------------
+  ⚡ 最近事件: CPI Release (2026-05-13)（1天后）
+  风险等级: HIGH
+  ⚡  1天后  CPI Release (2026-05-13)
+  📋 16天后  NVDA Earnings (est) (2026-05-28)
+
+【五、风险提示】
+----------------------------------------------------------------
+  ⚠️ 10Y美债 4.41% 处于高位，持续压制成长股估值
+  ⚠️ 重大事件 'CPI Release (2026-05-13)' 仅1天后，建议降低杠杆仓位
+
+==================================================================
+  数据来源: moomoo OpenD + Yahoo Finance + CNN Money
+  生成时间: 2026-05-11 16:04 ET  |  仅供参考，不构成投资建议
+==================================================================
+2026-05-12 05:04:04 报告已保存: F:\fsi-skills\agents\signals\report_20260511_1604.txt
+2026-05-12 05:04:04 运行每日复盘...
+2026-05-12 05:04:04 +==================================================================+
+|  每日复盘报告  |  2026-05-12 05:04                                     |
++==================================================================+
+
+  本次新复盘: 0 笔  |  待复盘: 90 笔  |  累计胜率: 0% (0/0)
+
+【TQQQ 实盘复盘】
+--------------------------------------------------------------------
+  暂无已复盘记录
+
+【SOXL 实盘复盘】
+--------------------------------------------------------------------
+  暂无已复盘记录
+
+【GLD 实盘复盘】
+--------------------------------------------------------------------
+  暂无已复盘记录
+
+【综合策略建议】
+--------------------------------------------------------------------
+  TQQQ: WATCH_BUY (backtest)
+    买入参考: [[进化]正常量+CCI中性+均线]  回测胜率 100.0%  (n=3，暂无实盘样本)
+    减仓参考: [[进化]RSI中性+CCI超卖]  回测胜率 69.2%  (n=13，暂无实盘样本)
+  SOXL: WATCH_BUY (backtest)
+    买入参考: [[进化]RSI>75+上升趋势]  回测胜率 100.0%  (n=7，暂无实盘样本)
+    减仓参考: [[进化]RSI>80+52周新高]  回测胜率 66.7%  (n=3，暂无实盘样本)
+  GLD: WATCH_BUY (backtest)
+    买入参考: [[进化]量比>1.1+下降趋势+]  回测胜率 80.0%  (n=5，暂无实盘样本)
+    减仓参考: [[进化]量比<0.65+上升趋势]  回测胜率 77.8%  (n=9，暂无实盘样本)
+
+====================================================================
+  注: 实盘样本 <5 笔时以回测结果为主，>=5 笔时实盘权重逐渐提升
+====================================================================
+2026-05-12 05:19:06   [宏观] VIX:18.350000381469727  F&G:None  T10Y2Y:0.48  FEDFUNDS:3.64
+2026-05-12 05:19:06 【TQQQ】价格:76.96  RSI:84.6  量比:0.78  趋势:up
+2026-05-12 05:19:06   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 05:19:06   信号: ⬜ 持仓观望  置信度:3/5  依据:重大事件在即  [rules]
+2026-05-12 05:19:06   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 05:19:06 
+2026-05-12 05:19:07 【SOXL】价格:190.42  RSI:78.6  量比:0.75  趋势:up
+2026-05-12 05:19:07   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 05:19:07   信号: ⬜ 持仓观望  置信度:3/5  依据:重大事件在即  [rules]
+2026-05-12 05:19:07   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 05:19:07 
+2026-05-12 05:19:07 【GLD】价格:434.65  RSI:45.1  量比:0.82  趋势:up
+2026-05-12 05:19:07   事件: CPI Release (2026-05-13)（1天后）  黄金偏向:bearish
+2026-05-12 05:19:07   信号: 🔴 卖出  置信度:2/5  依据:RSI超买  [rules]
+2026-05-12 05:19:07   解释: RSI(14)=45.1 > 78，动能过热，历史上此区间回调概率较高
+2026-05-12 05:19:07 
+2026-05-12 05:34:08   [宏观] VIX:18.3799991607666  F&G:None  T10Y2Y:0.48  FEDFUNDS:3.64
+2026-05-12 05:34:09 【TQQQ】价格:76.96  RSI:84.6  量比:0.78  趋势:up
+2026-05-12 05:34:09   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 05:34:09   信号: ⬜ 持仓观望  置信度:3/5  依据:重大事件在即  [rules]
+2026-05-12 05:34:09   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 05:34:09 
+2026-05-12 05:34:09 【SOXL】价格:190.42  RSI:78.6  量比:0.75  趋势:up
+2026-05-12 05:34:09   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 05:34:09   信号: ⬜ 持仓观望  置信度:3/5  依据:重大事件在即  [rules]
+2026-05-12 05:34:09   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 05:34:09 
+2026-05-12 05:34:10 【GLD】价格:434.65  RSI:45.1  量比:0.82  趋势:up
+2026-05-12 05:34:10   事件: CPI Release (2026-05-13)（1天后）  黄金偏向:bearish
+2026-05-12 05:34:10   信号: 🔴 卖出  置信度:2/5  依据:RSI超买  [rules]
+2026-05-12 05:34:10   解释: RSI(14)=45.1 > 78，动能过热，历史上此区间回调概率较高
+2026-05-12 05:34:10 
+2026-05-12 05:49:11   [宏观] VIX:18.3799991607666  F&G:None  T10Y2Y:0.48  FEDFUNDS:3.64
+2026-05-12 05:49:12 【TQQQ】价格:76.96  RSI:84.6  量比:0.78  趋势:up
+2026-05-12 05:49:12   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 05:49:12   信号: ⬜ 持仓观望  置信度:3/5  依据:重大事件在即  [rules]
+2026-05-12 05:49:12   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 05:49:12 
+2026-05-12 05:49:12 【SOXL】价格:190.42  RSI:78.6  量比:0.75  趋势:up
+2026-05-12 05:49:12   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 05:49:12   信号: ⬜ 持仓观望  置信度:3/5  依据:重大事件在即  [rules]
+2026-05-12 05:49:12   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 05:49:12 
+2026-05-12 05:49:13 【GLD】价格:434.65  RSI:45.1  量比:0.82  趋势:up
+2026-05-12 05:49:13   事件: CPI Release (2026-05-13)（1天后）  黄金偏向:bearish
+2026-05-12 05:49:13   信号: 🔴 卖出  置信度:2/5  依据:RSI超买  [rules]
+2026-05-12 05:49:13   解释: RSI(14)=45.1 > 78，动能过热，历史上此区间回调概率较高
+2026-05-12 05:49:13 
+2026-05-12 06:04:14   [宏观] VIX:18.3799991607666  F&G:None  T10Y2Y:0.47  FEDFUNDS:N/A
+2026-05-12 06:04:15 【TQQQ】价格:76.96  RSI:84.6  量比:0.78  趋势:up
+2026-05-12 06:04:15   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 06:04:15   信号: ⬜ 持仓观望  置信度:3/5  依据:重大事件在即  [rules]
+2026-05-12 06:04:15   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 06:04:15 
+2026-05-12 06:04:15 【SOXL】价格:190.42  RSI:78.6  量比:0.76  趋势:up
+2026-05-12 06:04:15   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 06:04:15   信号: ⬜ 持仓观望  置信度:3/5  依据:重大事件在即  [rules]
+2026-05-12 06:04:15   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 06:04:15 
+2026-05-12 06:04:16 【GLD】价格:434.65  RSI:45.1  量比:0.82  趋势:up
+2026-05-12 06:04:16   事件: CPI Release (2026-05-13)（1天后）  黄金偏向:bearish
+2026-05-12 06:04:16   信号: 🔴 卖出  置信度:2/5  依据:RSI超买  [rules]
+2026-05-12 06:04:16   解释: RSI(14)=45.1 > 78，动能过热，历史上此区间回调概率较高
+2026-05-12 06:04:16 
+2026-05-12 06:19:17   [宏观] VIX:18.3799991607666  F&G:None  T10Y2Y:0.47  FEDFUNDS:3.64
+2026-05-12 06:19:18 【TQQQ】价格:76.96  RSI:84.6  量比:0.78  趋势:up
+2026-05-12 06:19:18   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 06:19:18   信号: ⬜ 持仓观望  置信度:3/5  依据:重大事件在即  [rules]
+2026-05-12 06:19:18   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 06:19:18 
+2026-05-12 06:19:18 【SOXL】价格:190.42  RSI:78.6  量比:0.76  趋势:up
+2026-05-12 06:19:19   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 06:19:19   信号: ⬜ 持仓观望  置信度:3/5  依据:重大事件在即  [rules]
+2026-05-12 06:19:19   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 06:19:19 
+2026-05-12 06:19:20 【GLD】价格:434.65  RSI:45.1  量比:0.82  趋势:up
+2026-05-12 06:19:20   事件: CPI Release (2026-05-13)（1天后）  黄金偏向:bearish
+2026-05-12 06:19:20   信号: 🔴 卖出  置信度:2/5  依据:RSI超买  [rules]
+2026-05-12 06:19:20   解释: RSI(14)=45.1 > 78，动能过热，历史上此区间回调概率较高
+2026-05-12 06:19:20 
+2026-05-12 06:34:21   [宏观] VIX:18.3799991607666  F&G:None  T10Y2Y:0.47  FEDFUNDS:3.64
+2026-05-12 06:34:21 【TQQQ】价格:76.96  RSI:84.6  量比:0.78  趋势:up
+2026-05-12 06:34:21   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 06:34:21   信号: ⬜ 持仓观望  置信度:3/5  依据:重大事件在即  [rules]
+2026-05-12 06:34:21   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 06:34:21 
+2026-05-12 06:34:22 【SOXL】价格:190.42  RSI:78.6  量比:0.76  趋势:up
+2026-05-12 06:34:22   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 06:34:22   信号: ⬜ 持仓观望  置信度:3/5  依据:重大事件在即  [rules]
+2026-05-12 06:34:22   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 06:34:22 
+2026-05-12 06:34:22 【GLD】价格:434.65  RSI:45.1  量比:0.82  趋势:up
+2026-05-12 06:34:22   事件: CPI Release (2026-05-13)（1天后）  黄金偏向:bearish
+2026-05-12 06:34:22   信号: 🔴 卖出  置信度:2/5  依据:RSI超买  [rules]
+2026-05-12 06:34:22   解释: RSI(14)=45.1 > 78，动能过热，历史上此区间回调概率较高
+2026-05-12 06:34:22 
+2026-05-12 06:49:23   [宏观] VIX:18.3799991607666  F&G:None  T10Y2Y:0.47  FEDFUNDS:3.64
+2026-05-12 06:49:24 【TQQQ】价格:76.96  RSI:84.6  量比:0.78  趋势:up
+2026-05-12 06:49:24   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 06:49:24   信号: ⬜ 持仓观望  置信度:3/5  依据:重大事件在即  [rules]
+2026-05-12 06:49:24   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 06:49:24 
+2026-05-12 06:49:25 【SOXL】价格:190.42  RSI:78.6  量比:0.76  趋势:up
+2026-05-12 06:49:25   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 06:49:25   信号: ⬜ 持仓观望  置信度:3/5  依据:重大事件在即  [rules]
+2026-05-12 06:49:25   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 06:49:25 
+2026-05-12 06:49:25 【GLD】价格:434.65  RSI:45.1  量比:0.82  趋势:up
+2026-05-12 06:49:25   事件: CPI Release (2026-05-13)（1天后）  黄金偏向:bearish
+2026-05-12 06:49:25   信号: 🔴 卖出  置信度:2/5  依据:RSI超买  [rules]
+2026-05-12 06:49:25   解释: RSI(14)=45.1 > 78，动能过热，历史上此区间回调概率较高
+2026-05-12 06:49:25 
+2026-05-12 07:04:26   [宏观] VIX:18.3799991607666  F&G:None  T10Y2Y:0.47  FEDFUNDS:3.64
+2026-05-12 07:04:27 【TQQQ】价格:76.96  RSI:84.6  量比:0.79  趋势:up
+2026-05-12 07:04:27   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 07:04:27   信号: ⬜ 持仓观望  置信度:3/5  依据:重大事件在即  [rules]
+2026-05-12 07:04:27   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 07:04:27 
+2026-05-12 07:04:27 【SOXL】价格:190.42  RSI:78.6  量比:0.76  趋势:up
+2026-05-12 07:04:27   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 07:04:27   信号: ⬜ 持仓观望  置信度:3/5  依据:重大事件在即  [rules]
+2026-05-12 07:04:27   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 07:04:27 
+2026-05-12 07:04:28 【GLD】价格:434.65  RSI:45.1  量比:0.82  趋势:up
+2026-05-12 07:04:28   事件: CPI Release (2026-05-13)（1天后）  黄金偏向:bearish
+2026-05-12 07:04:28   信号: 🔴 卖出  置信度:2/5  依据:RSI超买  [rules]
+2026-05-12 07:04:28   解释: RSI(14)=45.1 > 78，动能过热，历史上此区间回调概率较高
+2026-05-12 07:04:28 
+2026-05-12 07:19:29   [宏观] VIX:18.3799991607666  F&G:None  T10Y2Y:0.47  FEDFUNDS:3.64
+2026-05-12 07:19:30 【TQQQ】价格:76.96  RSI:84.6  量比:0.79  趋势:up
+2026-05-12 07:19:30   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 07:19:30   信号: ⬜ 持仓观望  置信度:3/5  依据:重大事件在即  [rules]
+2026-05-12 07:19:30   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 07:19:30 
+2026-05-12 07:19:30 【SOXL】价格:190.42  RSI:78.6  量比:0.76  趋势:up
+2026-05-12 07:19:30   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 07:19:30   信号: ⬜ 持仓观望  置信度:3/5  依据:重大事件在即  [rules]
+2026-05-12 07:19:30   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 07:19:30 
+2026-05-12 07:19:31 【GLD】价格:434.65  RSI:45.1  量比:0.82  趋势:up
+2026-05-12 07:19:31   事件: CPI Release (2026-05-13)（1天后）  黄金偏向:bearish
+2026-05-12 07:19:31   信号: 🔴 卖出  置信度:2/5  依据:RSI超买  [rules]
+2026-05-12 07:19:31   解释: RSI(14)=45.1 > 78，动能过热，历史上此区间回调概率较高
+2026-05-12 07:19:31 
+2026-05-12 07:34:32   [宏观] VIX:18.3799991607666  F&G:None  T10Y2Y:0.47  FEDFUNDS:3.64
+2026-05-12 07:34:33 【TQQQ】价格:76.96  RSI:84.6  量比:0.79  趋势:up
+2026-05-12 07:34:33   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 07:34:33   信号: ⬜ 持仓观望  置信度:3/5  依据:重大事件在即  [rules]
+2026-05-12 07:34:33   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 07:34:33 
+2026-05-12 07:34:33 【SOXL】价格:190.42  RSI:78.6  量比:0.76  趋势:up
+2026-05-12 07:34:33   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 07:34:33   信号: ⬜ 持仓观望  置信度:3/5  依据:重大事件在即  [rules]
+2026-05-12 07:34:33   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 07:34:33 
+2026-05-12 07:34:34 【GLD】价格:434.65  RSI:45.1  量比:0.82  趋势:up
+2026-05-12 07:34:34   事件: CPI Release (2026-05-13)（1天后）  黄金偏向:bearish
+2026-05-12 07:34:34   信号: 🔴 卖出  置信度:2/5  依据:RSI超买  [rules]
+2026-05-12 07:34:34   解释: RSI(14)=45.1 > 78，动能过热，历史上此区间回调概率较高
+2026-05-12 07:34:34 
+2026-05-12 07:49:37   [宏观] VIX:18.3799991607666  F&G:None  T10Y2Y:0.47  FEDFUNDS:3.64
+2026-05-12 07:49:37 【TQQQ】价格:76.96  RSI:84.6  量比:0.79  趋势:up
+2026-05-12 07:49:37   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 07:49:37   信号: ⬜ 持仓观望  置信度:3/5  依据:重大事件在即  [rules]
+2026-05-12 07:49:37   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 07:49:37 
+2026-05-12 07:49:38 【SOXL】价格:190.42  RSI:78.6  量比:0.76  趋势:up
+2026-05-12 07:49:38   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 07:49:38   信号: ⬜ 持仓观望  置信度:3/5  依据:重大事件在即  [rules]
+2026-05-12 07:49:38   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 07:49:38 
+2026-05-12 07:49:38 【GLD】价格:434.65  RSI:45.1  量比:0.83  趋势:up
+2026-05-12 07:49:38   事件: CPI Release (2026-05-13)（1天后）  黄金偏向:bearish
+2026-05-12 07:49:38   信号: 🔴 卖出  置信度:2/5  依据:RSI超买  [rules]
+2026-05-12 07:49:38   解释: RSI(14)=45.1 > 78，动能过热，历史上此区间回调概率较高
+2026-05-12 07:49:38 
+2026-05-12 08:04:40   [宏观] VIX:18.3799991607666  F&G:None  T10Y2Y:0.47  FEDFUNDS:3.64
+2026-05-12 08:04:40 【TQQQ】价格:76.96  RSI:84.6  量比:0.79  趋势:up
+2026-05-12 08:04:40   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 08:04:40   信号: ⬜ 持仓观望  置信度:3/5  依据:重大事件在即  [rules]
+2026-05-12 08:04:40   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 08:04:40 
+2026-05-12 08:04:41 【SOXL】价格:190.42  RSI:78.6  量比:0.76  趋势:up
+2026-05-12 08:04:41   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 08:04:41   信号: ⬜ 持仓观望  置信度:3/5  依据:重大事件在即  [rules]
+2026-05-12 08:04:41   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 08:04:41 
+2026-05-12 08:04:41 【GLD】价格:434.65  RSI:45.1  量比:0.83  趋势:up
+2026-05-12 08:04:41   事件: CPI Release (2026-05-13)（1天后）  黄金偏向:bearish
+2026-05-12 08:04:41   信号: 🔴 卖出  置信度:2/5  依据:RSI超买  [rules]
+2026-05-12 08:04:41   解释: RSI(14)=45.1 > 78，动能过热，历史上此区间回调概率较高
+2026-05-12 08:04:41 
+2026-05-12 08:19:43   [宏观] VIX:18.3799991607666  F&G:None  T10Y2Y:0.47  FEDFUNDS:3.64
+2026-05-12 08:19:43 【TQQQ】价格:76.96  RSI:84.6  量比:0.79  趋势:up
+2026-05-12 08:19:43   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 08:19:43   信号: ⬜ 持仓观望  置信度:3/5  依据:重大事件在即  [rules]
+2026-05-12 08:19:43   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 08:19:43 
+2026-05-12 08:19:44 【SOXL】价格:190.42  RSI:78.6  量比:0.76  趋势:up
+2026-05-12 08:19:44   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 08:19:44   信号: ⬜ 持仓观望  置信度:3/5  依据:重大事件在即  [rules]
+2026-05-12 08:19:44   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 08:19:44 
+2026-05-12 08:19:44 【GLD】价格:434.65  RSI:45.1  量比:0.83  趋势:up
+2026-05-12 08:19:44   事件: CPI Release (2026-05-13)（1天后）  黄金偏向:bearish
+2026-05-12 08:19:44   信号: 🔴 卖出  置信度:2/5  依据:RSI超买  [rules]
+2026-05-12 08:19:44   解释: RSI(14)=45.1 > 78，动能过热，历史上此区间回调概率较高
+2026-05-12 08:19:44 
+2026-05-12 08:34:45   [宏观] VIX:18.3799991607666  F&G:None  T10Y2Y:0.47  FEDFUNDS:3.64
+2026-05-12 08:34:46 【TQQQ】价格:76.96  RSI:84.6  量比:0.79  趋势:up
+2026-05-12 08:34:46   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 08:34:46   信号: ⬜ 持仓观望  置信度:3/5  依据:重大事件在即  [rules]
+2026-05-12 08:34:46   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 08:34:46 
+2026-05-12 08:34:46 【SOXL】价格:190.42  RSI:78.6  量比:0.77  趋势:up
+2026-05-12 08:34:46   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 08:34:46   信号: ⬜ 持仓观望  置信度:3/5  依据:重大事件在即  [rules]
+2026-05-12 08:34:46   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 08:34:46 
+2026-05-12 08:34:47 【GLD】价格:434.65  RSI:45.1  量比:0.83  趋势:up
+2026-05-12 08:34:47   事件: CPI Release (2026-05-13)（1天后）  黄金偏向:bearish
+2026-05-12 08:34:47   信号: 🔴 卖出  置信度:2/5  依据:RSI超买  [rules]
+2026-05-12 08:34:47   解释: RSI(14)=45.1 > 78，动能过热，历史上此区间回调概率较高
+2026-05-12 08:34:47 
+2026-05-12 08:49:48   [宏观] VIX:18.3799991607666  F&G:None  T10Y2Y:0.47  FEDFUNDS:3.64
+2026-05-12 08:49:49 【TQQQ】价格:76.96  RSI:84.6  量比:0.79  趋势:up
+2026-05-12 08:49:49   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 08:49:49   信号: ⬜ 持仓观望  置信度:3/5  依据:重大事件在即  [rules]
+2026-05-12 08:49:49   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 08:49:49 
+2026-05-12 08:49:49 【SOXL】价格:190.42  RSI:78.6  量比:0.77  趋势:up
+2026-05-12 08:49:49   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 08:49:49   信号: ⬜ 持仓观望  置信度:3/5  依据:重大事件在即  [rules]
+2026-05-12 08:49:49   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 08:49:49 
+2026-05-12 08:49:50 【GLD】价格:434.65  RSI:45.1  量比:0.83  趋势:up
+2026-05-12 08:49:50   事件: CPI Release (2026-05-13)（1天后）  黄金偏向:bearish
+2026-05-12 08:49:50   信号: 🔴 卖出  置信度:2/5  依据:RSI超买  [rules]
+2026-05-12 08:49:50   解释: RSI(14)=45.1 > 78，动能过热，历史上此区间回调概率较高
+2026-05-12 08:49:50 
+2026-05-12 09:04:51   [宏观] VIX:18.3799991607666  F&G:None  T10Y2Y:0.47  FEDFUNDS:3.64
+2026-05-12 09:04:52 【TQQQ】价格:76.96  RSI:84.6  量比:0.79  趋势:up
+2026-05-12 09:04:52   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 09:04:52   信号: ⬜ 持仓观望  置信度:3/5  依据:重大事件在即  [rules]
+2026-05-12 09:04:52   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 09:04:52 
+2026-05-12 09:04:52 【SOXL】价格:190.42  RSI:78.6  量比:0.77  趋势:up
+2026-05-12 09:04:52   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 09:04:52   信号: ⬜ 持仓观望  置信度:3/5  依据:重大事件在即  [rules]
+2026-05-12 09:04:52   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 09:04:52 
+2026-05-12 09:04:53 【GLD】价格:434.65  RSI:45.1  量比:0.83  趋势:up
+2026-05-12 09:04:53   事件: CPI Release (2026-05-13)（1天后）  黄金偏向:bearish
+2026-05-12 09:04:53   信号: 🔴 卖出  置信度:2/5  依据:RSI超买  [rules]
+2026-05-12 09:04:53   解释: RSI(14)=45.1 > 78，动能过热，历史上此区间回调概率较高
+2026-05-12 09:04:53 
+2026-05-12 09:19:54   [宏观] VIX:18.3799991607666  F&G:None  T10Y2Y:0.47  FEDFUNDS:3.64
+2026-05-12 09:19:55 【TQQQ】价格:76.96  RSI:84.6  量比:0.79  趋势:up
+2026-05-12 09:19:55   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 09:19:55   信号: ⬜ 持仓观望  置信度:3/5  依据:重大事件在即  [rules]
+2026-05-12 09:19:55   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 09:19:55 
+2026-05-12 09:19:55 【SOXL】价格:190.42  RSI:78.6  量比:0.77  趋势:up
+2026-05-12 09:19:55   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 09:19:55   信号: ⬜ 持仓观望  置信度:3/5  依据:重大事件在即  [rules]
+2026-05-12 09:19:55   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 09:19:55 
+2026-05-12 09:19:56 【GLD】价格:434.65  RSI:45.1  量比:0.83  趋势:up
+2026-05-12 09:19:56   事件: CPI Release (2026-05-13)（1天后）  黄金偏向:bearish
+2026-05-12 09:19:56   信号: 🔴 卖出  置信度:2/5  依据:RSI超买  [rules]
+2026-05-12 09:19:56   解释: RSI(14)=45.1 > 78，动能过热，历史上此区间回调概率较高
+2026-05-12 09:19:56 
+2026-05-12 10:34:07   [宏观] VIX:18.3799991607666  F&G:None  T10Y2Y:0.47  FEDFUNDS:3.64
+2026-05-12 10:34:07 【TQQQ】价格:76.96  RSI:84.6  量比:0.79  趋势:up
+2026-05-12 10:34:07   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 10:34:07   信号: ⬜ 持仓观望  置信度:3/5  依据:重大事件在即  [rules]
+2026-05-12 10:34:07   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 10:34:07 
+2026-05-12 10:34:08 【SOXL】价格:190.42  RSI:78.6  量比:0.77  趋势:up
+2026-05-12 10:34:08   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 10:34:08   信号: ⬜ 持仓观望  置信度:3/5  依据:重大事件在即  [rules]
+2026-05-12 10:34:08   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 10:34:08 
+2026-05-12 10:34:08 【GLD】价格:434.65  RSI:45.1  量比:0.83  趋势:up
+2026-05-12 10:34:08   事件: CPI Release (2026-05-13)（1天后）  黄金偏向:bearish
+2026-05-12 10:34:08   信号: 🔴 卖出  置信度:2/5  依据:RSI超买  [rules]
+2026-05-12 10:34:08   解释: RSI(14)=45.1 > 78，动能过热，历史上此区间回调概率较高
+2026-05-12 10:34:08 
+2026-05-12 10:49:10   [宏观] VIX:18.3799991607666  F&G:None  T10Y2Y:0.47  FEDFUNDS:3.64
+2026-05-12 10:49:10 【TQQQ】价格:76.96  RSI:84.6  量比:0.79  趋势:up
+2026-05-12 10:49:10   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 10:49:10   信号: ⬜ 持仓观望  置信度:3/5  依据:重大事件在即  [rules]
+2026-05-12 10:49:10   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 10:49:10 
+2026-05-12 10:49:11 【SOXL】价格:190.42  RSI:78.6  量比:0.77  趋势:up
+2026-05-12 10:49:11   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 10:49:11   信号: ⬜ 持仓观望  置信度:3/5  依据:重大事件在即  [rules]
+2026-05-12 10:49:11   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 10:49:11 
+2026-05-12 10:49:11 【GLD】价格:434.65  RSI:45.1  量比:0.83  趋势:up
+2026-05-12 10:49:11   事件: CPI Release (2026-05-13)（1天后）  黄金偏向:bearish
+2026-05-12 10:49:11   信号: 🔴 卖出  置信度:2/5  依据:RSI超买  [rules]
+2026-05-12 10:49:11   解释: RSI(14)=45.1 > 78，动能过热，历史上此区间回调概率较高
+2026-05-12 10:49:11 
+2026-05-12 11:04:14   [宏观] VIX:18.3799991607666  F&G:None  T10Y2Y:0.47  FEDFUNDS:3.64
+2026-05-12 11:04:15 【TQQQ】价格:76.96  RSI:84.6  量比:0.79  趋势:up
+2026-05-12 11:04:15   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 11:04:15   信号: ⬜ 持仓观望  置信度:3/5  依据:重大事件在即  [rules]
+2026-05-12 11:04:15   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 11:04:15 
+2026-05-12 11:04:15 【SOXL】价格:190.42  RSI:78.6  量比:0.77  趋势:up
+2026-05-12 11:04:15   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 11:04:15   信号: ⬜ 持仓观望  置信度:3/5  依据:重大事件在即  [rules]
+2026-05-12 11:04:15   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 11:04:15 
+2026-05-12 11:04:16 【GLD】价格:434.65  RSI:45.1  量比:0.83  趋势:up
+2026-05-12 11:04:16   事件: CPI Release (2026-05-13)（1天后）  黄金偏向:bearish
+2026-05-12 11:04:16   信号: 🔴 卖出  置信度:2/5  依据:RSI超买  [rules]
+2026-05-12 11:04:16   解释: RSI(14)=45.1 > 78，动能过热，历史上此区间回调概率较高
+2026-05-12 11:04:16 
+2026-05-12 11:19:18   [宏观] VIX:18.3799991607666  F&G:None  T10Y2Y:0.47  FEDFUNDS:3.64
+2026-05-12 11:19:18 【TQQQ】价格:76.96  RSI:84.6  量比:0.79  趋势:up
+2026-05-12 11:19:18   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 11:19:18   信号: ⬜ 持仓观望  置信度:3/5  依据:重大事件在即  [rules]
+2026-05-12 11:19:18   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 11:19:18 
+2026-05-12 11:19:19 【SOXL】价格:190.42  RSI:78.6  量比:0.77  趋势:up
+2026-05-12 11:19:19   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 11:19:19   信号: ⬜ 持仓观望  置信度:3/5  依据:重大事件在即  [rules]
+2026-05-12 11:19:19   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 11:19:19 
+2026-05-12 11:19:19 【GLD】价格:434.65  RSI:45.1  量比:0.83  趋势:up
+2026-05-12 11:19:19   事件: CPI Release (2026-05-13)（1天后）  黄金偏向:bearish
+2026-05-12 11:19:19   信号: 🔴 卖出  置信度:2/5  依据:RSI超买  [rules]
+2026-05-12 11:19:19   解释: RSI(14)=45.1 > 78，动能过热，历史上此区间回调概率较高
+2026-05-12 11:19:19 
+2026-05-12 11:34:21   [宏观] VIX:18.3799991607666  F&G:None  T10Y2Y:0.47  FEDFUNDS:3.64
+2026-05-12 11:34:22 【TQQQ】价格:76.96  RSI:84.6  量比:0.79  趋势:up
+2026-05-12 11:34:22   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 11:34:22   信号: ⬜ 持仓观望  置信度:3/5  依据:重大事件在即  [rules]
+2026-05-12 11:34:22   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 11:34:22 
+2026-05-12 11:34:22 【SOXL】价格:190.42  RSI:78.6  量比:0.77  趋势:up
+2026-05-12 11:34:22   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 11:34:22   信号: ⬜ 持仓观望  置信度:3/5  依据:重大事件在即  [rules]
+2026-05-12 11:34:22   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 11:34:22 
+2026-05-12 11:34:23 【GLD】价格:434.65  RSI:45.1  量比:0.83  趋势:up
+2026-05-12 11:34:23   事件: CPI Release (2026-05-13)（1天后）  黄金偏向:bearish
+2026-05-12 11:34:23   信号: 🔴 卖出  置信度:2/5  依据:RSI超买  [rules]
+2026-05-12 11:34:23   解释: RSI(14)=45.1 > 78，动能过热，历史上此区间回调概率较高
+2026-05-12 11:34:23 
+2026-05-12 11:49:24   [宏观] VIX:18.3799991607666  F&G:None  T10Y2Y:0.47  FEDFUNDS:3.64
+2026-05-12 11:49:25 【TQQQ】价格:76.96  RSI:84.6  量比:0.79  趋势:up
+2026-05-12 11:49:25   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 11:49:25   信号: ⬜ 持仓观望  置信度:3/5  依据:重大事件在即  [rules]
+2026-05-12 11:49:25   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 11:49:25 
+2026-05-12 11:49:25 【SOXL】价格:190.42  RSI:78.6  量比:0.77  趋势:up
+2026-05-12 11:49:25   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 11:49:25   信号: ⬜ 持仓观望  置信度:3/5  依据:重大事件在即  [rules]
+2026-05-12 11:49:25   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 11:49:25 
+2026-05-12 11:49:26 【GLD】价格:434.65  RSI:45.1  量比:0.83  趋势:up
+2026-05-12 11:49:26   事件: CPI Release (2026-05-13)（1天后）  黄金偏向:bearish
+2026-05-12 11:49:26   信号: 🔴 卖出  置信度:2/5  依据:RSI超买  [rules]
+2026-05-12 11:49:26   解释: RSI(14)=45.1 > 78，动能过热，历史上此区间回调概率较高
+2026-05-12 11:49:26 
+2026-05-12 13:25:14 ================================================================
+2026-05-12 13:25:14 Trading Agents 启动
+2026-05-12 13:25:14   ETF 标的 : ['US.TQQQ', 'US.SOXL']
+2026-05-12 13:25:14   黄金标的 : US.GLD
+2026-05-12 13:25:14   信号间隔 : 每 15 分钟
+2026-05-12 13:25:14   报告时间 : 开盘后 + 收盘后（ET 9:30 / 16:00）
+2026-05-12 13:25:14 ================================================================
+2026-05-12 13:25:17   [宏观] VIX:18.3799991607666  F&G:None  T10Y2Y:N/A  FEDFUNDS:3.64
+2026-05-12 13:25:18 【TQQQ】价格:76.96  RSI:84.6  量比:0.79  趋势:up
+2026-05-12 13:25:18   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 13:25:18   信号: ⬜ 持仓观望  置信度:3/10  依据:重大事件在即  行情:中性  [rules]
+2026-05-12 13:25:18   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 13:25:18 
+2026-05-12 13:25:18 【SOXL】价格:190.42  RSI:78.6  量比:0.77  趋势:up
+2026-05-12 13:25:18   事件: CPI Release (2026-05-13)（1天后）
+2026-05-12 13:25:18   信号: ⬜ 持仓观望  置信度:3/10  依据:重大事件在即  行情:中性  [rules]
+2026-05-12 13:25:18   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-12 13:25:18 
+2026-05-12 13:25:19 【GLD】价格:434.65  RSI:45.1  量比:0.83  趋势:up
+2026-05-12 13:25:19   事件: CPI Release (2026-05-13)（1天后）  黄金偏向:bearish
+2026-05-12 13:25:19   信号: 🔴 卖出  置信度:2/10  依据:RSI超买  行情:中性  [rules]
+2026-05-12 13:25:19   解释: RSI(14)=45.1 > 78，动能过热，历史上此区间回调概率较高
+2026-05-12 13:25:19 
+2026-05-12 14:52:51 ================================================================
+2026-05-12 14:52:51 Trading Agents 启动（日K交易者模式）
+2026-05-12 14:52:51   ETF 标的 : ['US.TQQQ', 'US.SOXL']
+2026-05-12 14:52:51   黄金标的 : US.GLD
+2026-05-12 14:52:51   运行窗口 : 09:20 / 12:00 / 15:45 ET（每天3次）
+2026-05-12 14:52:51   报告时间 : 开盘后 + 收盘后（ET 9:30 / 16:00）
+2026-05-12 14:52:51   60分钟K  : 可操作信号时自动附加入场参考
+2026-05-12 14:52:51 ================================================================
+2026-05-13 00:34:28 ================================================================
+2026-05-13 00:34:28 Trading Agents 启动（日K交易者模式）
+2026-05-13 00:34:28   ETF 标的 : ['US.TQQQ', 'US.SOXL']
+2026-05-13 00:34:28   黄金标的 : US.GLD
+2026-05-13 00:34:28   运行窗口 : 09:20 / 12:00 / 15:45 ET（每天3次）
+2026-05-13 00:34:28   报告时间 : 开盘后 + 收盘后（ET 9:30 / 16:00）
+2026-05-13 00:34:28   60分钟K  : 可操作信号时自动附加入场参考
+2026-05-13 00:34:28 ================================================================
+2026-05-13 00:42:40 ================================================================
+2026-05-13 00:42:40 Trading Agents 启动（日K交易者模式）
+2026-05-13 00:42:40   ETF 标的 : ['US.TQQQ', 'US.SOXL']
+2026-05-13 00:42:40   黄金标的 : US.GLD
+2026-05-13 00:42:40   运行窗口 : 09:20 / 12:00 / 15:45 ET（每天3次）
+2026-05-13 00:42:40   报告时间 : 开盘后 + 收盘后（ET 9:30 / 16:00）
+2026-05-13 00:42:40   60分钟K  : 可操作信号时自动附加入场参考
+2026-05-13 00:42:40 ================================================================
+2026-05-13 00:42:40 启动扫描：信号 + 策略回测 + 规则进化...
+2026-05-13 00:42:42   [宏观] VIX:19.040000915527344  F&G:None  T10Y2Y:0.47  FEDFUNDS:3.64
+2026-05-13 00:43:07 【TQQQ】价格:72.92  RSI:76.5  量比:0.61  趋势:up
+2026-05-13 00:43:07   事件: CPI Release (2026-05-13)（0天后）
+2026-05-13 00:43:07   信号: ⬜ 持仓观望  置信度:4/10  依据:重大事件在即  行情:中性  [rules]
+2026-05-13 00:43:07   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-13 00:43:07 
+2026-05-13 00:43:08 【SOXL】价格:158.86  RSI:68.1  量比:0.72  趋势:up
+2026-05-13 00:43:08   事件: CPI Release (2026-05-13)（0天后）
+2026-05-13 00:43:08   信号: ⬜ 持仓观望  置信度:3/10  依据:重大事件在即  行情:中性  [rules]
+2026-05-13 00:43:08   解释: 距重大宏观事件≤1天，建议降低持仓等待数据落地
+2026-05-13 00:43:08 
+2026-05-13 00:43:08 【GLD】价格:428.30  RSI:49.1  量比:0.44  趋势:down
+2026-05-13 00:43:08   事件: CPI Release (2026-05-13)（0天后）  ⚡突发新闻  黄金偏向:mixed
+2026-05-13 00:43:08   信号: ⬜ 持仓观望  置信度:8/10  依据:突发新闻，等待方向确认  行情:中性  [rules]
+2026-05-13 00:43:08   📰 Gold Trading Lower as USD and Yields Rise as U.S. Inflation Surged Last Month
+2026-05-13 00:43:08      🔗 https://finance.yahoo.com/markets/commodities/articles/gold-trading-lower-usd-yields-132340634.html?.tsrc=rss
+2026-05-13 00:43:08   📰 Exchange-Traded Funds, Equity Futures Fall Pre-Bell Tuesday Amid Consumer Inflation Report Release
+2026-05-13 00:43:08      🔗 https://finance.yahoo.com/markets/stocks/articles/exchange-traded-funds-equity-futures-124800218.html?.tsrc=rss
+2026-05-13 00:43:08 
+2026-05-13 00:43:08 
+================================================================
+2026-05-13 00:43:08 生成open报告...
+2026-05-13 00:43:10 +================================================================+
+|  📊 美股市场综合报告  |  开盘报告                                           |
++================================================================+
+  生成时间: 2026-05-12 11:43 ET
+
+【一、核心标的行情】
+----------------------------------------------------------------
+  标的         名称               价格        涨跌     量比
+  ---------- ---------- --------  --------  -----
+  TQQQ       3x纳指         $72.93   ▼ 5.24%   0.64
+  SOXL       3x半导体       $158.82   ▼16.60%   0.79
+  GLD        黄金ETF       $428.31   ▼ 1.46%   0.48
+  QQQ        纳斯达克100     $700.90   ▼ 1.74%   0.48
+  SPY        标普500       $733.02   ▼ 0.85%   0.35
+
+【二、市场情绪】
+----------------------------------------------------------------
+  VIX 恐慌指数     19.04   → 平静
+  CNN 贪婪指数   获取失败
+  比特币 BTC     $80,293  ▼ 1.76%
+
+【三、宏观指标】
+----------------------------------------------------------------
+  10Y美债收益率  4.45%  ▲ 0.98%
+  解读: 偏高，压制高估值股⚠️
+  美元指数 DXY   98.4  ▲ 0.48%
+  WTI 原油       $101.7  ▲ 3.73%
+
+  -- FRED 宏观数据 --
+  10Y-2Y利差      +0.47%  趋于平坦
+  盈亏平衡通胀率  2.47%  通胀预期中性
+  联邦基金利率    3.64%
+
+【四、近期重大事件】
+----------------------------------------------------------------
+  ⚡ 最近事件: CPI Release (2026-05-13)（0天后）
+  风险等级: HIGH
+  ⚡  0天后  CPI Release (2026-05-13)
+  📋 15天后  NVDA Earnings (est) (2026-05-28)
+
+【五、风险提示】
+----------------------------------------------------------------
+  ⚠️ 10Y美债 4.45% 处于高位，持续压制成长股估值
+  ⚠️ 重大事件 'CPI Release (2026-05-13)' 仅0天后，建议降低杠杆仓位
+
+==================================================================
+  数据来源: moomoo OpenD + Yahoo Finance + CNN Money
+  生成时间: 2026-05-12 11:43 ET  |  仅供参考，不构成投资建议
+==================================================================
+2026-05-13 00:43:10 报告已保存: F:\fsi-skills\agents\signals\report_20260512_1143.txt
+2026-05-13 00:43:10 运行策略回测...
+2026-05-13 00:43:11 +==================================================================+
+|  策略回测报告  |  2026-05-13 00:43                                     |
++==================================================================+
+
+【TQQQ 回测结果】
+--------------------------------------------------------------------
+  规则             动作         训练     测试         训练胜率     测试胜率     平均收益  评级
+  -------------- ---------- ------ ------ -------- -------- --------  ----
+  [进化]正常量+CCI中性+均线 WATCH_BUY  34     3         91.2%    100.0%   +12.97%  ★★★
+  [进化]RSI中性+CCI超买+ WATCH_BUY  9      4         88.9%    100.0%   +21.39%  ★★★
+  [进化]CCI中性+上升趋势+均 WATCH_BUY  44     3         86.4%    100.0%   +12.97%  ★★★
+  [进化]正常量+CCI中性+均线 WATCH_BUY  34     3         85.3%    100.0%   +20.49%  ★★★
+  [进化]CCI中性+均线多排 WATCH_BUY  59     3         84.7%    100.0%   +12.97%  ★★★
+  [进化]RSI超卖      WATCH_BUY  6      4         83.3%    100.0%    +7.53%  ★★★
+  [进化]RSI超卖      WATCH_BUY  6      4         83.3%    100.0%   +23.35%  ★★★
+
+  最佳买入规则: [[进化]正常量+CCI中性+均线]  持5天  测试胜率 100.0%  平均 +12.97%
+  最佳减仓规则: [[进化]CCI下穿-100]  持5天  测试胜率 60.0%  平均 -0.59%
+
+【SOXL 回测结果】
+--------------------------------------------------------------------
+  规则             动作         训练     测试         训练胜率     测试胜率     平均收益  评级
+  -------------- ---------- ------ ------ -------- -------- --------  ----
+  [进化]RSI超买+缩量   WATCH_BUY  9      10        88.9%    100.0%   +34.11%  ★★★
+  [进化]RSI超买+缩量+上升趋 WATCH_BUY  9      10        88.9%    100.0%   +34.11%  ★★★
+  [进化]RSI超买+缩量+均线多 WATCH_BUY  9      7         88.9%    100.0%   +32.64%  ★★★
+  [进化]RSI超买+缩量+52周 WATCH_BUY  9      8         88.9%    100.0%   +30.47%  ★★★
+  [进化]RSI超买+缩量+CCI WATCH_BUY  8      9         87.5%    100.0%   +32.34%  ★★★
+  [进化]RSI超买+缩量   WATCH_BUY  9      12        77.8%    100.0%   +26.23%  ★★★
+  [进化]RSI超买+缩量   WATCH_BUY  9      8         77.8%    100.0%   +42.14%  ★★★
+
+  最佳买入规则: [[进化]RSI超买+缩量]  持7天  测试胜率 100.0%  平均 +34.11%
+  最佳减仓规则: [[进化]CCI下穿-100]  持3天  测试胜率 66.7%  平均 -1.08%
+
+【GLD 回测结果】
+--------------------------------------------------------------------
+  规则             动作         训练     测试         训练胜率     测试胜率     平均收益  评级
+  -------------- ---------- ------ ------ -------- -------- --------  ----
+  [进化]正常量+CCI超卖  WATCH_BUY  6      6        100.0%    100.0%    +4.27%  ★★★
+  [进化]正常量+CCI超卖  WATCH_BUY  6      3        100.0%    100.0%    +7.27%  ★★★
+  [进化]RSI中性+正常量+CC WATCH_BUY  6      4        100.0%    100.0%    +2.89%  ★★★
+  [进化]正常量+CCI超卖+下降 WATCH_BUY  6      6        100.0%    100.0%    +4.27%  ★★★
+  [进化]正常量+CCI超卖+下降 WATCH_BUY  6      3        100.0%    100.0%    +7.27%  ★★★
+  [进化]正常量+CCI超卖+均线 WATCH_BUY  5      6        100.0%    100.0%    +4.27%  ★★★
+  [进化]正常量+CCI超卖+均线 WATCH_BUY  5      3        100.0%    100.0%    +7.27%  ★★★
+
+  最佳买入规则: [[进化]正常量+CCI超卖]  持7天  测试胜率 100.0%  平均 +4.27%
+  最佳减仓规则: [[进化]缩量+CCI超买]  持2天  测试胜率 100.0%  平均 -2.65%
+
+====================================================================
+  评级: ★★★ 测试胜率≥58%  ★★ ≥52%  ★ ≥47%
+  数据来源: moomoo OpenD 历史日K线（前复权）
+  方法: 80/20 train/test 分割，按规则持仓日历算收益
+====================================================================
+2026-05-13 00:43:11 运行规则进化器（约需30-60秒）...
+2026-05-13 00:43:16 +==================================================================+
+|  TQQQ 规则进化报告  |  2026-05-13 00:43                                |
++==================================================================+
+
+  穷举候选规则 : 10,560
+  暴力搜索存活 : 399  (train≥55.0% & test≥50.0%)
+  遗传进化新增 : 交叉+0  变异+0  蒸馏+0
+  最终存活规则 : 399
+  耗时         : 5.0秒
+
+  [WATCH_BUY] Top 6
+  规则                     持仓    训练     测试         训练胜率     测试胜率     均收益  来源
+  ---------------------- ----- ------ ------ -------- -------- -------  ----
+  正常量+CCI中性+均线多排         5     34     3         91.2%    100.0%  +12.97%  穷举
+  RSI中性+CCI超买+均线空排       10    10     4         90.0%    100.0%  +21.39%  穷举
+  CCI中性+上升趋势+均线多排        5     44     3         86.4%    100.0%  +12.97%  穷举
+  正常量+CCI中性+均线多排         7     34     3         85.3%    100.0%  +20.63%  穷举
+  CCI中性+均线多排             5     59     3         84.7%    100.0%  +12.97%  穷举
+  CCI超买+均线空排             10    12     10        83.3%    100.0%  +16.88%  穷举
+
+  [REDUCE] Top 6
+  规则                     持仓    训练     测试         训练胜率     测试胜率     均收益  来源
+  ---------------------- ----- ------ ------ -------- -------- -------  ----
+  CCI下穿-100              5     8      4         62.5%     75.0%   -1.67%  穷举
+  CCI下穿-100              7     8      4         62.5%     75.0%   -5.48%  穷举
+  CCI超卖+CCI下穿-100        5     8      4         62.5%     75.0%   -1.67%  穷举
+  CCI超卖+CCI下穿-100        7     8      4         62.5%     75.0%   -5.48%  穷举
+  下降趋势+CCI下穿-100         5     8      4         62.5%     75.0%   -1.67%  穷举
+  下降趋势+CCI下穿-100         7     8      4         62.5%     75.0%   -5.48%  穷举
+
+====================================================================
+  存活规则已保存: evolved_rules_US-TQQQ.json
+  筛选标准: 训练胜率≥55.0%  测试胜率≥50.0%  训练样本≥5  测试样本≥2
+====================================================================
+2026-05-13 00:43:21 +==================================================================+
+|  SOXL 规则进化报告  |  2026-05-13 00:43                                |
++==================================================================+
+
+  穷举候选规则 : 10,560
+  暴力搜索存活 : 541  (train≥55.0% & test≥50.0%)
+  遗传进化新增 : 交叉+0  变异+0  蒸馏+0
+  最终存活规则 : 541
+  耗时         : 5.0秒
+
+  [WATCH_BUY] Top 6
+  规则                     持仓    训练     测试         训练胜率     测试胜率     均收益  来源
+  ---------------------- ----- ------ ------ -------- -------- -------  ----
+  RSI超买+缩量               7     9      11        88.9%    100.0%  +33.25%  穷举
+  RSI超买+缩量+上升趋势          7     9      11        88.9%    100.0%  +33.25%  穷举
+  RSI超买+缩量+均线多排          7     9      8         88.9%    100.0%  +31.64%  穷举
+  RSI超买+缩量+52周新高         7     9      9         88.9%    100.0%  +29.53%  穷举
+  RSI超买+缩量+CCI超买         7     8      10        87.5%    100.0%  +31.57%  穷举
+  RSI超买+缩量               5     9      13        77.8%    100.0%  +25.21%  穷举
+
+  [REDUCE] Top 6
+  规则                     持仓    训练     测试         训练胜率     测试胜率     均收益  来源
+  ---------------------- ----- ------ ------ -------- -------- -------  ----
+  CCI下穿-100              3     5      3         80.0%     66.7%   -1.08%  穷举
+  RSI中性+CCI下穿-100        3     5      3         80.0%     66.7%   -1.08%  穷举
+  CCI超卖+CCI下穿-100        3     5      3         80.0%     66.7%   -1.08%  穷举
+  下降趋势+CCI下穿-100         3     5      3         80.0%     66.7%   -1.08%  穷举
+  均线空排+CCI下穿-100         3     5      3         80.0%     66.7%   -1.08%  穷举
+  RSI中性+CCI超卖+CCI下穿-100  3     5      3         80.0%     66.7%   -1.08%  穷举
+
+====================================================================
+  存活规则已保存: evolved_rules_US-SOXL.json
+  筛选标准: 训练胜率≥55.0%  测试胜率≥50.0%  训练样本≥5  测试样本≥2
+====================================================================
+2026-05-13 00:43:27 +==================================================================+
+|  GLD 规则进化报告  |  2026-05-13 00:43                                 |
++==================================================================+
+
+  穷举候选规则 : 10,560
+  暴力搜索存活 : 272  (train≥55.0% & test≥50.0%)
+  遗传进化新增 : 交叉+0  变异+0  蒸馏+0
+  最终存活规则 : 272
+  耗时         : 5.0秒
+
+  [WATCH_BUY] Top 6
+  规则                     持仓    训练     测试         训练胜率     测试胜率     均收益  来源
+  ---------------------- ----- ------ ------ -------- -------- -------  ----
+  正常量+CCI超卖              7     6      7        100.0%    100.0%   +3.83%  穷举
+  正常量+CCI超卖              10    6      4        100.0%    100.0%   +5.84%  穷举
+  RSI中性+正常量+CCI超卖        7     6      5        100.0%    100.0%   +2.56%  穷举
+  RSI中性+正常量+CCI超卖        10    6      2        100.0%    100.0%   +3.36%  穷举
+  正常量+CCI超卖+下降趋势         7     6      7        100.0%    100.0%   +3.83%  穷举
+  正常量+CCI超卖+下降趋势         10    6      4        100.0%    100.0%   +5.84%  穷举
+
+  [REDUCE] Top 6
+  规则                     持仓    训练     测试         训练胜率     测试胜率     均收益  来源
+  ---------------------- ----- ------ ------ -------- -------- -------  ----
+  缩量+CCI超买               2     9      2         77.8%    100.0%   -2.65%  穷举
+  缩量+CCI超买               3     9      2         77.8%    100.0%   -1.59%  穷举
+  缩量+CCI超买+上升趋势          2     9      2         77.8%    100.0%   -2.65%  穷举
+  缩量+CCI超买+上升趋势          3     9      2         77.8%    100.0%   -1.59%  穷举
+  RSI中性+缩量+CCI超买         2     7      2         71.4%    100.0%   -2.65%  穷举
+  RSI中性+缩量+CCI超买         3     7      2         71.4%    100.0%   -1.59%  穷举
+
+====================================================================
+  存活规则已保存: evolved_rules_US-GLD.json
+  筛选标准: 训练胜率≥55.0%  测试胜率≥50.0%  训练样本≥5  测试样本≥2
+====================================================================
+2026-05-13 00:54:49 ================================================================
+2026-05-13 00:54:49 Trading Agents 启动（日K交易者模式）
+2026-05-13 00:54:49   ETF 标的 : ['US.TQQQ', 'US.SOXL']
+2026-05-13 00:54:49   黄金标的 : US.GLD
+2026-05-13 00:54:49   运行窗口 : 09:20 / 12:00 / 15:45 ET（每天3次）
+2026-05-13 00:54:49   报告时间 : 开盘后 + 收盘后（ET 9:30 / 16:00）
+2026-05-13 00:54:49   60分钟K  : 可操作信号时自动附加入场参考
+2026-05-13 00:54:49 ================================================================
+2026-05-13 00:54:49 启动扫描：信号 + 策略回测 + 规则进化...
+2026-05-13 00:54:51   [宏观] VIX:18.889999389648438  F&G:None  T10Y2Y:0.47  FEDFUNDS:3.64
+2026-05-13 00:54:53 【TQQQ】价格:72.60  RSI:75.7  量比:0.63  趋势:up
+2026-05-13 00:54:53   事件: NVDA Earnings (est) (2026-05-28)（15天后）
+2026-05-13 00:54:53   信号: 🟡 关注买入  置信度:3/10  依据:强趋势 + 动能延续  行情:中性  [rules]
+2026-05-13 00:54:53   入场参考(60分钟): 趋势:向下  RSI:67.5  近期死叉
+2026-05-13 00:54:53 
+2026-05-13 00:54:53 【SOXL】价格:156.38  RSI:67.1  量比:0.75  趋势:up
+2026-05-13 00:54:53   事件: NVDA Earnings (est) (2026-05-28)（15天后）
+2026-05-13 00:54:53   信号: 🟡 关注买入  置信度:3/10  依据:强趋势 + 动能延续  行情:中性  [rules]
+2026-05-13 00:54:53   入场参考(60分钟): 趋势:向下  RSI:57.8
+2026-05-13 00:54:53 
+2026-05-13 00:54:54 【GLD】价格:428.57  RSI:49.3  量比:0.45  趋势:down
+2026-05-13 00:54:54   事件: NVDA Earnings (est) (2026-05-28)（15天后）  黄金偏向:mixed
+2026-05-13 00:54:54   ⚡ 突发新闻  黄金偏向:mixed
+2026-05-13 00:54:54   信号: ⬜ 持仓观望  置信度:6/10  依据:突发新闻，等待方向确认  行情:中性  [rules]
+2026-05-13 00:54:54   📰 Gold Trading Lower as USD and Yields Rise as U.S. Inflation Surged Last Month
+2026-05-13 00:54:54      🔗 https://finance.yahoo.com/markets/commodities/articles/gold-trading-lower-usd-yields-132340634.html?.tsrc=rss
+2026-05-13 00:54:54   📰 Exchange-Traded Funds, Equity Futures Fall Pre-Bell Tuesday Amid Consumer Inflation Report Release
+2026-05-13 00:54:54      🔗 https://finance.yahoo.com/markets/stocks/articles/exchange-traded-funds-equity-futures-124800218.html?.tsrc=rss
+2026-05-13 00:54:54 
+2026-05-13 00:54:54 
+================================================================
+2026-05-13 00:54:54 生成open报告...
+2026-05-13 00:54:57 +================================================================+
+|  📊 美股市场综合报告  |  开盘报告                                           |
++================================================================+
+  生成时间: 2026-05-12 11:54 ET
+
+【一、核心标的行情】
+----------------------------------------------------------------
+  标的         名称               价格        涨跌     量比
+  ---------- ---------- --------  --------  -----
+  TQQQ       3x纳指         $72.61   ▼ 5.65%   0.66
+  SOXL       3x半导体       $156.40   ▼17.87%   0.82
+  GLD        黄金ETF       $428.57   ▼ 1.40%   0.48
+  QQQ        纳斯达克100     $699.92   ▼ 1.87%   0.50
+  SPY        标普500       $733.19   ▼ 0.83%   0.37
+
+【二、市场情绪】
+----------------------------------------------------------------
+  VIX 恐慌指数     18.89   → 平静
+  CNN 贪婪指数   获取失败
+  比特币 BTC     $80,372  ▼ 1.66%
+
+【三、宏观指标】
+----------------------------------------------------------------
+  10Y美债收益率  4.45%  ▲ 0.93%
+  解读: 偏高，压制高估值股⚠️
+  美元指数 DXY   98.4  ▲ 0.44%
+  WTI 原油       $101.3  ▲ 3.27%
+
+  -- FRED 宏观数据 --
+  盈亏平衡通胀率  2.47%  通胀预期中性
+  联邦基金利率    3.64%
+
+【四、近期重大事件】
+----------------------------------------------------------------
+  ⚡ 最近事件: NVDA Earnings (est) (2026-05-28)（15天后）
+  风险等级: NORMAL
+  ⚡  0天后  CPI Release (2026-05-13)
+  📋 15天后  NVDA Earnings (est) (2026-05-28)
+
+【五、风险提示】
+----------------------------------------------------------------
+  ⚠️ 10Y美债 4.45% 处于高位，持续压制成长股估值
+
+==================================================================
+  数据来源: moomoo OpenD + Yahoo Finance + CNN Money
+  生成时间: 2026-05-12 11:54 ET  |  仅供参考，不构成投资建议
+==================================================================
+2026-05-13 00:54:57 报告已保存: F:\fsi-skills\agents\signals\report_20260512_1154.txt
+2026-05-13 00:54:57 运行策略回测...
+2026-05-13 00:54:57 +==================================================================+
+|  策略回测报告  |  2026-05-13 00:54                                     |
++==================================================================+
+
+【TQQQ 回测结果】
+--------------------------------------------------------------------
+  规则             动作         训练     测试         训练胜率     测试胜率     平均收益  评级
+  -------------- ---------- ------ ------ -------- -------- --------  ----
+  [进化]正常量+CCI中性+均线 WATCH_BUY  34     3         91.2%    100.0%   +12.97%  ★★★
+  [进化]RSI中性+CCI超买+ WATCH_BUY  10     4         90.0%    100.0%   +21.39%  ★★★
+  [进化]CCI中性+上升趋势+均 WATCH_BUY  44     3         86.4%    100.0%   +12.97%  ★★★
+  [进化]正常量+CCI中性+均线 WATCH_BUY  34     3         85.3%    100.0%   +20.63%  ★★★
+  [进化]CCI中性+均线多排 WATCH_BUY  59     3         84.7%    100.0%   +12.97%  ★★★
+  [进化]CCI超买+均线空排 WATCH_BUY  12     10        83.3%    100.0%   +16.88%  ★★★
+  [进化]正常量+CCI中性+均线 WATCH_BUY  34     3         82.4%    100.0%    +6.17%  ★★★
+
+  最佳买入规则: [[进化]正常量+CCI中性+均线]  持5天  测试胜率 100.0%  平均 +12.97%
+  最佳减仓规则: [[进化]CCI下穿-100]  持5天  测试胜率 75.0%  平均 -1.67%
+
+【SOXL 回测结果】
+--------------------------------------------------------------------
+  规则             动作         训练     测试         训练胜率     测试胜率     平均收益  评级
+  -------------- ---------- ------ ------ -------- -------- --------  ----
+  [进化]RSI超买+缩量   WATCH_BUY  9      11        88.9%    100.0%   +33.25%  ★★★
+  [进化]RSI超买+缩量+上升趋 WATCH_BUY  9      11        88.9%    100.0%   +33.25%  ★★★
+  [进化]RSI超买+缩量+均线多 WATCH_BUY  9      8         88.9%    100.0%   +31.64%  ★★★
+  [进化]RSI超买+缩量+52周 WATCH_BUY  9      9         88.9%    100.0%   +29.53%  ★★★
+  [进化]RSI超买+缩量+CCI WATCH_BUY  8      10        87.5%    100.0%   +31.57%  ★★★
+  [进化]RSI超买+缩量   WATCH_BUY  9      13        77.8%    100.0%   +25.21%  ★★★
+  [进化]RSI超买+缩量   WATCH_BUY  9      8         77.8%    100.0%   +42.14%  ★★★
+
+  最佳买入规则: [[进化]RSI超买+缩量]  持7天  测试胜率 100.0%  平均 +33.25%
+  最佳减仓规则: [[进化]CCI下穿-100]  持3天  测试胜率 66.7%  平均 -1.08%
+
+【GLD 回测结果】
+--------------------------------------------------------------------
+  规则             动作         训练     测试         训练胜率     测试胜率     平均收益  评级
+  -------------- ---------- ------ ------ -------- -------- --------  ----
+  [进化]正常量+CCI超卖  WATCH_BUY  6      7        100.0%    100.0%    +3.83%  ★★★
+  [进化]正常量+CCI超卖  WATCH_BUY  6      4        100.0%    100.0%    +5.84%  ★★★
+  [进化]RSI中性+正常量+CC WATCH_BUY  6      5        100.0%    100.0%    +2.56%  ★★★
+  [进化]RSI中性+正常量+CC WATCH_BUY  6      2        100.0%    100.0%    +3.36%  ★★★
+  [进化]正常量+CCI超卖+下降 WATCH_BUY  6      7        100.0%    100.0%    +3.83%  ★★★
+  [进化]正常量+CCI超卖+下降 WATCH_BUY  6      4        100.0%    100.0%    +5.84%  ★★★
+  [进化]正常量+CCI超卖+均线 WATCH_BUY  5      7        100.0%    100.0%    +3.83%  ★★★
+
+  最佳买入规则: [[进化]正常量+CCI超卖]  持7天  测试胜率 100.0%  平均 +3.83%
+  最佳减仓规则: [[进化]缩量+CCI超买]  持2天  测试胜率 100.0%  平均 -2.65%
+
+====================================================================
+  评级: ★★★ 测试胜率≥58%  ★★ ≥52%  ★ ≥47%
+  数据来源: moomoo OpenD 历史日K线（前复权）
+  方法: 80/20 train/test 分割，按规则持仓日历算收益
+====================================================================
+2026-05-13 00:54:57 运行规则进化器（约需30-60秒）...
+2026-05-13 00:55:02 +==================================================================+
+|  TQQQ 规则进化报告  |  2026-05-13 00:55                                |
++==================================================================+
+
+  穷举候选规则 : 10,560
+  暴力搜索存活 : 399  (train≥55.0% & test≥50.0%)
+  遗传进化新增 : 交叉+0  变异+0  蒸馏+0
+  最终存活规则 : 399
+  耗时         : 5.0秒
+
+  [WATCH_BUY] Top 6
+  规则                     持仓    训练     测试         训练胜率     测试胜率     均收益  来源
+  ---------------------- ----- ------ ------ -------- -------- -------  ----
+  正常量+CCI中性+均线多排         5     34     3         91.2%    100.0%  +12.97%  穷举
+  RSI中性+CCI超买+均线空排       10    10     4         90.0%    100.0%  +21.39%  穷举
+  CCI中性+上升趋势+均线多排        5     44     3         86.4%    100.0%  +12.97%  穷举
+  正常量+CCI中性+均线多排         7     34     3         85.3%    100.0%  +20.63%  穷举
+  CCI中性+均线多排             5     59     3         84.7%    100.0%  +12.97%  穷举
+  CCI超买+均线空排             10    12     10        83.3%    100.0%  +16.88%  穷举
+
+  [REDUCE] Top 6
+  规则                     持仓    训练     测试         训练胜率     测试胜率     均收益  来源
+  ---------------------- ----- ------ ------ -------- -------- -------  ----
+  CCI下穿-100              5     8      4         62.5%     75.0%   -1.67%  穷举
+  CCI下穿-100              7     8      4         62.5%     75.0%   -5.48%  穷举
+  CCI超卖+CCI下穿-100        5     8      4         62.5%     75.0%   -1.67%  穷举
+  CCI超卖+CCI下穿-100        7     8      4         62.5%     75.0%   -5.48%  穷举
+  下降趋势+CCI下穿-100         5     8      4         62.5%     75.0%   -1.67%  穷举
+  下降趋势+CCI下穿-100         7     8      4         62.5%     75.0%   -5.48%  穷举
+
+====================================================================
+  存活规则已保存: evolved_rules_US-TQQQ.json
+  筛选标准: 训练胜率≥55.0%  测试胜率≥50.0%  训练样本≥5  测试样本≥2
+====================================================================
+2026-05-13 00:55:07 +==================================================================+
+|  SOXL 规则进化报告  |  2026-05-13 00:55                                |
++==================================================================+
+
+  穷举候选规则 : 10,560
+  暴力搜索存活 : 541  (train≥55.0% & test≥50.0%)
+  遗传进化新增 : 交叉+0  变异+0  蒸馏+0
+  最终存活规则 : 541
+  耗时         : 4.8秒
+
+  [WATCH_BUY] Top 6
+  规则                     持仓    训练     测试         训练胜率     测试胜率     均收益  来源
+  ---------------------- ----- ------ ------ -------- -------- -------  ----
+  RSI超买+缩量               7     9      11        88.9%    100.0%  +33.03%  穷举
+  RSI超买+缩量+上升趋势          7     9      11        88.9%    100.0%  +33.03%  穷举
+  RSI超买+缩量+均线多排          7     9      8         88.9%    100.0%  +31.35%  穷举
+  RSI超买+缩量+52周新高         7     9      9         88.9%    100.0%  +29.27%  穷举
+  RSI超买+缩量+CCI超买         7     8      10        87.5%    100.0%  +31.34%  穷举
+  RSI超买+缩量               5     9      13        77.8%    100.0%  +25.05%  穷举
+
+  [REDUCE] Top 6
+  规则                     持仓    训练     测试         训练胜率     测试胜率     均收益  来源
+  ---------------------- ----- ------ ------ -------- -------- -------  ----
+  CCI下穿-100              3     5      3         80.0%     66.7%   -1.08%  穷举
+  RSI中性+CCI下穿-100        3     5      3         80.0%     66.7%   -1.08%  穷举
+  CCI超卖+CCI下穿-100        3     5      3         80.0%     66.7%   -1.08%  穷举
+  下降趋势+CCI下穿-100         3     5      3         80.0%     66.7%   -1.08%  穷举
+  均线空排+CCI下穿-100         3     5      3         80.0%     66.7%   -1.08%  穷举
+  RSI中性+CCI超卖+CCI下穿-100  3     5      3         80.0%     66.7%   -1.08%  穷举
+
+====================================================================
+  存活规则已保存: evolved_rules_US-SOXL.json
+  筛选标准: 训练胜率≥55.0%  测试胜率≥50.0%  训练样本≥5  测试样本≥2
+====================================================================
+2026-05-13 00:55:12 +==================================================================+
+|  GLD 规则进化报告  |  2026-05-13 00:55                                 |
++==================================================================+
+
+  穷举候选规则 : 10,560
+  暴力搜索存活 : 272  (train≥55.0% & test≥50.0%)
+  遗传进化新增 : 交叉+0  变异+0  蒸馏+0
+  最终存活规则 : 272
+  耗时         : 4.8秒
+
+  [WATCH_BUY] Top 6
+  规则                     持仓    训练     测试         训练胜率     测试胜率     均收益  来源
+  ---------------------- ----- ------ ------ -------- -------- -------  ----
+  正常量+CCI超卖              7     6      7        100.0%    100.0%   +3.84%  穷举
+  正常量+CCI超卖              10    6      4        100.0%    100.0%   +5.85%  穷举
+  RSI中性+正常量+CCI超卖        7     6      5        100.0%    100.0%   +2.57%  穷举
+  RSI中性+正常量+CCI超卖        10    6      2        100.0%    100.0%   +3.38%  穷举
+  正常量+CCI超卖+下降趋势         7     6      7        100.0%    100.0%   +3.84%  穷举
+  正常量+CCI超卖+下降趋势         10    6      4        100.0%    100.0%   +5.85%  穷举
+
+  [REDUCE] Top 6
+  规则                     持仓    训练     测试         训练胜率     测试胜率     均收益  来源
+  ---------------------- ----- ------ ------ -------- -------- -------  ----
+  缩量+CCI超买               2     9      2         77.8%    100.0%   -2.65%  穷举
+  缩量+CCI超买               3     9      2         77.8%    100.0%   -1.59%  穷举
+  缩量+CCI超买+上升趋势          2     9      2         77.8%    100.0%   -2.65%  穷举
+  缩量+CCI超买+上升趋势          3     9      2         77.8%    100.0%   -1.59%  穷举
+  RSI中性+缩量+CCI超买         2     7      2         71.4%    100.0%   -2.65%  穷举
+  RSI中性+缩量+CCI超买         3     7      2         71.4%    100.0%   -1.59%  穷举
+
+====================================================================
+  存活规则已保存: evolved_rules_US-GLD.json
+  筛选标准: 训练胜率≥55.0%  测试胜率≥50.0%  训练样本≥5  测试样本≥2
+====================================================================
+2026-05-13 01:12:15 ================================================================
+2026-05-13 01:12:15 Trading Agents 启动（日K交易者模式）
+2026-05-13 01:12:15   ETF 标的 : ['US.TQQQ', 'US.SOXL']
+2026-05-13 01:12:15   黄金标的 : US.GLD
+2026-05-13 01:12:15   运行窗口 : 09:20 / 12:00 / 15:45 ET（每天3次）
+2026-05-13 01:12:15   报告时间 : 开盘后 + 收盘后（ET 9:30 / 16:00）
+2026-05-13 01:12:15   60分钟K  : 可操作信号时自动附加入场参考
+2026-05-13 01:12:15 ================================================================
+2026-05-13 01:12:15 启动扫描：信号 + 规则进化 + 胜率排行...
+2026-05-13 01:12:18   [宏观] VIX:18.889999389648438  F&G:None  T10Y2Y:0.47  FEDFUNDS:3.64
+2026-05-13 01:12:20 【TQQQ】价格:72.60  RSI:75.7  量比:0.67  趋势:up
+2026-05-13 01:12:20   事件: NVDA Earnings (est) (2026-05-28)（15天后）
+2026-05-13 01:12:20   信号: 🟡 关注买入  置信度:3/10  依据:强趋势 + 动能延续  行情:中性  [rules]
+2026-05-13 01:12:20   共振: 多头(2) vs 空头(1)  弱多头共振 ★
+2026-05-13 01:12:20     [多] 价格站上MA20 · 均线多排
+2026-05-13 01:12:20     [空] CCI超买
+2026-05-13 01:12:20   入场参考(60分钟): 趋势:向下  RSI:67.5  近期死叉
+2026-05-13 01:12:20 
+2026-05-13 01:12:21 【SOXL】价格:156.50  RSI:67.2  量比:0.8  趋势:up
+2026-05-13 01:12:21   事件: NVDA Earnings (est) (2026-05-28)（15天后）
+2026-05-13 01:12:21   信号: 🟡 关注买入  置信度:3/10  依据:强趋势 + 动能延续  行情:中性  [rules]
+2026-05-13 01:12:21   共振: 多头(2) vs 空头(1)  弱多头共振 ★
+2026-05-13 01:12:21     [多] 价格站上MA20 · 均线多排
+2026-05-13 01:12:21     [空] CCI超买
+2026-05-13 01:12:21   入场参考(60分钟): 趋势:向下  RSI:57.8
+2026-05-13 01:12:21 
+2026-05-13 01:12:22 【GLD】价格:428.86  RSI:49.5  量比:0.47  趋势:down
+2026-05-13 01:12:22   事件: NVDA Earnings (est) (2026-05-28)（15天后）  黄金偏向:mixed
+2026-05-13 01:12:22   ⚡ 突发新闻  黄金偏向:mixed
+2026-05-13 01:12:22   信号: ⬜ 持仓观望  置信度:6/10  依据:突发新闻，等待方向确认  行情:中性  [rules]
+2026-05-13 01:12:22   共振: 多头(0) vs 空头(2)  空头共振 ▼▼
+2026-05-13 01:12:22     [空] 价格跌破MA20 · 均线空排
+2026-05-13 01:12:22   📰 Gold Trading Lower as USD and Yields Rise as U.S. Inflation Surged Last Month
+2026-05-13 01:12:22      🔗 https://finance.yahoo.com/markets/commodities/articles/gold-trading-lower-usd-yields-132340634.html?.tsrc=rss
+2026-05-13 01:12:22   📰 Exchange-Traded Funds, Equity Futures Fall Pre-Bell Tuesday Amid Consumer Inflation Report Release
+2026-05-13 01:12:22      🔗 https://finance.yahoo.com/markets/stocks/articles/exchange-traded-funds-equity-futures-124800218.html?.tsrc=rss
+2026-05-13 01:12:22 
+2026-05-13 01:12:22 
+================================================================
+2026-05-13 01:12:22 生成open报告...
+2026-05-13 01:12:25 +================================================================+
+|  📊 美股市场综合报告  |  开盘报告                                           |
++================================================================+
+  生成时间: 2026-05-12 12:12 ET
+
+【一、核心标的行情】
+----------------------------------------------------------------
+  标的         名称               价格        涨跌     量比
+  ---------- ---------- --------  --------  -----
+  TQQQ       3x纳指         $72.60   ▼ 5.67%   0.71
+  SOXL       3x半导体       $156.60   ▼17.76%   0.88
+  GLD        黄金ETF       $428.86   ▼ 1.33%   0.51
+  QQQ        纳斯达克100     $699.94   ▼ 1.87%   0.54
+  SPY        标普500       $732.90   ▼ 0.87%   0.40
+
+【二、市场情绪】
+----------------------------------------------------------------
+  VIX 恐慌指数     18.89   → 平静
+  CNN 贪婪指数   获取失败
+  比特币 BTC     $80,305  ▼ 1.74%
+
+【三、宏观指标】
+----------------------------------------------------------------
+  10Y美债收益率  4.45%  ▲ 1.02%
+  解读: 偏高，压制高估值股⚠️
+  美元指数 DXY   98.4  ▲ 0.44%
+  WTI 原油       $101.6  ▲ 3.58%
+
+  -- FRED 宏观数据 --
+  10Y-2Y利差      +0.47%  趋于平坦
+  盈亏平衡通胀率  2.47%  通胀预期中性
+  联邦基金利率    3.64%
+
+【四、近期重大事件】
+----------------------------------------------------------------
+  ⚡ 最近事件: NVDA Earnings (est) (2026-05-28)（15天后）
+  风险等级: NORMAL
+  ⚡  0天后  CPI Release (2026-05-13)
+  📋 15天后  NVDA Earnings (est) (2026-05-28)
+
+【五、风险提示】
+----------------------------------------------------------------
+  ⚠️ 10Y美债 4.45% 处于高位，持续压制成长股估值
+
+==================================================================
+  数据来源: moomoo OpenD + Yahoo Finance + CNN Money
+  生成时间: 2026-05-12 12:12 ET  |  仅供参考，不构成投资建议
+==================================================================
+2026-05-13 01:12:25 报告已保存: F:\fsi-skills\agents\signals\report_20260512_1212.txt
+2026-05-13 01:12:30   [TQQQ] 规则进化完成: 399 条规则
+2026-05-13 01:12:35   [SOXL] 规则进化完成: 541 条规则
+2026-05-13 01:12:40   [GLD] 规则进化完成: 272 条规则
+2026-05-13 01:12:41 +==================================================================+
+|  技术形态胜率排行  |  2026-05-13 01:12                                   |
++==================================================================+
+
+  【TQQQ】  127 条规则 · 历史触发 6138 次
+--------------------------------------------------------------------
+  买入信号 (Top 8)
+  形态                            触发      胜率   评级
+  -------------------------- -----  ------   ----
+  [进化]正常量+CCI中性+均线              37   100.0%   ★★★
+  [进化]RSI中性+CCI超买+              14   100.0%   ★★★
+  [进化]CCI中性+上升趋势+均              47   100.0%   ★★★
+  [进化]CCI中性+均线多排                62   100.0%   ★★★
+  [进化]CCI超买+均线空排                22   100.0%   ★★★
+  [进化]CCI上穿100                  17   100.0%   ★★★
+  [进化]RSI超卖+正常量                  9   100.0%   ★★★
+  [进化]RSI超买+均线多排                18   100.0%   ★★★
+
+  减仓/卖出信号 (Top 2)
+  形态                            触发      胜率   评级
+  -------------------------- -----  ------   ----
+  [进化]缩量+下降趋势+均线空排              18    66.7%   ★★★
+  下降趋势确认                       105    60.6%   ★★
+
+  【SOXL】  132 条规则 · 历史触发 8266 次
+--------------------------------------------------------------------
+  买入信号 (Top 8)
+  形态                            触发      胜率   评级
+  -------------------------- -----  ------   ----
+  [进化]RSI超买+缩量                  20   100.0%   ★★★
+  [进化]RSI超买+缩量+上升趋              20   100.0%   ★★★
+  [进化]RSI超买+缩量+均线多              17   100.0%   ★★★
+  [进化]RSI超买+缩量+52周              18   100.0%   ★★★
+  [进化]RSI超买+缩量+CCI              18   100.0%   ★★★
+  [进化]RSI超买                     43   100.0%   ★★★
+  [进化]RSI超买+正常量                 23   100.0%   ★★★
+  [进化]RSI超买+上升趋势                43   100.0%   ★★★
+
+  减仓/卖出信号 (Top 8)
+  形态                            触发      胜率   评级
+  -------------------------- -----  ------   ----
+  [进化]CCI下穿-100                  8    66.7%   ★★★
+  [进化]RSI中性+CCI下穿-               8    66.7%   ★★★
+  [进化]CCI超卖+CCI下穿-               8    66.7%   ★★★
+  [进化]下降趋势+CCI下穿-1               8    66.7%   ★★★
+  [进化]均线空排+CCI下穿-1               8    66.7%   ★★★
+  [进化]RSI中性+CCI超卖+               8    66.7%   ★★★
+  [进化]RSI中性+下降趋势+C               8    66.7%   ★★★
+  [进化]RSI中性+均线空排+C               8    66.7%   ★★★
+
+  【GLD】  72 条规则 · 历史触发 3082 次
+--------------------------------------------------------------------
+  买入信号 (Top 8)
+  形态                            触发      胜率   评级
+  -------------------------- -----  ------   ----
+  [进化]正常量+CCI超卖                 13   100.0%   ★★★
+  [进化]RSI中性+正常量+CC              11   100.0%   ★★★
+  [进化]正常量+CCI超卖+下降              13   100.0%   ★★★
+  [进化]正常量+CCI超卖+均线              12   100.0%   ★★★
+  [进化]均线金叉                      10   100.0%   ★★★
+  [进化]RSI中性+均线金叉                10   100.0%   ★★★
+  [进化]上升趋势+均线金叉                 10   100.0%   ★★★
+  [进化]RSI中性+上升趋势+均              10   100.0%   ★★★
+
+  减仓/卖出信号 (Top 8)
+  形态                            触发      胜率   评级
+  -------------------------- -----  ------   ----
+  [进化]缩量+CCI超买                  11   100.0%   ★★★
+  [进化]缩量+CCI超买+上升趋              11   100.0%   ★★★
+  [进化]RSI中性+缩量+CCI               9   100.0%   ★★★
+  [进化]RSI中性+均线多排+C              12   100.0%   ★★★
+  [进化]均线多排+CCI上穿10              14   100.0%   ★★★
+  [进化]CCI超买+均线多排+C              14   100.0%   ★★★
+  [进化]上升趋势+均线多排+CC              14   100.0%   ★★★
+  [进化]缩量+上升趋势+均线多排              46    70.0%   ★★★
+
+====================================================================
+  ★★★ 测试胜率≥65%  ★★ ≥58%  ★ ≥52%
+  数据来源: moomoo OpenD 日K线（前复权）· 80/20 拆分回测
+====================================================================
+2026-05-13 01:12:41 +==================================================================+
+|  重大事件日历  |  2026-05-13 01:12                                     |
++==================================================================+
+
+  [今日事件]
+  [!] 2026-05-13  CPI Release               已落地 [Yahoo]  月增 +0.64%
+
+  [待发布]  未来 45 天
+  日期           事件                       距今
+  ------------ ------------------------ --------
+  [ ] 2026-05-28  NVDA Earnings (est)       15天后 ★
+  [ ] 2026-05-29  PCE Release               16天后 ★
+  [ ] 2026-06-05  NFP Release               23天后 ★
+  [ ] 2026-06-09  FOMC Decision             27天后 ★
+  [ ] 2026-06-10  CPI Release               28天后 ★
+  [ ] 2026-06-26  PCE Release               44天后 ★
+
+====================================================================
+  ★ = 高影响事件  [+] = 已落地  [!] = 今日  [ ] = 待发布
+  数据来源: FRED (CPI/NFP/FOMC/PCE) · Yahoo Finance (财报)
+====================================================================
+2026-05-13 01:12:42 +==================================================================+
+|  重大事件日历  |  2026-05-13 01:12                                     |
++==================================================================+
+
+  [今日事件]
+  [!] 2026-05-13  CPI Release               已落地 [Yahoo]  月增 +0.64%
+
+  [待发布]  未来 45 天
+  日期           事件                       距今
+  ------------ ------------------------ --------
+  [ ] 2026-05-28  NVDA Earnings (est)       15天后 ★
+  [ ] 2026-05-29  PCE Release               16天后 ★
+  [ ] 2026-06-05  NFP Release               23天后 ★
+  [ ] 2026-06-09  FOMC Decision             27天后 ★
+  [ ] 2026-06-10  CPI Release               28天后 ★
+  [ ] 2026-06-26  PCE Release               44天后 ★
+
+====================================================================
+  ★ = 高影响事件  [+] = 已落地  [!] = 今日  [ ] = 待发布
+  数据来源: FRED (CPI/NFP/FOMC/PCE) · Yahoo Finance (财报)
+====================================================================
+2026-05-13 01:24:14 ================================================================
+2026-05-13 01:24:14 Trading Agents 启动（日K交易者模式）
+2026-05-13 01:24:14   ETF 标的 : ['US.TQQQ', 'US.SOXL']
+2026-05-13 01:24:14   黄金标的 : US.GLD
+2026-05-13 01:24:14   运行窗口 : 09:20 / 12:00 / 15:45 ET（每天3次）
+2026-05-13 01:24:14   报告时间 : 开盘后 + 收盘后（ET 9:30 / 16:00）
+2026-05-13 01:24:14   60分钟K  : 可操作信号时自动附加入场参考
+2026-05-13 01:24:14 ================================================================
+2026-05-13 01:24:14 启动扫描：信号 + 规则进化 + 胜率排行...
+2026-05-13 01:24:16   [宏观] VIX:18.81999969482422  F&G:None  T10Y2Y:0.47  FEDFUNDS:3.64
+2026-05-13 01:24:17 【TQQQ】价格:72.33  RSI:75.0  量比:0.69  趋势:up
+2026-05-13 01:24:17   事件: NVDA Earnings (est) (2026-05-28)（15天后）
+2026-05-13 01:24:17   信号: 🟡 关注买入  置信度:3/10  依据:强趋势 + 动能延续  行情:中性  [rules]
+2026-05-13 01:24:17   共振: 多头(2) vs 空头(1)  →  弱多头共振 ★
+2026-05-13 01:24:17     [多] 价格站上MA20(价格72.33 > MA20=61.89)
+2026-05-13 01:24:17     [多] 均线多排(MA20=61.89 > MA50=52.32)
+2026-05-13 01:24:17     [空] CCI超买(CCI=189，中性区间-100~+100，当前高于+100)
+2026-05-13 01:24:17   入场参考(60分钟): 趋势:向下  RSI:67.5  近期死叉
+2026-05-13 01:24:17 
+2026-05-13 01:24:18 【SOXL】价格:154.27  RSI:66.3  量比:0.83  趋势:up
+2026-05-13 01:24:18   事件: NVDA Earnings (est) (2026-05-28)（15天后）
+2026-05-13 01:24:18   信号: 🟡 关注买入  置信度:3/10  依据:强趋势 + 动能延续  行情:中性  [rules]
+2026-05-13 01:24:18   共振: 多头(2) vs 空头(1)  →  弱多头共振 ★
+2026-05-13 01:24:18     [多] 价格站上MA20(价格154.27 > MA20=117.53)
+2026-05-13 01:24:18     [多] 均线多排(MA20=117.53 > MA50=80.08)
+2026-05-13 01:24:18     [空] CCI超买(CCI=174，中性区间-100~+100，当前高于+100)
+2026-05-13 01:24:18   入场参考(60分钟): 趋势:向下  RSI:57.8
+2026-05-13 01:24:18 
+2026-05-13 01:24:19 【GLD】价格:428.58  RSI:49.3  量比:0.48  趋势:down
+2026-05-13 01:24:19   事件: NVDA Earnings (est) (2026-05-28)（15天后）  黄金偏向:mixed
+2026-05-13 01:24:19   ⚡ 突发新闻  黄金偏向:mixed
+2026-05-13 01:24:19   信号: ⬜ 持仓观望  置信度:6/10  依据:突发新闻，等待方向确认  行情:中性  [rules]
+2026-05-13 01:24:19   共振: 多头(0) vs 空头(2)  →  空头共振 ▼▼
+2026-05-13 01:24:19     [空] 价格跌破MA20(价格428.58 < MA20=431.18)
+2026-05-13 01:24:19     [空] 均线空排(MA20=431.18 < MA50=439.13)
+2026-05-13 01:24:19   📰 Gold Trading Lower as USD and Yields Rise as U.S. Inflation Surged Last Month
+2026-05-13 01:24:19      🔗 https://finance.yahoo.com/markets/commodities/articles/gold-trading-lower-usd-yields-132340634.html?.tsrc=rss
+2026-05-13 01:24:19   📰 Exchange-Traded Funds, Equity Futures Fall Pre-Bell Tuesday Amid Consumer Inflation Report Release
+2026-05-13 01:24:19      🔗 https://finance.yahoo.com/markets/stocks/articles/exchange-traded-funds-equity-futures-124800218.html?.tsrc=rss
+2026-05-13 01:24:19 
+2026-05-13 01:24:19 
+================================================================
+2026-05-13 01:24:19 生成open报告...
+2026-05-13 01:24:21 +================================================================+
+|  📊 美股市场综合报告  |  开盘报告                                           |
++================================================================+
+  生成时间: 2026-05-12 12:24 ET
+
+【一、核心标的行情】
+----------------------------------------------------------------
+  标的         名称               价格        涨跌     量比
+  ---------- ---------- --------  --------  -----
+  TQQQ       3x纳指         $72.29   ▼ 6.06%   0.73
+  SOXL       3x半导体       $154.17   ▼19.04%   0.91
+  GLD        黄金ETF       $428.61   ▼ 1.39%   0.52
+  QQQ        纳斯达克100     $699.02   ▼ 2.00%   0.57
+  SPY        标普500       $732.65   ▼ 0.90%   0.43
+
+【二、市场情绪】
+----------------------------------------------------------------
+  VIX 恐慌指数     18.83   → 平静
+  CNN 贪婪指数   获取失败
+  比特币 BTC     $80,255  ▼ 1.80%
+
+【三、宏观指标】
+----------------------------------------------------------------
+  10Y美债收益率  4.45%  ▲ 1.02%
+  解读: 偏高，压制高估值股⚠️
+  美元指数 DXY   98.3  ▲ 0.42%
+  WTI 原油       $101.3  ▲ 3.27%
+
+  -- FRED 宏观数据 --
+  10Y-2Y利差      +0.47%  趋于平坦
+  盈亏平衡通胀率  2.47%  通胀预期中性
+  联邦基金利率    3.64%
+
+【四、近期重大事件】
+----------------------------------------------------------------
+  ⚡ 最近事件: NVDA Earnings (est) (2026-05-28)（15天后）
+  风险等级: NORMAL
+  ⚡  0天后  CPI Release (2026-05-13)
+  📋 15天后  NVDA Earnings (est) (2026-05-28)
+
+【五、风险提示】
+----------------------------------------------------------------
+  ⚠️ 10Y美债 4.45% 处于高位，持续压制成长股估值
+
+==================================================================
+  数据来源: moomoo OpenD + Yahoo Finance + CNN Money
+  生成时间: 2026-05-12 12:24 ET  |  仅供参考，不构成投资建议
+==================================================================
+2026-05-13 01:24:21 报告已保存: F:\fsi-skills\agents\signals\report_20260512_1224.txt
+2026-05-13 01:24:27   [TQQQ] 规则进化完成: 399 条规则
+2026-05-13 01:24:32   [SOXL] 规则进化完成: 541 条规则
+2026-05-13 01:24:37   [GLD] 规则进化完成: 272 条规则
+2026-05-13 01:24:38 +==================================================================+
+|  技术形态胜率排行  |  2026-05-13 01:24                                   |
++==================================================================+
+
+  【TQQQ】  127 条规则 · 历史触发 6138 次
+--------------------------------------------------------------------
+  买入信号 (Top 8)
+  形态                            触发      胜率   评级
+  -------------------------- -----  ------   ----
+  [进化]正常量+CCI中性+均线              37   100.0%   ★★★
+  [进化]RSI中性+CCI超买+              14   100.0%   ★★★
+  [进化]CCI中性+上升趋势+均              47   100.0%   ★★★
+  [进化]CCI中性+均线多排                62   100.0%   ★★★
+  [进化]CCI超买+均线空排                22   100.0%   ★★★
+  [进化]CCI上穿100                  17   100.0%   ★★★
+  [进化]RSI超卖+正常量                  9   100.0%   ★★★
+  [进化]RSI超买+均线多排                18   100.0%   ★★★
+
+  减仓/卖出信号 (Top 2)
+  形态                            触发      胜率   评级
+  -------------------------- -----  ------   ----
+  [进化]缩量+下降趋势+均线空排              18    66.7%   ★★★
+  下降趋势确认                       105    60.6%   ★★
+
+  【SOXL】  132 条规则 · 历史触发 8266 次
+--------------------------------------------------------------------
+  买入信号 (Top 8)
+  形态                            触发      胜率   评级
+  -------------------------- -----  ------   ----
+  [进化]RSI超买+缩量                  20   100.0%   ★★★
+  [进化]RSI超买+缩量+上升趋              20   100.0%   ★★★
+  [进化]RSI超买+缩量+均线多              17   100.0%   ★★★
+  [进化]RSI超买+缩量+52周              18   100.0%   ★★★
+  [进化]RSI超买+缩量+CCI              18   100.0%   ★★★
+  [进化]RSI超买                     43   100.0%   ★★★
+  [进化]RSI超买+正常量                 23   100.0%   ★★★
+  [进化]RSI超买+上升趋势                43   100.0%   ★★★
+
+  减仓/卖出信号 (Top 8)
+  形态                            触发      胜率   评级
+  -------------------------- -----  ------   ----
+  [进化]CCI下穿-100                  8    66.7%   ★★★
+  [进化]RSI中性+CCI下穿-               8    66.7%   ★★★
+  [进化]CCI超卖+CCI下穿-               8    66.7%   ★★★
+  [进化]下降趋势+CCI下穿-1               8    66.7%   ★★★
+  [进化]均线空排+CCI下穿-1               8    66.7%   ★★★
+  [进化]RSI中性+CCI超卖+               8    66.7%   ★★★
+  [进化]RSI中性+下降趋势+C               8    66.7%   ★★★
+  [进化]RSI中性+均线空排+C               8    66.7%   ★★★
+
+  【GLD】  72 条规则 · 历史触发 3082 次
+--------------------------------------------------------------------
+  买入信号 (Top 8)
+  形态                            触发      胜率   评级
+  -------------------------- -----  ------   ----
+  [进化]正常量+CCI超卖                 13   100.0%   ★★★
+  [进化]RSI中性+正常量+CC              11   100.0%   ★★★
+  [进化]正常量+CCI超卖+下降              13   100.0%   ★★★
+  [进化]正常量+CCI超卖+均线              12   100.0%   ★★★
+  [进化]均线金叉                      10   100.0%   ★★★
+  [进化]RSI中性+均线金叉                10   100.0%   ★★★
+  [进化]上升趋势+均线金叉                 10   100.0%   ★★★
+  [进化]RSI中性+上升趋势+均              10   100.0%   ★★★
+
+  减仓/卖出信号 (Top 8)
+  形态                            触发      胜率   评级
+  -------------------------- -----  ------   ----
+  [进化]缩量+CCI超买                  11   100.0%   ★★★
+  [进化]缩量+CCI超买+上升趋              11   100.0%   ★★★
+  [进化]RSI中性+缩量+CCI               9   100.0%   ★★★
+  [进化]RSI中性+均线多排+C              12   100.0%   ★★★
+  [进化]均线多排+CCI上穿10              14   100.0%   ★★★
+  [进化]CCI超买+均线多排+C              14   100.0%   ★★★
+  [进化]上升趋势+均线多排+CC              14   100.0%   ★★★
+  [进化]缩量+上升趋势+均线多排              46    70.0%   ★★★
+
+====================================================================
+  ★★★ 测试胜率≥65%  ★★ ≥58%  ★ ≥52%
+  数据来源: moomoo OpenD 日K线（前复权）· 80/20 拆分回测
+====================================================================
+2026-05-13 01:24:38 +==================================================================+
+|  重大事件日历  |  2026-05-13 01:24                                     |
++==================================================================+
+
+  [今日事件]
+  [!] 2026-05-13  CPI Release               已落地 [Yahoo]  月增 +0.64%
+
+  [待发布]  未来 45 天
+  日期           事件                       距今
+  ------------ ------------------------ --------
+  [ ] 2026-05-28  NVDA Earnings (est)       15天后 ★
+  [ ] 2026-05-29  PCE Release               16天后 ★
+  [ ] 2026-06-05  NFP Release               23天后 ★
+  [ ] 2026-06-09  FOMC Decision             27天后 ★
+  [ ] 2026-06-10  CPI Release               28天后 ★
+  [ ] 2026-06-26  PCE Release               44天后 ★
+
+====================================================================
+  ★ = 高影响事件  [+] = 已落地  [!] = 今日  [ ] = 待发布
+  数据来源: FRED (CPI/NFP/FOMC/PCE) · Yahoo Finance (财报)
+====================================================================
+2026-05-13 01:27:41 ================================================================
+2026-05-13 01:27:41 Trading Agents 启动（日K交易者模式）
+2026-05-13 01:27:41   ETF 标的 : ['US.TQQQ', 'US.SOXL']
+2026-05-13 01:27:41   黄金标的 : US.GLD
+2026-05-13 01:27:41   运行窗口 : 09:20 / 12:00 / 15:45 ET（每天3次）
+2026-05-13 01:27:41   报告时间 : 开盘后 + 收盘后（ET 9:30 / 16:00）
+2026-05-13 01:27:41   60分钟K  : 可操作信号时自动附加入场参考
+2026-05-13 01:27:41 ================================================================
+2026-05-13 01:27:41 启动扫描：信号 + 规则进化 + 胜率排行...
+2026-05-13 01:27:43   [宏观] VIX:18.760000228881836  F&G:None  T10Y2Y:0.47  FEDFUNDS:3.64
+2026-05-13 01:27:44 【TQQQ】价格:72.38  RSI:75.1  量比:0.7  趋势:up
+2026-05-13 01:27:44   事件: NVDA Earnings (est) (2026-05-28)（15天后）
+2026-05-13 01:27:44   信号: 🟡 关注买入  置信度:3/10  依据:强趋势 + 动能延续  行情:中性  [rules]
+2026-05-13 01:27:44   共振: 多头(2) vs 空头(1)  →  弱多头共振 ★
+2026-05-13 01:27:44     [多] 价格站上MA20(价格72.38 > MA20=61.89)
+2026-05-13 01:27:44     [多] 均线多排(MA20=61.89 > MA50=52.32)
+2026-05-13 01:27:44     [空] CCI超买(CCI=189，中性区间-100~+100，当前高于+100)
+2026-05-13 01:27:44   入场参考(60分钟): 趋势:向下  RSI:67.5  近期死叉
+2026-05-13 01:27:44 
+2026-05-13 01:27:44 【SOXL】价格:154.18  RSI:66.3  量比:0.84  趋势:up
+2026-05-13 01:27:44   事件: NVDA Earnings (est) (2026-05-28)（15天后）
+2026-05-13 01:27:44   信号: 🟡 关注买入  置信度:3/10  依据:强趋势 + 动能延续  行情:中性  [rules]
+2026-05-13 01:27:44   共振: 多头(2) vs 空头(1)  →  弱多头共振 ★
+2026-05-13 01:27:44     [多] 价格站上MA20(价格154.18 > MA20=117.53)
+2026-05-13 01:27:44     [多] 均线多排(MA20=117.53 > MA50=80.08)
+2026-05-13 01:27:44     [空] CCI超买(CCI=174，中性区间-100~+100，当前高于+100)
+2026-05-13 01:27:44   入场参考(60分钟): 趋势:向下  RSI:57.8
+2026-05-13 01:27:44 
+2026-05-13 01:27:45 【GLD】价格:428.61  RSI:49.3  量比:0.48  趋势:down
+2026-05-13 01:27:45   事件: NVDA Earnings (est) (2026-05-28)（15天后）  黄金偏向:mixed
+2026-05-13 01:27:45   ⚡ 突发新闻  黄金偏向:mixed
+2026-05-13 01:27:45   信号: ⬜ 持仓观望  置信度:6/10  依据:突发新闻，等待方向确认  行情:中性  [rules]
+2026-05-13 01:27:45   共振: 多头(0) vs 空头(2)  →  空头共振 ▼▼
+2026-05-13 01:27:45     [空] 价格跌破MA20(价格428.61 < MA20=431.18)
+2026-05-13 01:27:45     [空] 均线空排(MA20=431.18 < MA50=439.13)
+2026-05-13 01:27:45   📰 Gold Trading Lower as USD and Yields Rise as U.S. Inflation Surged Last Month
+2026-05-13 01:27:45      🔗 https://finance.yahoo.com/markets/commodities/articles/gold-trading-lower-usd-yields-132340634.html?.tsrc=rss
+2026-05-13 01:27:45   📰 Exchange-Traded Funds, Equity Futures Fall Pre-Bell Tuesday Amid Consumer Inflation Report Release
+2026-05-13 01:27:45      🔗 https://finance.yahoo.com/markets/stocks/articles/exchange-traded-funds-equity-futures-124800218.html?.tsrc=rss
+2026-05-13 01:27:45 
+2026-05-13 01:27:45 
+================================================================
+2026-05-13 01:27:45 生成open报告...
+2026-05-13 01:27:48 +================================================================+
+|  📊 美股市场综合报告  |  开盘报告                                           |
++================================================================+
+  生成时间: 2026-05-12 12:27 ET
+
+【一、核心标的行情】
+----------------------------------------------------------------
+  标的         名称               价格        涨跌     量比
+  ---------- ---------- --------  --------  -----
+  TQQQ       3x纳指         $72.39   ▼ 5.94%   0.73
+  SOXL       3x半导体       $154.21   ▼19.01%   0.91
+  GLD        黄金ETF       $428.61   ▼ 1.39%   0.52
+  QQQ        纳斯达克100     $699.23   ▼ 1.97%   0.57
+  SPY        标普500       $732.83   ▼ 0.88%   0.43
+
+【二、市场情绪】
+----------------------------------------------------------------
+  VIX 恐慌指数     18.76   → 平静
+  CNN 贪婪指数   获取失败
+  比特币 BTC     $80,242  ▼ 1.82%
+
+【三、宏观指标】
+----------------------------------------------------------------
+  10Y美债收益率  4.45%  ▲ 0.93%
+  解读: 偏高，压制高估值股⚠️
+  美元指数 DXY   98.3  ▲ 0.41%
+  WTI 原油       $101.3  ▲ 3.30%
+
+  -- FRED 宏观数据 --
+  10Y-2Y利差      +0.47%  趋于平坦
+  盈亏平衡通胀率  2.47%  通胀预期中性
+
+【四、近期重大事件】
+----------------------------------------------------------------
+  ⚡ 最近事件: NVDA Earnings (est) (2026-05-28)（15天后）
+  风险等级: NORMAL
+  ⚡  0天后  CPI Release (2026-05-13)
+  📋 15天后  NVDA Earnings (est) (2026-05-28)
+
+【五、风险提示】
+----------------------------------------------------------------
+  ⚠️ 10Y美债 4.45% 处于高位，持续压制成长股估值
+
+==================================================================
+  数据来源: moomoo OpenD + Yahoo Finance + CNN Money
+  生成时间: 2026-05-12 12:27 ET  |  仅供参考，不构成投资建议
+==================================================================
+2026-05-13 01:27:48 报告已保存: F:\fsi-skills\agents\signals\report_20260512_1227.txt
+2026-05-13 01:27:53   [TQQQ] 规则进化完成: 399 条规则
+2026-05-13 01:27:58   [SOXL] 规则进化完成: 541 条规则
+2026-05-13 01:28:03   [GLD] 规则进化完成: 272 条规则
+2026-05-13 01:28:03 +==================================================================+
+|  技术形态胜率排行  |  2026-05-13 01:28                                   |
++==================================================================+
+
+  【TQQQ】  127 条规则 · 历史触发 6138 次
+--------------------------------------------------------------------
+  买入信号 (Top 8)
+  形态                            触发      胜率   评级
+  -------------------------- -----  ------   ----
+  [进化]正常量+CCI中性+均线              37   100.0%   ★★★
+  [进化]RSI中性+CCI超买+              14   100.0%   ★★★
+  [进化]CCI中性+上升趋势+均              47   100.0%   ★★★
+  [进化]CCI中性+均线多排                62   100.0%   ★★★
+  [进化]CCI超买+均线空排                22   100.0%   ★★★
+  [进化]CCI上穿100                  17   100.0%   ★★★
+  [进化]RSI超卖+正常量                  9   100.0%   ★★★
+  [进化]RSI超买+均线多排                18   100.0%   ★★★
+
+  减仓/卖出信号 (Top 2)
+  形态                            触发      胜率   评级
+  -------------------------- -----  ------   ----
+  [进化]缩量+下降趋势+均线空排              18    66.7%   ★★★
+  下降趋势确认                       105    60.6%   ★★
+
+  【SOXL】  132 条规则 · 历史触发 8266 次
+--------------------------------------------------------------------
+  买入信号 (Top 8)
+  形态                            触发      胜率   评级
+  -------------------------- -----  ------   ----
+  [进化]RSI超买+缩量                  20   100.0%   ★★★
+  [进化]RSI超买+缩量+上升趋              20   100.0%   ★★★
+  [进化]RSI超买+缩量+均线多              17   100.0%   ★★★
+  [进化]RSI超买+缩量+52周              18   100.0%   ★★★
+  [进化]RSI超买+缩量+CCI              18   100.0%   ★★★
+  [进化]RSI超买                     43   100.0%   ★★★
+  [进化]RSI超买+正常量                 23   100.0%   ★★★
+  [进化]RSI超买+上升趋势                43   100.0%   ★★★
+
+  减仓/卖出信号 (Top 8)
+  形态                            触发      胜率   评级
+  -------------------------- -----  ------   ----
+  [进化]CCI下穿-100                  8    66.7%   ★★★
+  [进化]RSI中性+CCI下穿-               8    66.7%   ★★★
+  [进化]CCI超卖+CCI下穿-               8    66.7%   ★★★
+  [进化]下降趋势+CCI下穿-1               8    66.7%   ★★★
+  [进化]均线空排+CCI下穿-1               8    66.7%   ★★★
+  [进化]RSI中性+CCI超卖+               8    66.7%   ★★★
+  [进化]RSI中性+下降趋势+C               8    66.7%   ★★★
+  [进化]RSI中性+均线空排+C               8    66.7%   ★★★
+
+  【GLD】  72 条规则 · 历史触发 3082 次
+--------------------------------------------------------------------
+  买入信号 (Top 8)
+  形态                            触发      胜率   评级
+  -------------------------- -----  ------   ----
+  [进化]正常量+CCI超卖                 13   100.0%   ★★★
+  [进化]RSI中性+正常量+CC              11   100.0%   ★★★
+  [进化]正常量+CCI超卖+下降              13   100.0%   ★★★
+  [进化]正常量+CCI超卖+均线              12   100.0%   ★★★
+  [进化]均线金叉                      10   100.0%   ★★★
+  [进化]RSI中性+均线金叉                10   100.0%   ★★★
+  [进化]上升趋势+均线金叉                 10   100.0%   ★★★
+  [进化]RSI中性+上升趋势+均              10   100.0%   ★★★
+
+  减仓/卖出信号 (Top 8)
+  形态                            触发      胜率   评级
+  -------------------------- -----  ------   ----
+  [进化]缩量+CCI超买                  11   100.0%   ★★★
+  [进化]缩量+CCI超买+上升趋              11   100.0%   ★★★
+  [进化]RSI中性+缩量+CCI               9   100.0%   ★★★
+  [进化]RSI中性+均线多排+C              12   100.0%   ★★★
+  [进化]均线多排+CCI上穿10              14   100.0%   ★★★
+  [进化]CCI超买+均线多排+C              14   100.0%   ★★★
+  [进化]上升趋势+均线多排+CC              14   100.0%   ★★★
+  [进化]缩量+上升趋势+均线多排              46    70.0%   ★★★
+
+====================================================================
+  ★★★ 测试胜率≥65%  ★★ ≥58%  ★ ≥52%
+  数据来源: moomoo OpenD 日K线（前复权）· 80/20 拆分回测
+====================================================================
+2026-05-13 01:28:04 +==================================================================+
+|  重大事件日历  |  2026-05-13 01:28                                     |
++==================================================================+
+
+  [今日事件]
+  [!] 2026-05-13  CPI Release               已落地 [Yahoo]  月增 +0.64%
+
+  [待发布]  未来 45 天
+  日期           事件                       距今
+  ------------ ------------------------ --------
+  [ ] 2026-05-28  NVDA Earnings (est)       15天后 ★
+  [ ] 2026-05-29  PCE Release               16天后 ★
+  [ ] 2026-06-05  NFP Release               23天后 ★
+  [ ] 2026-06-09  FOMC Decision             27天后 ★
+  [ ] 2026-06-10  CPI Release               28天后 ★
+  [ ] 2026-06-26  PCE Release               44天后 ★
+
+====================================================================
+  ★ = 高影响事件  [+] = 已落地  [!] = 今日  [ ] = 待发布
+  数据来源: FRED (CPI/NFP/FOMC/PCE) · Yahoo Finance (财报)
+====================================================================
+2026-05-13 01:36:56 ================================================================
+2026-05-13 01:36:56 Trading Agents 启动（日K交易者模式）
+2026-05-13 01:36:56   ETF 标的 : ['US.TQQQ', 'US.SOXL']
+2026-05-13 01:36:56   黄金标的 : US.GLD
+2026-05-13 01:36:56   运行窗口 : 09:20 / 12:00 / 15:45 ET（每天3次）
+2026-05-13 01:36:56   报告时间 : 开盘后 + 收盘后（ET 9:30 / 16:00）
+2026-05-13 01:36:56   60分钟K  : 可操作信号时自动附加入场参考
+2026-05-13 01:36:56 ================================================================
+2026-05-13 01:36:56 启动扫描：信号 + 规则进化 + 胜率排行...
+2026-05-13 01:36:58   [宏观] VIX:18.709999084472656  F&G:None  T10Y2Y:0.47  FEDFUNDS:3.64
+2026-05-13 01:37:00 【TQQQ】价格:72.28  RSI:74.9  量比:0.72  趋势:up
+2026-05-13 01:37:00   事件: NVDA Earnings (est) (2026-05-28)（15天后）
+2026-05-13 01:37:00   信号: 🟡 关注买入  置信度:3/10  依据:强趋势 + 动能延续  行情:中性  [rules]
+2026-05-13 01:37:00   共振: 多头(2) vs 空头(2)  →  多空均衡 ─
+2026-05-13 01:37:00     [多] 价格站上MA20(价格72.28 > MA20=61.89)
+2026-05-13 01:37:00     [多] 均线多排(MA20=61.89 > MA50=52.32)
+2026-05-13 01:37:00     [空] CCI超买(CCI=189，中性区间-100~+100，当前高于+100)
+2026-05-13 01:37:00     [空] 突破布林上轨(%B=1.07，上轨=74.61，价格偏离均线2σ，统计均值回归区)
+2026-05-13 01:37:00   入场参考(60分钟): 趋势:向下  RSI:67.5  近期死叉
+2026-05-13 01:37:00 
+2026-05-13 01:37:00 【SOXL】价格:154.22  RSI:66.3  量比:0.86  趋势:up
+2026-05-13 01:37:00   事件: NVDA Earnings (est) (2026-05-28)（15天后）
+2026-05-13 01:37:00   信号: 🟡 关注买入  置信度:3/10  依据:强趋势 + 动能延续  行情:中性  [rules]
+2026-05-13 01:37:00   共振: 多头(2) vs 空头(2)  →  多空均衡 ─
+2026-05-13 01:37:00     [多] 价格站上MA20(价格154.22 > MA20=117.53)
+2026-05-13 01:37:00     [多] 均线多排(MA20=117.53 > MA50=80.08)
+2026-05-13 01:37:00     [空] CCI超买(CCI=174，中性区间-100~+100，当前高于+100)
+2026-05-13 01:37:00     [空] 突破布林上轨(%B=1.04，上轨=172.05，价格偏离均线2σ，统计均值回归区)
+2026-05-13 01:37:00   入场参考(60分钟): 趋势:向下  RSI:57.8
+2026-05-13 01:37:00 
+2026-05-13 01:37:01 【GLD】价格:428.80  RSI:49.4  量比:0.49  趋势:down
+2026-05-13 01:37:01   事件: NVDA Earnings (est) (2026-05-28)（15天后）  黄金偏向:mixed
+2026-05-13 01:37:01   ⚡ 突发新闻  黄金偏向:mixed
+2026-05-13 01:37:01   信号: ⬜ 持仓观望  置信度:6/10  依据:突发新闻，等待方向确认  行情:中性  [rules]
+2026-05-13 01:37:01   共振: 多头(0) vs 空头(2)  →  空头共振 ▼▼
+2026-05-13 01:37:01     [空] 价格跌破MA20(价格428.80 < MA20=431.18)
+2026-05-13 01:37:01     [空] 均线空排(MA20=431.18 < MA50=439.13)
+2026-05-13 01:37:01   📰 Gold Trading Lower as USD and Yields Rise as U.S. Inflation Surged Last Month
+2026-05-13 01:37:01      🔗 https://finance.yahoo.com/markets/commodities/articles/gold-trading-lower-usd-yields-132340634.html?.tsrc=rss
+2026-05-13 01:37:01   📰 Exchange-Traded Funds, Equity Futures Fall Pre-Bell Tuesday Amid Consumer Inflation Report Release
+2026-05-13 01:37:01      🔗 https://finance.yahoo.com/markets/stocks/articles/exchange-traded-funds-equity-futures-124800218.html?.tsrc=rss
+2026-05-13 01:37:01 
+2026-05-13 01:37:01 
+================================================================
+2026-05-13 01:37:01 生成open报告...
+2026-05-13 01:37:04 +================================================================+
+|  📊 美股市场综合报告  |  开盘报告                                           |
++================================================================+
+  生成时间: 2026-05-12 12:37 ET
+
+【一、核心标的行情】
+----------------------------------------------------------------
+  标的         名称               价格        涨跌     量比
+  ---------- ---------- --------  --------  -----
+  TQQQ       3x纳指         $72.28   ▼ 6.09%   0.75
+  SOXL       3x半导体       $154.23   ▼19.01%   0.94
+  GLD        黄金ETF       $428.80   ▼ 1.35%   0.53
+  QQQ        纳斯达克100     $698.95   ▼ 2.01%   0.59
+  SPY        标普500       $732.89   ▼ 0.87%   0.45
+
+【二、市场情绪】
+----------------------------------------------------------------
+  VIX 恐慌指数     18.73   → 平静
+  CNN 贪婪指数   获取失败
+  比特币 BTC     $80,311  ▼ 1.73%
+
+【三、宏观指标】
+----------------------------------------------------------------
+  10Y美债收益率  4.45%  ▲ 1.02%
+  解读: 偏高，压制高估值股⚠️
+  美元指数 DXY   98.4  ▲ 0.42%
+  WTI 原油       $101.7  ▲ 3.73%
+
+  -- FRED 宏观数据 --
+  10Y-2Y利差      +0.47%  趋于平坦
+  盈亏平衡通胀率  2.47%  通胀预期中性
+  联邦基金利率    3.64%
+
+【四、近期重大事件】
+----------------------------------------------------------------
+  ⚡ 最近事件: NVDA Earnings (est) (2026-05-28)（15天后）
+  风险等级: NORMAL
+  ⚡  0天后  CPI Release (2026-05-13)
+  📋 15天后  NVDA Earnings (est) (2026-05-28)
+
+【五、风险提示】
+----------------------------------------------------------------
+  ⚠️ 10Y美债 4.45% 处于高位，持续压制成长股估值
+
+==================================================================
+  数据来源: moomoo OpenD + Yahoo Finance + CNN Money
+  生成时间: 2026-05-12 12:37 ET  |  仅供参考，不构成投资建议
+==================================================================
+2026-05-13 01:37:04 报告已保存: F:\fsi-skills\agents\signals\report_20260512_1237.txt
+2026-05-13 01:37:13   [TQQQ] 规则进化完成: 737 条规则
+2026-05-13 01:37:21   [SOXL] 规则进化完成: 918 条规则
+2026-05-13 01:37:29   [GLD] 规则进化完成: 422 条规则
+2026-05-13 01:37:30 +==================================================================+
+|  技术形态胜率排行  |  2026-05-13 01:37                                   |
++==================================================================+
+
+  【TQQQ】  191 条规则 · 历史触发 9422 次
+--------------------------------------------------------------------
+  买入信号 (Top 8)
+  形态                                            触发    测试N      胜率(测试)   评级
+  ------------------------------------------ -----  -----  ----------   ----
+  [进化]正常量+CCI中性+均线                              37      3     100.0%*   ★★★
+  [进化]RSI中性+CCI超买+                              14      4     100.0%*   ★★★
+  [进化]CCI中性+上升趋势+均                              47      3     100.0%*   ★★★
+  [进化]CCI中性+均线多排                                62      3     100.0%*   ★★★
+  [进化]CCI中性+均线多排+布                              62      3     100.0%*   ★★★
+  [进化]CCI超买+均线空排                                22     10     100.0%    ★★★
+  [进化]CCI上穿100                                  17      2     100.0%*   ★★★
+  [进化]RSI超卖+正常量                                  9      4     100.0%*   ★★★
+  (* 测试样本 N<5，胜率仅供参考)
+
+  减仓/卖出信号 (Top 2)
+  形态                                            触发    测试N      胜率(测试)   评级
+  ------------------------------------------ -----  -----  ----------   ----
+  [进化]缩量+下降趋势+均线空排                              18      6      66.7%    ★★★
+  下降趋势确认                                       105     33      60.6%    ★★
+  (* 测试样本 N<5，胜率仅供参考)
+
+  【SOXL】  209 条规则 · 历史触发 12555 次
+--------------------------------------------------------------------
+  买入信号 (Top 8)
+  形态                                            触发    测试N      胜率(测试)   评级
+  ------------------------------------------ -----  -----  ----------   ----
+  [进化]RSI超买+缩量                                  20     11     100.0%    ★★★
+  [进化]RSI超买+缩量+上升趋                              20     11     100.0%    ★★★
+  [进化]RSI超买+缩量+均线多                              17      8     100.0%    ★★★
+  [进化]RSI超买+缩量+52周                              18      9     100.0%    ★★★
+  [进化]RSI超买+缩量+布林带                              18      9     100.0%    ★★★
+  [进化]RSI超买+缩量+CCI                              18     10     100.0%    ★★★
+  [进化]RSI超买+布林上轨突破                              10      3     100.0%*   ★★★
+  [进化]RSI超买+CCI超买+                              10      3     100.0%*   ★★★
+  (* 测试样本 N<5，胜率仅供参考)
+
+  减仓/卖出信号 (Top 8)
+  形态                                            触发    测试N      胜率(测试)   评级
+  ------------------------------------------ -----  -----  ----------   ----
+  [进化]CCI下穿-100                                  8      3      66.7%*   ★★★
+  [进化]RSI中性+CCI下穿-                               8      3      66.7%*   ★★★
+  [进化]CCI超卖+CCI下穿-                               8      3      66.7%*   ★★★
+  [进化]下降趋势+CCI下穿-1                               8      3      66.7%*   ★★★
+  [进化]均线空排+CCI下穿-1                               8      3      66.7%*   ★★★
+  [进化]RSI中性+CCI超卖+                               8      3      66.7%*   ★★★
+  [进化]RSI中性+下降趋势+C                               8      3      66.7%*   ★★★
+  [进化]RSI中性+均线空排+C                               8      3      66.7%*   ★★★
+  (* 测试样本 N<5，胜率仅供参考)
+
+  【GLD】  109 条规则 · 历史触发 4750 次
+--------------------------------------------------------------------
+  买入信号 (Top 8)
+  形态                                            触发    测试N      胜率(测试)   评级
+  ------------------------------------------ -----  -----  ----------   ----
+  [进化]正常量+CCI超卖                                 13      7     100.0%    ★★★
+  [进化]RSI中性+正常量+CC                              11      5     100.0%    ★★★
+  [进化]正常量+CCI超卖+下降                              13      7     100.0%    ★★★
+  [进化]正常量+CCI超卖+均线                              12      7     100.0%    ★★★
+  [进化]正常量+CCI超卖+布林                               9      4     100.0%*   ★★★
+  [进化]均线金叉                                      10      2     100.0%*   ★★★
+  [进化]SAR转多                                     10      2     100.0%*   ★★★
+  [进化]RSI中性+均线金叉                                10      2     100.0%*   ★★★
+  (* 测试样本 N<5，胜率仅供参考)
+
+  减仓/卖出信号 (Top 8)
+  形态                                            触发    测试N      胜率(测试)   评级
+  ------------------------------------------ -----  -----  ----------   ----
+  [进化]缩量+CCI超买                                  11      2     100.0%*   ★★★
+  [进化]缩量+CCI超买+上升趋                              11      2     100.0%*   ★★★
+  [进化]缩量+CCI超买+布林带                              10      2     100.0%*   ★★★
+  [进化]RSI中性+缩量+CCI                               9      2     100.0%*   ★★★
+  [进化]RSI中性+均线多排+C                              12      2     100.0%*   ★★★
+  [进化]均线多排+CCI上穿10                              12      2     100.0%*   ★★★
+  [进化]CCI超买+均线多排+C                              14      2     100.0%*   ★★★
+  [进化]上升趋势+均线多排+CC                              14      2     100.0%*   ★★★
+  (* 测试样本 N<5，胜率仅供参考)
+
+====================================================================
+  ★★★ 测试胜率≥65%  ★★ ≥58%  ★ ≥52%
+  数据来源: moomoo OpenD 日K线（前复权）· 80/20 拆分回测
+====================================================================
+2026-05-13 01:37:30 +==================================================================+
+|  重大事件日历  |  2026-05-13 01:37                                     |
++==================================================================+
+
+  [今日事件]
+  [!] 2026-05-13  CPI Release               已落地 [Yahoo]  月增 +0.64%
+
+  [待发布]  未来 45 天
+  日期           事件                       距今
+  ------------ ------------------------ --------
+  [ ] 2026-05-28  NVDA Earnings (est)       15天后 ★
+  [ ] 2026-05-29  PCE Release               16天后 ★
+  [ ] 2026-06-05  NFP Release               23天后 ★
+  [ ] 2026-06-09  FOMC Decision             27天后 ★
+  [ ] 2026-06-10  CPI Release               28天后 ★
+  [ ] 2026-06-26  PCE Release               44天后 ★
+
+====================================================================
+  ★ = 高影响事件  [+] = 已落地  [!] = 今日  [ ] = 待发布
+  数据来源: FRED (CPI/NFP/FOMC/PCE) · Yahoo Finance (财报)
+====================================================================
+2026-05-13 01:41:42 ================================================================
+2026-05-13 01:41:42 Trading Agents 启动（日K交易者模式）
+2026-05-13 01:41:42   ETF 标的 : ['US.TQQQ', 'US.SOXL']
+2026-05-13 01:41:42   黄金标的 : US.GLD
+2026-05-13 01:41:42   运行窗口 : 09:20 / 12:00 / 15:45 ET（每天3次）
+2026-05-13 01:41:42   报告时间 : 开盘后 + 收盘后（ET 9:30 / 16:00）
+2026-05-13 01:41:42   60分钟K  : 可操作信号时自动附加入场参考
+2026-05-13 01:41:42 ================================================================
+2026-05-13 01:41:42 启动扫描：信号 + 规则进化 + 胜率排行...
+2026-05-13 01:41:44   [宏观] VIX:18.709999084472656  F&G:None  T10Y2Y:0.47  FEDFUNDS:N/A
+2026-05-13 01:41:45 【TQQQ】价格:71.92  RSI:74.0  量比:0.73  趋势:up
+2026-05-13 01:41:45   事件: NVDA Earnings (est) (2026-05-28)（15天后）
+2026-05-13 01:41:45   信号: 🟡 关注买入  置信度:3/10  依据:强趋势 + 动能延续  行情:中性  [rules]
+2026-05-13 01:41:45   共振: 多头(2) vs 空头(3)  →  弱空头共振 ▼
+2026-05-13 01:41:45     [多] 价格站上MA20(价格71.92 > MA20=61.89)
+2026-05-13 01:41:45     [多] 均线多排(MA20=61.89 > MA50=52.32)
+2026-05-13 01:41:45     [空] RSI超买(RSI=74，正常区间40-60，>70为超买)
+2026-05-13 01:41:45     [空] CCI超买(CCI=189，中性区间-100~+100，当前高于+100)
+2026-05-13 01:41:45     [空] 突破布林上轨(%B=1.07，上轨=74.61，价格偏离均线2σ，统计均值回归区)
+2026-05-13 01:41:45   入场参考(60分钟): 趋势:向下  RSI:67.5  近期死叉
+2026-05-13 01:41:45 
+2026-05-13 01:41:46 【SOXL】价格:151.82  RSI:65.4  量比:0.87  趋势:up
+2026-05-13 01:41:46   事件: NVDA Earnings (est) (2026-05-28)（15天后）
+2026-05-13 01:41:46   信号: 🟡 关注买入  置信度:3/10  依据:强趋势 + 动能延续  行情:中性  [rules]
+2026-05-13 01:41:46   共振: 多头(2) vs 空头(2)  →  多空均衡 ─
+2026-05-13 01:41:46     [多] 价格站上MA20(价格151.82 > MA20=117.53)
+2026-05-13 01:41:46     [多] 均线多排(MA20=117.53 > MA50=80.08)
+2026-05-13 01:41:46     [空] CCI超买(CCI=174，中性区间-100~+100，当前高于+100)
+2026-05-13 01:41:46     [空] 突破布林上轨(%B=1.04，上轨=172.05，价格偏离均线2σ，统计均值回归区)
+2026-05-13 01:41:46   入场参考(60分钟): 趋势:向下  RSI:57.8
+2026-05-13 01:41:46 
+2026-05-13 01:41:47 【GLD】价格:428.70  RSI:49.4  量比:0.49  趋势:down
+2026-05-13 01:41:47   事件: NVDA Earnings (est) (2026-05-28)（15天后）  黄金偏向:mixed
+2026-05-13 01:41:47   ⚡ 突发新闻  黄金偏向:mixed
+2026-05-13 01:41:47   信号: ⬜ 持仓观望  置信度:6/10  依据:突发新闻，等待方向确认  行情:中性  [rules]
+2026-05-13 01:41:47   共振: 多头(0) vs 空头(2)  →  空头共振 ▼▼
+2026-05-13 01:41:47     [空] 价格跌破MA20(价格428.70 < MA20=431.18)
+2026-05-13 01:41:47     [空] 均线空排(MA20=431.18 < MA50=439.13)
+2026-05-13 01:41:47   📰 Gold Trading Lower as USD and Yields Rise as U.S. Inflation Surged Last Month
+2026-05-13 01:41:47      🔗 https://finance.yahoo.com/markets/commodities/articles/gold-trading-lower-usd-yields-132340634.html?.tsrc=rss
+2026-05-13 01:41:47   📰 Exchange-Traded Funds, Equity Futures Fall Pre-Bell Tuesday Amid Consumer Inflation Report Release
+2026-05-13 01:41:47      🔗 https://finance.yahoo.com/markets/stocks/articles/exchange-traded-funds-equity-futures-124800218.html?.tsrc=rss
+2026-05-13 01:41:47 
+2026-05-13 01:41:47 
+================================================================
+2026-05-13 01:41:47 生成open报告...
+2026-05-13 01:41:49 +================================================================+
+|  📊 美股市场综合报告  |  开盘报告                                           |
++================================================================+
+  生成时间: 2026-05-12 12:41 ET
+
+【一、核心标的行情】
+----------------------------------------------------------------
+  标的         名称               价格        涨跌     量比
+  ---------- ---------- --------  --------  -----
+  TQQQ       3x纳指         $71.91   ▼ 6.56%   0.77
+  SOXL       3x半导体       $151.83   ▼20.27%   0.95
+  GLD        黄金ETF       $428.70   ▼ 1.37%   0.53
+  QQQ        纳斯达克100     $697.78   ▼ 2.17%   0.60
+  SPY        标普500       $732.45   ▼ 0.93%   0.45
+
+【二、市场情绪】
+----------------------------------------------------------------
+  VIX 恐慌指数      18.7   → 平静
+  CNN 贪婪指数   获取失败
+  比特币 BTC     $80,232  ▼ 1.83%
+
+【三、宏观指标】
+----------------------------------------------------------------
+  10Y美债收益率  4.45%  ▲ 1.02%
+  解读: 偏高，压制高估值股⚠️
+  美元指数 DXY   98.4  ▲ 0.43%
+  WTI 原油       $101.7  ▲ 3.71%
+
+  -- FRED 宏观数据 --
+  10Y-2Y利差      +0.47%  趋于平坦
+  盈亏平衡通胀率  2.47%  通胀预期中性
+  联邦基金利率    3.64%
+
+【四、近期重大事件】
+----------------------------------------------------------------
+  ⚡ 最近事件: NVDA Earnings (est) (2026-05-28)（15天后）
+  风险等级: NORMAL
+  ⚡  0天后  CPI Release (2026-05-13)
+  📋 15天后  NVDA Earnings (est) (2026-05-28)
+
+【五、风险提示】
+----------------------------------------------------------------
+  ⚠️ 10Y美债 4.45% 处于高位，持续压制成长股估值
+
+==================================================================
+  数据来源: moomoo OpenD + Yahoo Finance + CNN Money
+  生成时间: 2026-05-12 12:41 ET  |  仅供参考，不构成投资建议
+==================================================================
+2026-05-13 01:41:49 报告已保存: F:\fsi-skills\agents\signals\report_20260512_1241.txt
+2026-05-13 01:41:57   [TQQQ] 规则进化完成: 737 条规则
+2026-05-13 01:42:07   [SOXL] 规则进化完成: 910 条规则
+2026-05-13 01:42:16   [GLD] 规则进化完成: 422 条规则
+2026-05-13 01:42:17 +==================================================================+
+|  技术形态胜率排行  |  2026-05-13 01:42                                   |
++==================================================================+
+
+  【TQQQ】  211 条规则 · 历史触发 9838 次
+--------------------------------------------------------------------
+  买入信号 (Top 8)
+  形态                                            触发    测试N      胜率(测试)   评级
+  ------------------------------------------ -----  -----  ----------   ----
+  [进化]正常量+CCI中性+均线多排                            37      3     100.0%*   ★★★
+  [进化]RSI中性+CCI超买+均线空排                          14      4     100.0%*   ★★★
+  [进化]CCI中性+上升趋势+均线多排                           47      3     100.0%*   ★★★
+  [进化]CCI中性+均线多排                                62      3     100.0%*   ★★★
+  [进化]CCI中性+均线多排+布林带内                           62      3     100.0%*   ★★★
+  [进化]CCI超买+均线空排                                22     10     100.0%    ★★★
+  [进化]CCI上穿100                                  17      2     100.0%*   ★★★
+  [进化]RSI超卖+正常量                                  9      4     100.0%*   ★★★
+  (* 测试样本 N<5，胜率仅供参考)
+
+  减仓/卖出信号 (Top 2)
+  形态                                            触发    测试N      胜率(测试)   评级
+  ------------------------------------------ -----  -----  ----------   ----
+  [进化]缩量+下降趋势+均线空排                              18      6      66.7%    ★★★
+  下降趋势确认                                       105     33      60.6%    ★★
+  (* 测试样本 N<5，胜率仅供参考)
+
+  【SOXL】  236 条规则 · 历史触发 13799 次
+--------------------------------------------------------------------
+  买入信号 (Top 8)
+  形态                                            触发    测试N      胜率(测试)   评级
+  ------------------------------------------ -----  -----  ----------   ----
+  [进化]RSI超买+缩量                                  20     11     100.0%    ★★★
+  [进化]RSI超买+缩量+上升趋势                             20     11     100.0%    ★★★
+  [进化]RSI超买+缩量+均线多排                             17      8     100.0%    ★★★
+  [进化]RSI超买+缩量+52周新高                            18      9     100.0%    ★★★
+  [进化]RSI超买+缩量+布林带内                             18      9     100.0%    ★★★
+  [进化]RSI超买+缩量+CCI超买                            18     10     100.0%    ★★★
+  [进化]RSI超买+布林上轨突破                              10      3     100.0%*   ★★★
+  [进化]RSI超买+CCI超买+布林上轨突破                        10      3     100.0%*   ★★★
+  (* 测试样本 N<5，胜率仅供参考)
+
+  减仓/卖出信号 (Top 8)
+  形态                                            触发    测试N      胜率(测试)   评级
+  ------------------------------------------ -----  -----  ----------   ----
+  [进化]CCI下穿-100                                  8      3      66.7%*   ★★★
+  [进化]RSI中性+CCI下穿-100                            8      3      66.7%*   ★★★
+  [进化]CCI超卖+CCI下穿-100                            8      3      66.7%*   ★★★
+  [进化]下降趋势+CCI下穿-100                             8      3      66.7%*   ★★★
+  [进化]均线空排+CCI下穿-100                             8      3      66.7%*   ★★★
+  [进化]RSI中性+CCI超卖+CCI下穿-100                      8      3      66.7%*   ★★★
+  [进化]RSI中性+下降趋势+CCI下穿-100                       8      3      66.7%*   ★★★
+  [进化]RSI中性+均线空排+CCI下穿-100                       8      3      66.7%*   ★★★
+  (* 测试样本 N<5，胜率仅供参考)
+
+  【GLD】  121 条规则 · 历史触发 5515 次
+--------------------------------------------------------------------
+  买入信号 (Top 8)
+  形态                                            触发    测试N      胜率(测试)   评级
+  ------------------------------------------ -----  -----  ----------   ----
+  [进化]正常量+CCI超卖                                 13      7     100.0%    ★★★
+  [进化]RSI中性+正常量+CCI超卖                           11      5     100.0%    ★★★
+  [进化]正常量+CCI超卖+下降趋势                            13      7     100.0%    ★★★
+  [进化]正常量+CCI超卖+均线空排                            12      7     100.0%    ★★★
+  [进化]正常量+CCI超卖+布林带内                             9      4     100.0%*   ★★★
+  [进化]均线金叉                                      10      2     100.0%*   ★★★
+  [进化]SAR转多                                     10      2     100.0%*   ★★★
+  [进化]RSI中性+均线金叉                                10      2     100.0%*   ★★★
+  (* 测试样本 N<5，胜率仅供参考)
+
+  减仓/卖出信号 (Top 8)
+  形态                                            触发    测试N      胜率(测试)   评级
+  ------------------------------------------ -----  -----  ----------   ----
+  [进化]缩量+CCI超买                                  11      2     100.0%*   ★★★
+  [进化]缩量+CCI超买+上升趋势                             11      2     100.0%*   ★★★
+  [进化]缩量+CCI超买+布林带内                             10      2     100.0%*   ★★★
+  [进化]RSI中性+缩量+CCI超买                             9      2     100.0%*   ★★★
+  [进化]RSI中性+均线多排+CCI上穿100                       12      2     100.0%*   ★★★
+  [进化]均线多排+CCI上穿100+布林带内                        12      2     100.0%*   ★★★
+  [进化]均线多排+CCI上穿100                             14      2     100.0%*   ★★★
+  [进化]CCI超买+均线多排+CCI上穿100                       14      2     100.0%*   ★★★
+  (* 测试样本 N<5，胜率仅供参考)
+
+====================================================================
+  ★★★ 测试胜率≥65%  ★★ ≥58%  ★ ≥52%
+  数据来源: moomoo OpenD 日K线（前复权）· 80/20 拆分回测
+====================================================================
+2026-05-13 01:42:18 +==========================================================================+
+|  今日信号实况  |  2026-05-13 01:42                                             |
++==========================================================================+
+
+  【TQQQ】 $71.84  (-6.65%)  距52周高点 -7.13%
+  --------------------------------------------------------------------------
+  指标快照:
+    RSI(14)= 73.8 [超买]    CCI(20)=  189 [超买]
+    BB(20,2σ): %B=1.07 [破上轨]  上轨$74.61/下轨$49.17
+    PSAR: 多头持续(SAR在价下方)    量比=0.74[缩量]    MA: 多排(MA20=61.89/MA50=52.32)
+
+  今日触发规则 (测试胜率≥55% + 样本N≥3):
+    [买入信号]
+      ▲ [进化]RSI超买+均线多排                                 胜率 100.0% (N=3)
+      ▲ [进化]RSI超买+布林上轨突破                               胜率 100.0% (N=3)
+      ▲ [进化]RSI超买+CCI超买+均线多排                           胜率 100.0% (N=3)
+      ▲ [进化]RSI超买+CCI超买+布林上轨突破                         胜率 100.0% (N=3)
+      ▲ [进化]RSI超买+上升趋势+均线多排                            胜率 100.0% (N=3)
+  净信号: 5多 vs 0空  →  偏多：可关注买入
+
+  【SOXL】 $151.19  (-20.60%)  距52周高点 -20.96%
+  --------------------------------------------------------------------------
+  指标快照:
+    RSI(14)= 65.1 [中性]    CCI(20)=  174 [超买]
+    BB(20,2σ): %B=1.04 [破上轨]  上轨$172.05/下轨$63.00
+    PSAR: 多头持续(SAR在价下方)    量比=0.87[正常]    MA: 多排(MA20=117.53/MA50=80.08)
+
+  今日触发规则 (测试胜率≥55% + 样本N≥3):
+    [买入信号]
+      ▲ [进化]CCI超买                                      胜率  90.0% (N=20)
+      ▲ [进化]CCI超买+上升趋势                                 胜率  90.0% (N=20)
+      ▲ 强趋势+健康动能                                       胜率  85.7% (N=7)
+      ▲ [进化]CCI超买+均线多排                                 胜率  85.7% (N=14)
+      ▲ [进化]CCI超买+上升趋势+均线多排                            胜率  85.7% (N=14)
+    [减仓信号]
+      ▼ [进化]均线多排+布林上轨突破                                胜率  66.7% (N=3)
+      ▼ [进化]CCI超买+均线多排+布林上轨突破                          胜率  66.7% (N=3)
+      ▼ [进化]上升趋势+均线多排+布林上轨突破                           胜率  66.7% (N=3)
+  净信号: 5多 vs 3空  →  偏多：可关注买入
+
+  【GLD】 $428.66  (-1.38%)  距52周高点 -15.90%
+  --------------------------------------------------------------------------
+  指标快照:
+    RSI(14)= 49.3 [中性]    CCI(20)=   23 [中性]
+    BB(20,2σ): %B=0.57 [带内]  上轨$449.41/下轨$412.95
+    PSAR: 多头持续(SAR在价下方)    量比=0.49[缩量]    MA: 空排(MA20=431.18/MA50=439.13)
+
+  今日触发规则 (测试胜率≥55% + 样本N≥3):
+    [买入信号]
+      ▲ [进化]缩量+CCI中性+下降趋势                              胜率  80.0% (N=10)
+      ▲ [进化]CCI中性+下降趋势+均线空排                            胜率  78.6% (N=14)
+      ▲ [进化]下降趋势+均线空排                                  胜率  78.3% (N=23)
+      ▲ [进化]下降趋势+均线空排+布林带内                             胜率  76.5% (N=17)
+      ▲ [进化]缩量+下降趋势                                    胜率  72.7% (N=11)
+  净信号: 5多 vs 0空  →  偏多：可关注买入
+
+============================================================================
+  说明: 规则由进化引擎从历史日K中挖掘；触发≠保证。结合共振+宏观综合判断。
+============================================================================
+2026-05-13 01:42:19 +==================================================================+
+|  重大事件日历  |  2026-05-13 01:42                                     |
++==================================================================+
+
+  [今日事件]
+  [!] 2026-05-13  CPI Release               已落地 [Yahoo]  月增 +0.64%
+
+  [待发布]  未来 45 天
+  日期           事件                       距今
+  ------------ ------------------------ --------
+  [ ] 2026-05-28  NVDA Earnings (est)       15天后 ★
+  [ ] 2026-05-29  PCE Release               16天后 ★
+  [ ] 2026-06-05  NFP Release               23天后 ★
+  [ ] 2026-06-09  FOMC Decision             27天后 ★
+  [ ] 2026-06-10  CPI Release               28天后 ★
+  [ ] 2026-06-26  PCE Release               44天后 ★
+
+====================================================================
+  ★ = 高影响事件  [+] = 已落地  [!] = 今日  [ ] = 待发布
+  数据来源: FRED (CPI/NFP/FOMC/PCE) · Yahoo Finance (财报)
+====================================================================
+2026-05-13 01:50:55 ================================================================
+2026-05-13 01:50:55 Trading Agents 启动（日K交易者模式）
+2026-05-13 01:50:55   ETF 标的 : ['US.TQQQ', 'US.SOXL']
+2026-05-13 01:50:55   黄金标的 : US.GLD
+2026-05-13 01:50:55   运行窗口 : 09:20 / 12:00 / 15:45 ET（每天3次）
+2026-05-13 01:50:55   报告时间 : 开盘后 + 收盘后（ET 9:30 / 16:00）
+2026-05-13 01:50:55   60分钟K  : 可操作信号时自动附加入场参考
+2026-05-13 01:50:55 ================================================================
+2026-05-13 01:50:55 启动扫描：信号 + 规则进化 + 胜率排行...
+2026-05-13 01:50:57   [宏观] VIX:18.65999984741211  F&G:None  T10Y2Y:0.47  FEDFUNDS:3.64
+2026-05-13 01:50:59 【TQQQ】价格:71.71  RSI:73.5  量比:0.75  趋势:up
+2026-05-13 01:50:59   事件: NVDA Earnings (est) (2026-05-28)（15天后）
+2026-05-13 01:50:59   ⚡ 突发新闻
+2026-05-13 01:50:59   信号: ⬜ 持仓观望  置信度:6/10  依据:突发新闻  行情:中性  [rules]
+2026-05-13 01:50:59   共振: 多头(2) vs 空头(3)  →  弱空头共振 ▼
+2026-05-13 01:50:59     [多] 价格站上MA20(价格71.71 > MA20=62.94)
+2026-05-13 01:50:59     [多] 均线多排(MA20=62.94 > MA50=52.76)
+2026-05-13 01:50:59     [空] RSI超买(RSI=74，正常区间40-60，>70为超买)
+2026-05-13 01:50:59     [空] CCI超买(CCI=126，中性区间-100~+100，当前高于+100)
+2026-05-13 01:50:59     [空] 当日暴跌(-6.8%，<-5%，恐慌信号，历史规则不适用)
+2026-05-13 01:50:59   📰 Stock Market Today: Nasdaq Tumbles On $100 Oil, Rising Inflation; Space Name Dives (Live Coverage)
+2026-05-13 01:50:59      🔗 https://finance.yahoo.com/m/05d937e7-3189-3e30-a046-88b8b65cbef4/stock-market-today%3A-nasdaq.html?.tsrc=rss
+2026-05-13 01:50:59   📰 Chip Stocks Have Been Crushing Software. Here’s How to Play Both.
+2026-05-13 01:50:59      🔗 https://finance.yahoo.com/m/a86728e6-08ba-3f7e-80ca-4a119f44b1d5/chip-stocks-have-been.html?.tsrc=rss
+2026-05-13 01:50:59 
+2026-05-13 01:50:59 【SOXL】价格:151.99  RSI:65.4  量比:0.9  趋势:up
+2026-05-13 01:50:59   事件: NVDA Earnings (est) (2026-05-28)（15天后）
+2026-05-13 01:50:59   ⚡ 突发新闻
+2026-05-13 01:50:59   信号: ⬜ 持仓观望  置信度:6/10  依据:突发新闻  行情:中性  [rules]
+2026-05-13 01:50:59   共振: 多头(2) vs 空头(2)  →  多空均衡 ─
+2026-05-13 01:50:59     [多] 价格站上MA20(价格151.99 > MA20=121.10)
+2026-05-13 01:50:59     [多] 均线多排(MA20=121.10 > MA50=81.86)
+2026-05-13 01:50:59     [空] CCI超买(CCI=101，中性区间-100~+100，当前高于+100)
+2026-05-13 01:50:59     [空] 当日暴跌(-20.2%，<-5%，恐慌信号，历史规则不适用)
+2026-05-13 01:50:59   📰 Stock Market Today: Nasdaq Tumbles On $100 Oil, Rising Inflation; Space Name Dives (Live Coverage)
+2026-05-13 01:50:59      🔗 https://finance.yahoo.com/m/05d937e7-3189-3e30-a046-88b8b65cbef4/stock-market-today%3A-nasdaq.html?.tsrc=rss
+2026-05-13 01:50:59   📰 Chip Stocks Have Been Crushing Software. Here’s How to Play Both.
+2026-05-13 01:50:59      🔗 https://finance.yahoo.com/m/a86728e6-08ba-3f7e-80ca-4a119f44b1d5/chip-stocks-have-been.html?.tsrc=rss
+2026-05-13 01:50:59 
+2026-05-13 01:51:00 【GLD】价格:428.83  RSI:49.4  量比:0.5  趋势:down
+2026-05-13 01:51:00   事件: NVDA Earnings (est) (2026-05-28)（15天后）  黄金偏向:mixed
+2026-05-13 01:51:00   ⚡ 突发新闻  黄金偏向:mixed
+2026-05-13 01:51:00   信号: ⬜ 持仓观望  置信度:6/10  依据:突发新闻，等待方向确认  行情:中性  [rules]
+2026-05-13 01:51:00   共振: 多头(0) vs 空头(2)  →  空头共振 ▼▼
+2026-05-13 01:51:00     [空] 价格跌破MA20(价格428.83 < MA20=430.85)
+2026-05-13 01:51:00     [空] 均线空排(MA20=430.85 < MA50=438.03)
+2026-05-13 01:51:00   📰 Gold Trading Lower as USD and Yields Rise as U.S. Inflation Surged Last Month
+2026-05-13 01:51:00      🔗 https://finance.yahoo.com/markets/commodities/articles/gold-trading-lower-usd-yields-132340634.html?.tsrc=rss
+2026-05-13 01:51:00   📰 Exchange-Traded Funds, Equity Futures Fall Pre-Bell Tuesday Amid Consumer Inflation Report Release
+2026-05-13 01:51:00      🔗 https://finance.yahoo.com/markets/stocks/articles/exchange-traded-funds-equity-futures-124800218.html?.tsrc=rss
+2026-05-13 01:51:00 
+2026-05-13 01:51:00 
+================================================================
+2026-05-13 01:51:00 生成open报告...
+2026-05-13 01:51:03 +================================================================+
+|  📊 美股市场综合报告  |  开盘报告                                           |
++================================================================+
+  生成时间: 2026-05-12 12:51 ET
+
+【一、核心标的行情】
+----------------------------------------------------------------
+  标的         名称               价格        涨跌     量比
+  ---------- ---------- --------  --------  -----
+  TQQQ       3x纳指         $71.72   ▼ 6.81%   0.79
+  SOXL       3x半导体       $152.00   ▼20.18%   0.98
+  GLD        黄金ETF       $428.83   ▼ 1.34%   0.54
+  QQQ        纳斯达克100     $697.18   ▼ 2.26%   0.62
+  SPY        标普500       $732.07   ▼ 0.98%   0.47
+
+【二、市场情绪】
+----------------------------------------------------------------
+  VIX 恐慌指数     18.66   → 平静
+  CNN 贪婪指数   获取失败
+  比特币 BTC     $79,830  ▼ 2.32%
+
+【三、宏观指标】
+----------------------------------------------------------------
+  10Y美债收益率  4.45%  ▲ 0.93%
+  解读: 偏高，压制高估值股⚠️
+  美元指数 DXY   98.4  ▲ 0.43%
+  WTI 原油       $101.8  ▲ 3.85%
+
+  -- FRED 宏观数据 --
+  10Y-2Y利差      +0.47%  趋于平坦
+  盈亏平衡通胀率  2.47%  通胀预期中性
+  联邦基金利率    3.64%
+
+【四、近期重大事件】
+----------------------------------------------------------------
+  ⚡ 最近事件: NVDA Earnings (est) (2026-05-28)（15天后）
+  风险等级: HIGH  ← 突发新闻已触发
+  ⚡  0天后  CPI Release (2026-05-13)
+  📋 15天后  NVDA Earnings (est) (2026-05-28)
+
+【五、风险提示】
+----------------------------------------------------------------
+  ⚠️ 10Y美债 4.45% 处于高位，持续压制成长股估值
+  ⚠️ RSS检测到突发新闻，请核实是否影响持仓
+
+==================================================================
+  数据来源: moomoo OpenD + Yahoo Finance + CNN Money
+  生成时间: 2026-05-12 12:51 ET  |  仅供参考，不构成投资建议
+==================================================================
+2026-05-13 01:51:03 报告已保存: F:\fsi-skills\agents\signals\report_20260512_1251.txt
+2026-05-13 01:51:11   [TQQQ] 规则进化完成: 737 条规则
+2026-05-13 01:51:19   [SOXL] 规则进化完成: 918 条规则
+2026-05-13 01:51:27   [GLD] 规则进化完成: 422 条规则
+2026-05-13 01:51:28 +==================================================================+
+|  技术形态胜率排行  |  2026-05-13 01:51                                   |
++==================================================================+
+
+  【TQQQ】  211 条规则 · 历史触发 9838 次
+--------------------------------------------------------------------
+  买入信号 (Top 8)
+  形态                                            触发    测试N      胜率(测试)   评级
+  ------------------------------------------ -----  -----  ----------   ----
+  [进化]正常量+CCI中性+均线多排                            37      3     100.0%*   ★★★
+  [进化]RSI中性+CCI超买+均线空排                          14      4     100.0%*   ★★★
+  [进化]CCI中性+上升趋势+均线多排                           47      3     100.0%*   ★★★
+  [进化]CCI中性+均线多排                                62      3     100.0%*   ★★★
+  [进化]CCI中性+均线多排+布林带内                           62      3     100.0%*   ★★★
+  [进化]CCI超买+均线空排                                22     10     100.0%    ★★★
+  [进化]CCI上穿100                                  17      2     100.0%*   ★★★
+  [进化]RSI超卖+正常量                                  9      4     100.0%*   ★★★
+  (* 测试样本 N<5，胜率仅供参考)
+
+  减仓/卖出信号 (Top 2)
+  形态                                            触发    测试N      胜率(测试)   评级
+  ------------------------------------------ -----  -----  ----------   ----
+  [进化]缩量+下降趋势+均线空排                              18      6      66.7%    ★★★
+  下降趋势确认                                       105     33      60.6%    ★★
+  (* 测试样本 N<5，胜率仅供参考)
+
+  【SOXL】  236 条规则 · 历史触发 13799 次
+--------------------------------------------------------------------
+  买入信号 (Top 8)
+  形态                                            触发    测试N      胜率(测试)   评级
+  ------------------------------------------ -----  -----  ----------   ----
+  [进化]RSI超买+缩量                                  20     11     100.0%    ★★★
+  [进化]RSI超买+缩量+上升趋势                             20     11     100.0%    ★★★
+  [进化]RSI超买+缩量+均线多排                             17      8     100.0%    ★★★
+  [进化]RSI超买+缩量+52周新高                            18      9     100.0%    ★★★
+  [进化]RSI超买+缩量+布林带内                             18      9     100.0%    ★★★
+  [进化]RSI超买+缩量+CCI超买                            18     10     100.0%    ★★★
+  [进化]RSI超买+布林上轨突破                              10      3     100.0%*   ★★★
+  [进化]RSI超买+CCI超买+布林上轨突破                        10      3     100.0%*   ★★★
+  (* 测试样本 N<5，胜率仅供参考)
+
+  减仓/卖出信号 (Top 8)
+  形态                                            触发    测试N      胜率(测试)   评级
+  ------------------------------------------ -----  -----  ----------   ----
+  [进化]CCI下穿-100                                  8      3      66.7%*   ★★★
+  [进化]RSI中性+CCI下穿-100                            8      3      66.7%*   ★★★
+  [进化]CCI超卖+CCI下穿-100                            8      3      66.7%*   ★★★
+  [进化]下降趋势+CCI下穿-100                             8      3      66.7%*   ★★★
+  [进化]均线空排+CCI下穿-100                             8      3      66.7%*   ★★★
+  [进化]RSI中性+CCI超卖+CCI下穿-100                      8      3      66.7%*   ★★★
+  [进化]RSI中性+下降趋势+CCI下穿-100                       8      3      66.7%*   ★★★
+  [进化]RSI中性+均线空排+CCI下穿-100                       8      3      66.7%*   ★★★
+  (* 测试样本 N<5，胜率仅供参考)
+
+  【GLD】  121 条规则 · 历史触发 5515 次
+--------------------------------------------------------------------
+  买入信号 (Top 8)
+  形态                                            触发    测试N      胜率(测试)   评级
+  ------------------------------------------ -----  -----  ----------   ----
+  [进化]正常量+CCI超卖                                 13      7     100.0%    ★★★
+  [进化]RSI中性+正常量+CCI超卖                           11      5     100.0%    ★★★
+  [进化]正常量+CCI超卖+下降趋势                            13      7     100.0%    ★★★
+  [进化]正常量+CCI超卖+均线空排                            12      7     100.0%    ★★★
+  [进化]正常量+CCI超卖+布林带内                             9      4     100.0%*   ★★★
+  [进化]均线金叉                                      10      2     100.0%*   ★★★
+  [进化]SAR转多                                     10      2     100.0%*   ★★★
+  [进化]RSI中性+均线金叉                                10      2     100.0%*   ★★★
+  (* 测试样本 N<5，胜率仅供参考)
+
+  减仓/卖出信号 (Top 8)
+  形态                                            触发    测试N      胜率(测试)   评级
+  ------------------------------------------ -----  -----  ----------   ----
+  [进化]缩量+CCI超买                                  11      2     100.0%*   ★★★
+  [进化]缩量+CCI超买+上升趋势                             11      2     100.0%*   ★★★
+  [进化]缩量+CCI超买+布林带内                             10      2     100.0%*   ★★★
+  [进化]RSI中性+缩量+CCI超买                             9      2     100.0%*   ★★★
+  [进化]RSI中性+均线多排+CCI上穿100                       12      2     100.0%*   ★★★
+  [进化]均线多排+CCI上穿100+布林带内                        12      2     100.0%*   ★★★
+  [进化]均线多排+CCI上穿100                             14      2     100.0%*   ★★★
+  [进化]CCI超买+均线多排+CCI上穿100                       14      2     100.0%*   ★★★
+  (* 测试样本 N<5，胜率仅供参考)
+
+====================================================================
+  ★★★ 测试胜率≥65%  ★★ ≥58%  ★ ≥52%
+  数据来源: moomoo OpenD 日K线（前复权）· 80/20 拆分回测
+====================================================================
+2026-05-13 01:51:28 +==========================================================================+
+|  今日信号实况  |  2026-05-13 01:51                                             |
++==========================================================================+
+
+  【TQQQ】 $71.72  (-6.82%)  ⚠⚠ 暴跌(-5%以上)  距52周高点 -7.30%
+  --------------------------------------------------------------------------
+  指标快照:
+    RSI(14)= 73.5 [超买]    CCI(20)=  126 [超买]
+    BB(20,2σ): %B=0.86 [带内]  上轨$75.23/下轨$50.66
+    PSAR: 多头持续(SAR在价下方)    量比=0.75[缩量]    MA: 多排(MA20=62.94/MA50=52.76)
+
+  今日触发规则 (测试胜率≥55% + 样本N≥3):
+    (无高胜率规则触发，参考共振和决策信号)
+  (当日-6.8%下跌，已屏蔽 95 条买入信号——历史规则未见此情境)
+
+  【SOXL】 $151.94  (-20.21%)  ⚠⚠ 暴跌(-5%以上)  距52周高点 -20.57%
+  --------------------------------------------------------------------------
+  指标快照:
+    RSI(14)= 65.4 [中性]    CCI(20)=  101 [超买]
+    BB(20,2σ): %B=0.79 [带内]  上轨$174.77/下轨$67.42
+    PSAR: 多头持续(SAR在价下方)    量比=0.90[正常]    MA: 多排(MA20=121.10/MA50=81.86)
+
+  今日触发规则 (测试胜率≥55% + 样本N≥3):
+    (无高胜率规则触发，参考共振和决策信号)
+  (当日-20.2%下跌，已屏蔽 133 条买入信号——历史规则未见此情境)
+
+  【GLD】 $428.81  (-1.34%)  距52周高点 -15.87%
+  --------------------------------------------------------------------------
+  指标快照:
+    RSI(14)= 49.4 [中性]    CCI(20)=  -23 [中性]
+    BB(20,2σ): %B=0.44 [带内]  上轨$449.00/下轨$412.70
+    PSAR: 多头持续(SAR在价下方)    量比=0.50[缩量]    MA: 空排(MA20=430.85/MA50=438.03)
+
+  今日触发规则 (测试胜率≥55% + 样本N≥3):
+    [买入信号]
+      ▲ [进化]缩量+CCI中性+下降趋势                              胜率  80.0% (N=10)
+      ▲ [进化]CCI中性+下降趋势+均线空排                            胜率  78.6% (N=14)
+      ▲ [进化]下降趋势+均线空排                                  胜率  78.3% (N=23)
+      ▲ [进化]下降趋势+均线空排+布林带内                             胜率  76.5% (N=17)
+      ▲ [进化]缩量+下降趋势                                    胜率  72.7% (N=11)
+  净信号: 5多 vs 0空  →  偏多：可关注买入
+
+============================================================================
+  说明: 规则由进化引擎从历史日K中挖掘；触发≠保证。结合共振+宏观综合判断。
+============================================================================
+2026-05-13 01:51:29 +==================================================================+
+|  重大事件日历  |  2026-05-13 01:51                                     |
++==================================================================+
+
+  [今日事件]
+  [!] 2026-05-13  CPI Release               已落地 [Yahoo]  月增 +0.64%
+
+  [待发布]  未来 45 天
+  日期           事件                       距今
+  ------------ ------------------------ --------
+  [ ] 2026-05-28  NVDA Earnings (est)       15天后 ★
+  [ ] 2026-05-29  PCE Release               16天后 ★
+  [ ] 2026-06-05  NFP Release               23天后 ★
+  [ ] 2026-06-09  FOMC Decision             27天后 ★
+  [ ] 2026-06-10  CPI Release               28天后 ★
+  [ ] 2026-06-26  PCE Release               44天后 ★
+
+====================================================================
+  ★ = 高影响事件  [+] = 已落地  [!] = 今日  [ ] = 待发布
+  数据来源: FRED (CPI/NFP/FOMC/PCE) · Yahoo Finance (财报)
+====================================================================
+2026-05-13 04:51:29 
+================================================================
+2026-05-13 04:51:29 [收盘前确认] 开始运行...
+2026-05-13 04:51:31   [宏观] VIX:17.989999771118164  F&G:None  T10Y2Y:0.47  FEDFUNDS:3.64
+2026-05-13 04:51:33 【TQQQ】价格:74.93  RSI:82.2  量比:1.1  趋势:up
+2026-05-13 04:51:33   事件: NVDA Earnings (est) (2026-05-28)（15天后）
+2026-05-13 04:51:33   ⚡ 突发新闻
+2026-05-13 04:51:33   信号: ⬜ 持仓观望  置信度:6/10  依据:突发新闻  行情:牛市延续  [rules]
+2026-05-13 04:51:33   共振: 多头(2) vs 空头(3)  →  弱空头共振 ▼
+2026-05-13 04:51:33     [多] 价格站上MA20(价格74.93 > MA20=63.10)
+2026-05-13 04:51:33     [多] 均线多排(MA20=63.10 > MA50=52.83)
+2026-05-13 04:51:33     [空] RSI超买(RSI=82，正常区间40-60，>70为超买)
+2026-05-13 04:51:33     [空] CCI超买(CCI=162，中性区间-100~+100，当前高于+100)
+2026-05-13 04:51:33     [空] 当日下跌(-2.6%，<-2%)
+2026-05-13 04:51:33   📰 Exchange-Traded Funds Lower as US Equities Drop After Midday
+2026-05-13 04:51:33      🔗 https://finance.yahoo.com/markets/stocks/articles/exchange-traded-funds-lower-us-171630730.html?.tsrc=rss
+2026-05-13 04:51:33   📰 Chip Stocks Have Been Crushing Software. Here’s How to Play Both.
+2026-05-13 04:51:33      🔗 https://finance.yahoo.com/m/a86728e6-08ba-3f7e-80ca-4a119f44b1d5/chip-stocks-have-been.html?.tsrc=rss
+2026-05-13 04:51:33 
+2026-05-13 04:51:33 【SOXL】价格:172.44  RSI:74.1  量比:1.33  趋势:up
+2026-05-13 04:51:33   事件: NVDA Earnings (est) (2026-05-28)（15天后）
+2026-05-13 04:51:33   ⚡ 突发新闻
+2026-05-13 04:51:33   信号: ⬜ 持仓观望  置信度:6/10  依据:突发新闻  行情:牛市延续  [rules]
+2026-05-13 04:51:33   共振: 多头(3) vs 空头(3)  →  多空均衡 ─
+2026-05-13 04:51:33     [多] 价格站上MA20(价格172.44 > MA20=122.12)
+2026-05-13 04:51:33     [多] 均线多排(MA20=122.12 > MA50=82.27)
+2026-05-13 04:51:33     [多] 放量上涨(量比=1.33，>1.5为放量，价量齐升)
+2026-05-13 04:51:33     [空] RSI超买(RSI=74，正常区间40-60，>70为超买)
+2026-05-13 04:51:33     [空] CCI超买(CCI=154，中性区间-100~+100，当前高于+100)
+2026-05-13 04:51:33     [空] 当日暴跌(-9.4%，<-5%，恐慌信号，历史规则不适用)
+2026-05-13 04:51:33   📰 Exchange-Traded Funds Lower as US Equities Drop After Midday
+2026-05-13 04:51:33      🔗 https://finance.yahoo.com/markets/stocks/articles/exchange-traded-funds-lower-us-171630730.html?.tsrc=rss
+2026-05-13 04:51:33   📰 Chip Stocks Have Been Crushing Software. Here’s How to Play Both.
+2026-05-13 04:51:33      🔗 https://finance.yahoo.com/m/a86728e6-08ba-3f7e-80ca-4a119f44b1d5/chip-stocks-have-been.html?.tsrc=rss
+2026-05-13 04:51:33 
+2026-05-13 04:51:34 【GLD】价格:432.52  RSI:52.3  量比:0.87  趋势:up
+2026-05-13 04:51:34   事件: NVDA Earnings (est) (2026-05-28)（15天后）  黄金偏向:mixed
+2026-05-13 04:51:34   ⚡ 突发新闻  黄金偏向:mixed
+2026-05-13 04:51:34   信号: ⬜ 持仓观望  置信度:6/10  依据:突发新闻，等待方向确认  行情:中性  [rules]
+2026-05-13 04:51:34   共振: 多头(1) vs 空头(1)  →  多空均衡 ─
+2026-05-13 04:51:34     [多] 价格站上MA20(价格432.52 > MA20=431.04)
+2026-05-13 04:51:34     [空] 均线空排(MA20=431.04 < MA50=438.10)
+2026-05-13 04:51:34   📰 Update: Gold Trading Lower as the Dollar and Yields Rise as U.S. Inflation Surged Last Month
+2026-05-13 04:51:34      🔗 https://finance.yahoo.com/markets/commodities/articles/gold-trading-lower-dollar-yields-180012717.html?.tsrc=rss
+2026-05-13 04:51:34   📰 Gold Trading Lower as USD and Yields Rise as U.S. Inflation Surged Last Month
+2026-05-13 04:51:34      🔗 https://finance.yahoo.com/markets/commodities/articles/gold-trading-lower-usd-yields-132340634.html?.tsrc=rss
+2026-05-13 04:51:34 

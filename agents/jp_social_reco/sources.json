@@ -1,0 +1,53 @@
+{
+  "sources": [
+    {
+      "creator": "higedura24",
+      "kind": "youtube",
+      "url": "https://www.youtube.com/@higedura24",
+      "weight": 1.0,
+      "enabled": true,
+      "note": "YouTube channel. Transcript adapter should write items with creator=higedura24."
+    },
+    {
+      "creator": "SHO1112",
+      "kind": "youtube",
+      "url": "https://www.youtube.com/@SHO1112",
+      "weight": 1.0,
+      "enabled": true,
+      "note": "YouTube channel. Transcript adapter should write items with creator=SHO1112."
+    },
+    {
+      "creator": "LA_Banker",
+      "kind": "youtube",
+      "url": "https://www.youtube.com/@LA_Banker",
+      "weight": 1.0,
+      "enabled": true,
+      "note": "YouTube channel. Transcript adapter should write items with creator=LA_Banker."
+    },
+    {
+      "creator": "NaNaShuoMeiGu",
+      "kind": "youtube",
+      "url": "https://www.youtube.com/@NaNaShuoMeiGu",
+      "weight": 1.0,
+      "enabled": true,
+      "note": "YouTube channel. Transcript adapter should write items with creator=NaNaShuoMeiGu."
+    },
+    {
+      "creator": "RhinoFinance",
+      "kind": "youtube",
+      "url": "https://www.youtube.com/@RhinoFinance",
+      "weight": 1.0,
+      "enabled": true,
+      "note": "YouTube channel. Transcript adapter should write items with creator=RhinoFinance."
+    },
+    {
+      "creator": "statementdog_official",
+      "kind": "youtube",
+      "url": "https://www.youtube.com/@statementdog_official",
+      "weight": 1.0,
+      "enabled": true,
+      "note": "YouTube channel. Transcript adapter should write items with creator=statementdog_official."
+    }
+  ],
+  "jp_universe": []
+}

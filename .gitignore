@@ -1,0 +1,59 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+.venv/
+*.egg-info/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# 运行时锁 + 临时文件
+*.lock
+.orchestrator.lock
+.snapshot_today.lock
+
+# Logs（每日大文件）
+agents/logs/
+agents/_archive/
+
+# Signals 缓存（运行时数据，可重生）
+agents/signals/option_walls_*.json
+agents/signals/backtest_*.json
+agents/signals/evolved_rules_*.json
+agents/signals/signal_history*.json
+agents/signals/news_cache/
+agents/signals/trump_cache/
+agents/signals/ai_prompt_*.md
+agents/signals/ai_analysis_*.md
+agents/signals/ai_targets_*.json
+agents/signals/snapshot_*.txt
+agents/signals/news_seen.json
+agents/signals/news_parsed_*.json
+agents/signals/manual_moomoo_ai_*.txt
+
+# 账户状态（包含模拟仓位 + 实际 ACC_ID）
+agents/trader_state.json
+agents/universe_state.json
+agents/regime_state.json
+agents/ticker_err.txt
+agents/ticker_out.txt
+agents/overnight_jp_state/
+
+# 备份 zip
+backups/*.zip
+
+# 本地敏感配置（FRED_API_KEY / MOOMOO_ACC_ID 等）— 由 config.py 加载
+agents/secrets.local.json
+.env
+.env.local
+*.secret

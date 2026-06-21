@@ -1,0 +1,125 @@
+{
+  "ts": "2026-06-03T10:45:17.652764",
+  "market": {
+    "ticker": "NVDA",
+    "ts": "2026-06-03 10:45",
+    "price": 222.82,
+    "pct_chg": -0.69,
+    "rsi_14": 52.7,
+    "cci_20": 58.3,
+    "cci_zone": "neutral",
+    "ma20": 216.68,
+    "ma50": 200.23,
+    "vol_ratio": 1.16,
+    "is_new_52w_high": false,
+    "dist_from_high": -5.8,
+    "trend": "up",
+    "ma_stack": "bull",
+    "rsi_zone": "neutral",
+    "vol_zone": "normal",
+    "pct_chg_zone": "normal",
+    "pre_price": 227.34,
+    "pre_pct": 1.328,
+    "pre_volume": 9014448.0,
+    "pre_date": "2026-06-02",
+    "pre_label": "今日盘前(已结束)",
+    "after_price": 221.7913,
+    "after_pct": -0.461,
+    "after_volume": 11149415.0,
+    "after_date": "2026-06-02",
+    "after_label": "今日盘后(已结束)",
+    "overnight_price": 221.46,
+    "overnight_pct": -0.61,
+    "overnight_volume": 145330.0,
+    "overnight_date": "2026-06-02",
+    "overnight_label": "今晚夜盘(进行中)",
+    "now_et": "2026-06-02 21:45 ET",
+    "prev_session": {
+      "date": "2026-05-29",
+      "open": 214.57,
+      "close": 211.14,
+      "high": 217.86,
+      "low": 211.13,
+      "pct": -1.6
+    },
+    "today_session": {
+      "date": "2026-06-02",
+      "open": 227.18,
+      "current": 222.82,
+      "pct": -1.92,
+      "status": "盘中已收"
+    },
+    "today_not_yet_opened": null,
+    "ma_cross": "death",
+    "rsi_cross": "none",
+    "cci_cross": "none",
+    "bb_pct": 0.668,
+    "bb_zone": "normal",
+    "bb_upper": 234.97,
+    "bb_lower": 198.38,
+    "psar_trend": -1,
+    "psar_signal": "none"
+  },
+  "events": {
+    "ts": "2026-06-03 10:45",
+    "next_event": "NFP Release (2026-06-05)",
+    "next_event_name": "NFP Release",
+    "next_event_date": "2026-06-05",
+    "next_event_impact": "high",
+    "event_verify_src": "",
+    "days_to_event": 2,
+    "breaking_news": false,
+    "top_headlines": [
+      {
+        "title": "Best ETFs for H1 2026: Winners, Losers, and What to Watch",
+        "url": "http://www.etf.com/sections/news/best-etfs-h1-2026-winners-losers-and-what-watch?utm_source=yahoo-finance&utm_medium=rss&utm_campaign=yahoo-finance-rss&.tsrc=rss",
+        "desc": "<p>The first half of 2026 produced dramatic divergence across ETF categories. Energy ETFs surged as much as 96% on Middle East conflict, semiconductor funds gained up to 100%, and South Korean memory chip ETFs became surprise standouts — while crypto sank, long bonds went nowhere, and gold rested after its monster 2025 run. Here's where the money was made and lost through May 2026, and what to watch for the rest of the year.</p>"
+      },
+      {
+        "title": "S&P 500, Nasdaq, Dow Rise To Record Highs As Strong Tech Gains Outpower US-Iran War Uncertainty — MSFT, UBER, MRVL, HPE, MSTR Stocks In Focus",
+        "url": "https://stocktwits.com/news-articles/markets/equity/s-and-p-500-nasdaq-dow-rise-to-record-highs-as-strong-tech-gains-outpower-us-iran-war-uncertainty-msft-uber-mrvl-hpe-mstr-stocks-in-focus/cZ00XX8ReDS?.tsrc=rss",
+        "desc": "President Donald Trump denied reports that communications between the United States and Iran had stalled, calling the claims “fake news.”"
+      }
+    ],
+    "risk_level": "elevated"
+  },
+  "decision": {
+    "action": "HOLD",
+    "confidence": 3,
+    "reason": "no clear signal",
+    "stop_ref": null,
+    "score_breakdown": {
+      "bear_raw": 2,
+      "bull_raw": 2,
+      "quant_bear": 0,
+      "quant_bull": 0
+    },
+    "engine": "rules",
+    "regime": "bull_trending",
+    "quant": {
+      "buy_hits": [],
+      "sell_hits": [],
+      "buy_score": 0,
+      "sell_score": 0,
+      "n_rules": 0,
+      "ts": null
+    },
+    "session": "closed",
+    "confluence": {
+      "bull_signals": [
+        "价格站上MA20(价格222.82 > MA20=216.68)",
+        "均线多排(MA20=216.68 > MA50=200.23)"
+      ],
+      "bear_signals": [
+        "均线死叉(MA5下穿MA20，近3日)"
+      ],
+      "bull_count": 2,
+      "bear_count": 1,
+      "net": 1,
+      "strength": "弱多头共振",
+      "stars": "★"
+    },
+    "m15_context": "[最新15m K线@2026-06-02 20:00:00] 短线无信号",
+    "m15_direction": "neutral"
+  }
+}

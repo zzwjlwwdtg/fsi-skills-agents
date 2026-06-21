@@ -1,0 +1,272 @@
+"""Claude pre-trade gate.
+
+The rule engine still proposes the trade. Claude is only allowed to approve,
+hold, or downgrade the proposed action before paper_trader.execute() can place
+an order.
+"""
+from __future__ import annotations
+
+import json
+import os
+import re
+from copy import deepcopy
+from datetime import datetime
+from pathlib import Path
+from typing import Any
+
+from config import SIGNALS_DIR
+from notifier import logger
+
+
+TRADE_WINDOWS = {"pre-market", "post-open", "midday", "pre-close"}
+ORDER_ACTIONS = {"BUY", "WATCH_BUY", "SELL", "REDUCE"}
+ALLOWED_VERDICTS = {"APPROVE", "HOLD", "CAUTION"}
+WINDOW_CONF_MIN = {
+    "pre-market": 7,
+    "post-open": 6,
+    "midday": 6,
+    "pre-close": 6,
+}
+
+
+def _enabled() -> bool:
+    return os.environ.get("CLAUDE_DECISION_GATE", "0") == "1"
+
+
+def _timeout_sec() -> int:
+    try:
+        return int(os.environ.get("CLAUDE_DECISION_TIMEOUT_SEC", "180"))
+    except ValueError:
+        return 180
+
+
+def _fail_closed() -> bool:
+    return os.environ.get("CLAUDE_DECISION_FAIL_CLOSED", "1") != "0"
+
+
+def _fallback_codex() -> bool:
+    return os.environ.get("CLAUDE_DECISION_FALLBACK_CODEX", "0") == "1"
+
+
+def _clip_text(value: str, limit: int = 600) -> str:
+    value = value.strip()
+    return value if len(value) <= limit else value[:limit] + "..."
+
+
+def _jsonable(value: Any, depth: int = 0) -> Any:
+    if depth > 4:
+        return str(value)
+    if value is None or isinstance(value, (bool, int, float, str)):
+        return value
+    if isinstance(value, dict):
+        out: dict[str, Any] = {}
+        for k, v in list(value.items())[:80]:
+            if str(k).lower() in {"raw", "history", "df", "dataframe"}:
+                continue
+            out[str(k)] = _jsonable(v, depth + 1)
+        return out
+    if isinstance(value, (list, tuple, set)):
+        return [_jsonable(v, depth + 1) for v in list(value)[:20]]
+    try:
+        return float(value)
+    except Exception:
+        return str(value)
+
+
+def _compact_events(events: dict | None) -> dict:
+    src = dict(events or {})
+    headlines = src.get("top_headlines")
+    if isinstance(headlines, list):
+        src["top_headlines"] = [
+            {
+                "title": h.get("title"),
+                "url": h.get("url"),
+                "source": h.get("source"),
+            }
+            for h in headlines
+            if isinstance(h, dict)
+        ][:3]
+    return _jsonable(src)
+
+
+def _prompt(
+    ticker: str,
+    market: dict | None,
+    events: dict | None,
+    decision: dict,
+    macro: dict | None,
+    window: str,
+) -> str:
+    payload = {
+        "timestamp_local": datetime.now().isoformat(timespec="seconds"),
+        "ticker": ticker,
+        "window": window,
+        "market": _jsonable(market or {}),
+        "events": _compact_events(events),
+        "macro": _jsonable(macro or {}),
+        "rule_decision": _jsonable(decision),
+    }
+    data = json.dumps(payload, ensure_ascii=False, indent=2)
+    return f"""You are the final pre-trade risk gate for this local trading system.
+
+Task:
+- Review ONLY the rule_decision below. Do not create a new trade idea.
+- Return APPROVE only if the proposed action is internally consistent, timely,
+  and risk is acceptable for the current window.
+- Return HOLD if data is stale, conflicted, weak, or the proposed order should
+  not be sent.
+- Return CAUTION if the signal is notable but should be recorded as no-order.
+- Be conservative. If unsure, choose HOLD.
+
+Output JSON only, with this schema:
+{{"verdict":"APPROVE|HOLD|CAUTION","confidence":1-10,"reason":"short reason","risk_flags":["..."]}}
+
+Decision packet:
+{data}
+"""
+
+
+def _extract_json(text: str) -> dict | None:
+    if not text:
+        return None
+    text = text.strip()
+    candidates = [text]
+    match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", text, re.S | re.I)
+    if match:
+        candidates.insert(0, match.group(1))
+    match = re.search(r"(\{.*\})", text, re.S)
+    if match:
+        candidates.append(match.group(1))
+    for candidate in candidates:
+        try:
+            parsed = json.loads(candidate)
+            return parsed if isinstance(parsed, dict) else None
+        except json.JSONDecodeError:
+            continue
+    return None
+
+
+def _audit(
+    provider: str,
+    verdict: str,
+    status: str,
+    reason: str,
+    confidence: Any = None,
+    risk_flags: Any = None,
+    prompt_path: str | None = None,
+    raw_path: str | None = None,
+) -> dict:
+    return {
+        "provider": provider,
+        "verdict": verdict,
+        "status": status,
+        "reason": _clip_text(str(reason or ""), 500),
+        "confidence": confidence,
+        "risk_flags": risk_flags if isinstance(risk_flags, list) else [],
+        "prompt_path": prompt_path,
+        "raw_path": raw_path,
+    }
+
+
+def _demote(decision: dict, verdict: str, audit: dict) -> dict:
+    out = deepcopy(decision)
+    original_action = out.get("action")
+    out["action"] = verdict
+    out["demoted_from"] = original_action
+    out["reason"] = f"claude_gate_{verdict.lower()}: {audit.get('reason') or audit.get('status')}"
+    out["claude_gate"] = audit | {"demoted_from": original_action}
+    return out
+
+
+def _fail_decision(decision: dict, status: str, prompt_path: str | None = None) -> dict:
+    audit = _audit(
+        "Claude",
+        "HOLD",
+        status,
+        "Claude gate unavailable; fail-closed to no-order.",
+        prompt_path=prompt_path,
+    )
+    if _fail_closed():
+        return _demote(decision, "HOLD", audit)
+    out = deepcopy(decision)
+    out["claude_gate"] = audit | {"verdict": "BYPASS_FAIL_OPEN"}
+    return out
+
+
+def apply_claude_gate(
+    ticker: str,
+    market: dict | None,
+    events: dict | None,
+    decision: dict,
+    macro: dict | None,
+    window: str | None,
+) -> dict:
+    """Return the final decision after Claude approval, if the gate applies."""
+    if not _enabled():
+        return decision
+    if window not in TRADE_WINDOWS:
+        return decision
+    if (decision or {}).get("action") not in ORDER_ACTIONS:
+        return decision
+    try:
+        conf = int((decision or {}).get("confidence") or 0)
+    except (TypeError, ValueError):
+        conf = 0
+    if conf < WINDOW_CONF_MIN.get(str(window), 6):
+        return decision
+
+    out_dir = Path(SIGNALS_DIR)
+    out_dir.mkdir(exist_ok=True)
+    stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    safe_ticker = ticker.replace(".", "-")
+    prompt_text = _prompt(ticker, market, events, decision, macro, str(window))
+    prompt_path = out_dir / f"claude_gate_prompt_{safe_ticker}_{stamp}.md"
+    raw_path = out_dir / f"claude_gate_raw_{safe_ticker}_{stamp}.txt"
+    prompt_path.write_text(prompt_text, encoding="utf-8")
+
+    try:
+        from ai_prompt import _is_claude_quota_status, query_claude_cli, query_codex_cli
+    except Exception as exc:
+        logger.error(f"[claude-gate] import failed for {ticker}: {exc}")
+        return _fail_decision(decision, f"import_error: {exc}", str(prompt_path))
+
+    provider = "Claude"
+    output, status = query_claude_cli(prompt_text, timeout=_timeout_sec())
+    if not output and _fallback_codex() and _is_claude_quota_status(status):
+        provider = "Codex"
+        output, status = query_codex_cli(prompt_text, timeout=_timeout_sec())
+
+    if not output:
+        logger.warning(f"[claude-gate] {ticker} unavailable: {status}")
+        return _fail_decision(decision, status, str(prompt_path))
+
+    raw_path.write_text(output + "\n", encoding="utf-8")
+    parsed = _extract_json(output)
+    if not parsed:
+        logger.warning(f"[claude-gate] {ticker} invalid JSON; raw={raw_path}")
+        return _fail_decision(decision, "invalid_json", str(prompt_path))
+
+    verdict = str(parsed.get("verdict", "")).upper().strip()
+    if verdict not in ALLOWED_VERDICTS:
+        logger.warning(f"[claude-gate] {ticker} invalid verdict={verdict!r}")
+        return _fail_decision(decision, f"invalid_verdict: {verdict}", str(prompt_path))
+
+    audit = _audit(
+        provider=provider,
+        verdict=verdict,
+        status=status,
+        reason=str(parsed.get("reason") or ""),
+        confidence=parsed.get("confidence"),
+        risk_flags=parsed.get("risk_flags"),
+        prompt_path=str(prompt_path),
+        raw_path=str(raw_path),
+    )
+
+    if verdict == "APPROVE":
+        approved = deepcopy(decision)
+        approved["claude_gate"] = audit
+        logger.info(f"[claude-gate] {ticker} APPROVE: {audit['reason']}")
+        return approved
+
+    logger.info(f"[claude-gate] {ticker} {verdict}: {audit['reason']}")
+    return _demote(decision, verdict, audit)

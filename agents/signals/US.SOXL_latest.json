@@ -1,0 +1,23 @@
+{
+  "ts": "2026-05-12T04:33:56.158100",
+  "market": {
+    "ticker": "US.SOXL",
+    "error": "snapshot: Network interruption."
+  },
+  "events": {
+    "ts": "2026-05-12 04:33",
+    "next_event": "CPI Release (2026-05-13)",
+    "days_to_event": 1,
+    "breaking_news": false,
+    "top_headlines": [],
+    "risk_level": "high"
+  },
+  "decision": {
+    "action": "HOLD",
+    "confidence": 3,
+    "reason": "major event tomorrow",
+    "stop_ref": null,
+    "engine": "rules",
+    "session": "open"
+  }
+}

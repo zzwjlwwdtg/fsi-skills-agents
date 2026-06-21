@@ -1,0 +1,25 @@
+{
+  "ts": "2026-05-12T04:33:56.166296",
+  "market": {
+    "ticker": "US.GLD",
+    "error": "snapshot: Network interruption."
+  },
+  "events": {
+    "ts": "2026-05-12 04:33",
+    "next_event": "CPI Release (2026-05-13)",
+    "days_to_event": 1,
+    "breaking_news": false,
+    "gold_bias": "neutral",
+    "top_headlines": [],
+    "risk_level": "high"
+  },
+  "decision": {
+    "action": "SELL",
+    "confidence": 2,
+    "reason": "RSI overbought",
+    "entry_ref": 0,
+    "stop_ref": null,
+    "engine": "rules",
+    "session": "open"
+  }
+}

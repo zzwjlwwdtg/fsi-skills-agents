@@ -1,0 +1,27 @@
+{
+  "sources": [
+    {
+      "creator": "sample_x_creator",
+      "kind": "x",
+      "url": "https://x.com/example",
+      "weight": 1.0,
+      "enabled": true,
+      "note": "Export or API adapter writes posts into data/inbox/*.jsonl"
+    },
+    {
+      "creator": "sample_youtube_creator",
+      "kind": "youtube",
+      "url": "https://www.youtube.com/@example",
+      "weight": 1.0,
+      "enabled": true,
+      "note": "Transcript adapter writes video text into data/inbox/*.jsonl"
+    }
+  ],
+  "jp_universe": [
+    {
+      "code": "7011",
+      "name": "三菱重工業",
+      "aliases": ["三菱重工", "MHI"]
+    }
+  ]
+}
