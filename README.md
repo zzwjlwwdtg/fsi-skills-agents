@@ -153,6 +153,40 @@ weekly.bat     :: 周末跑一次模块准确率回测，刷 signals/module_accu
 - Claude CLI 调用延迟 30-60s，每天 ≤30 次（额度可控）
 - 不付任何 API key — 全部用 FRED 免费 + yfinance + Claude Code 订阅 CLI
 
+## Changelog
+
+每个 tag 对应的主要变更。详细 diff 见 [GitHub Releases](https://github.com/zzwjlwwdtg/fsi-skills-agents/releases)。
+
+### [v0.2.0](https://github.com/zzwjlwwdtg/fsi-skills-agents/releases/tag/v0.2.0) — 2026-06-22
+
+JP Social Reco 接入 + Block ⑫
+
+- 接入 [`jp_social_reco`](agents/jp_social_reco/) 子系统到主框架（snap.bat / orchestrator / Claude prompt）
+- 新增 `get_jp_social_with_backtest()`：信号 + 创作者历史胜率 + ticker 按 horizon 回测命中
+- 新增 `format_jp_social_banner_enhanced()`：含星标 / thesis / 风险 / 时间维度 / 创作者胜率 / 回测命中
+- Claude prompt 加 **block ⑫** JP 博主推荐，要求 ≥★★★ 标的必须列入早盘可参考清单
+- 星标算法（按 mentions × creators 数）：★★★★★ / ★★★★ / ★★★ / ★★ / ★
+- bug 修复：price_check 字段附加方式 + creator_accuracy 取 creators list
+
+### [v0.1.0](https://github.com/zzwjlwwdtg/fsi-skills-agents/releases/tag/v0.1.0) — 2026-06-21
+
+初始版本
+
+- Regime 单一源（pre-open 算定 + -5% crisis override）
+- 5 标的：TQQQ / SOXL / DRAM / MULL / GLD
+- 进化规则共振 + module accuracy 250d 回测（quant 20d 70-78%）
+- Trump signal CLI 解析（80% hit rate vs trump-code baseline）
+- 黄金宏观（real_rate + DXY + WALCL + FOMC + oil + 10Y）
+- 期权盯盘（Call/Put Wall + Max Pain + GEX + 三巫日 + 关联财报）
+- V 反弹追买（1x WATCH_BUY / 杠杆 LONG_HOLD 分流）
+- 事件分级（CPI/FOMC/NFP critical, PCE/PPI/Retail high, 财报 moderate）
+- Claude CLI 综合解读 + 结构化 JSON 目标价（A 方案）
+- decision_agent 自动算 stop_ref（B 方案）→ paper_trader 挂真实 SELL STOP
+- ticker prefix bug 修复（_scaled_pct 兼容 "SOXL" 和 "US.SOXL"）
+- trump_score 方向不对称（bullish 不加 risk）
+- 7 层 vol-target 下单链
+- Secrets 隔离到 agents/secrets.local.json（gitignore）
+
 ## License
 
 私有项目，未授权不得分发。
