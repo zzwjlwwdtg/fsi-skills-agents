@@ -33,6 +33,9 @@ agents/signals/evolved_rules_*.json
 agents/signals/signal_history*.json
 agents/signals/news_cache/
 agents/signals/trump_cache/
+agents/signals/jp_social_reco/reports/*.pdf
+agents/signals/jp_social_reco/reports/*.payload.json
+agents/signals/jp_social_signal_latest.json
 agents/signals/ai_prompt_*.md
 agents/signals/ai_analysis_*.md
 agents/signals/ai_targets_*.json
