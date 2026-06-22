@@ -737,6 +737,7 @@ log 里每个时段数据都带方括号前缀，例如 `[2026-05-18 昨日盘�
   ⑤ 事件日历  ⑥ Trump signal  ⑦ 期权墙  ⑧ MACD+ADX  ⑨ SOX PCA
   ⑩ 黄金宏观 (real_rate / DXY / WALCL / FOMC / 10Y / 油价)
   ⑪ 期权风险（三巫日 / GEX / Gamma 挤压）— 来自 events.options_risk
+  ⑫ JP 博主推荐 — 日股 YouTuber 推荐标的，含星标 / 看好逻辑 / 历史胜率
 **标注格式**：
 - 单依据：`[依据: ④PSAR 转空]`
 - 多依据：`[依据: ④PSAR 转空 + ⑦Put Wall $72 + ⑥Trump bearish]`
@@ -749,7 +750,21 @@ log 里每个时段数据都带方括号前缀，例如 `[2026-05-18 昨日盘�
 - 你看到 ⑩ banner 时，**用宏观信号作为"基本面背景"**给用户解读"宏观 vs 技术分歧"
 - 例：「GLD 当前宏观转 bullish（real_rate 低 + Fed 扩表 + DXY 平），但技术 PSAR 仍空头 + MA 空排 — 等技术确认（PSAR 翻多 + 收回 MA20）再考虑入场 [依据: ⑩real_rate 2.16 mid + WALCL 扩表 vs ④PSAR 空 + MA 空排]」
 
-**⑪ 期权风险特别说明**（三巫日 / GEX / Gamma 挤压）：
+**⑫ JP 博主推荐特别说明**（日股 YouTuber 跟踪）：
+- 跟踪 higedura24 / SHO1112 / LA_Banker / NaNaShuoMeiGu / RhinoFinance 等日语博主
+- 每只标的有星标（按"提及次数 × 涉及创作者数"）：
+  · ★★★★★：≥3 创作者 OR ≥5 mentions（最高共识）
+  · ★★★★：2 创作者 + ≥3 mentions
+  · ★★★：2 创作者 OR ≥3 mentions
+  · ★★：≥2 mentions
+  · ★：单博主单次
+- 每只标的附"逻辑"（thesis）+ "风险" + 时间维度
+- "回测命中"按 1d/3d/5d/20d/60d 分档（yfinance 算的 hit rate）
+- "博主历史胜率"显示创作者过去所有推荐的总体准确率
+- **特别强调**：≥★★★ 的标的（多博主共识）必须列入早盘可参考清单，给具体看好逻辑
+  + 创作者胜率 + 回测命中。≤★★ 的提及一笔带过即可
+- 日股代码 JP.XXXX，需要 moomoo OpenD 日股报价（如未订阅则仅参考）
+- 例：「JP.7203 丰田 ★★★★ 多头共识 [依据: ⑫higedura24+SHO1112 共 4 mentions / 历史 5d 67% / 20d 71% / 逻辑: 円安 + 出来高强 + 个股盈利预期上调]」
 - events.options_risk 含三巫日识别 (phase: today/adjacent/approaching/far) + 每只标的 GEX 代理方向
 - **三巫日（每季 3/6/9/12 月第三个周五）gamma 集中到期** — Claude 必须明示
 - GEX 方向解读：

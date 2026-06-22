@@ -238,6 +238,20 @@ def _run_report(session_type: str) -> None:
             logger.error(t(f"期权墙分析失败: {exc}",
                            f"オプション・ウォール分析失敗: {exc}"))
 
+        # JP Social Reco — 博主推荐标的（含星标 / 看好逻辑 / 历史胜率）
+        try:
+            from jp_social_reco import (get_jp_social_with_backtest,
+                                          format_jp_social_banner_enhanced)
+            jp_sig = get_jp_social_with_backtest(
+                lookback_hours=168, use_llm=True, verify_opend=False,
+                attach_backtest=True)
+            logger.info("")
+            for line in format_jp_social_banner_enhanced(jp_sig):
+                logger.info(line)
+        except Exception as exc:
+            logger.error(t(f"JP Social Reco 失败: {exc}",
+                           f"JP Social Reco 失敗: {exc}"))
+
         # MACD + ADX 汇总（仅观察，不参与决策）
         try:
             from market_watch import get_market_signal

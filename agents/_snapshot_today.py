@@ -222,6 +222,19 @@ def main() -> int:
             p(f"option_walls ERR: {e}")
         p("")
 
+        # JP Social Reco banner（博主推荐 + 星标 + 看好逻辑 + 历史胜率）
+        try:
+            from jp_social_reco import (get_jp_social_with_backtest,
+                                          format_jp_social_banner_enhanced)
+            jp_sig = get_jp_social_with_backtest(
+                lookback_hours=168, use_llm=True, verify_opend=False,
+                attach_backtest=True)
+            for line in format_jp_social_banner_enhanced(jp_sig):
+                p(line)
+        except Exception as e:
+            p(f"jp_social ERR: {e}")
+        p("")
+
         try:
             ev_all = get_events_signal()
         except Exception as e:
