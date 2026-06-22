@@ -100,24 +100,29 @@ def get_jp_social_with_backtest(*, lookback_hours: int = DEFAULT_LOOKBACK_HOURS,
         return sig
     try:
         from .backtest import (price_moves_for_recommendations,
-                                summarize_creator_accuracy)
-        # 给所有 recs 附加 price_check
-        recs_with_prices = price_moves_for_recommendations(
-            sig["recommendations"])
-        sig["recommendations"] = recs_with_prices
-        # 把 ticker.recommendations 也更新（用 code 匹配）
-        rec_map = {}
-        for r in recs_with_prices:
-            key = (r.get("creator", ""), r.get("code", ""),
-                   r.get("published_at", "")[:10])
-            rec_map[key] = r
+                                summarize_creator_accuracy, _rec_key)
+        # price_moves_for_recommendations 返回 dict[rec_key → enriched_move_dict]
+        # 需要把每个原 rec 附加 price_check 字段，sig["recommendations"] 仍是 list
+        recs_list = sig.get("recommendations") or []
+        price_checks = price_moves_for_recommendations(recs_list)
+        # 给每个 rec 加 price_check 字段
+        for idx, rec in enumerate(recs_list):
+            key = _rec_key(idx, rec)
+            if key in price_checks:
+                rec["price_check"] = price_checks[key]
+        # 同步给 ticker.recommendations 加 price_check（通过 creator+code+date 匹配）
+        rec_lookup = {}
+        for r in recs_list:
+            k = (r.get("creator", ""), r.get("code", ""),
+                 (r.get("published_at") or "")[:10])
+            rec_lookup[k] = r.get("price_check")
         for tk in sig.get("tickers") or []:
             for r in tk.get("recommendations") or []:
                 k = (r.get("creator", ""), r.get("code", ""),
-                     r.get("published_at", "")[:10])
-                if k in rec_map:
-                    r["price_check"] = rec_map[k].get("price_check")
-            # 给 ticker 加聚合 best_horizon_hit（哪个 horizon 最多成功）
+                     (r.get("published_at") or "")[:10])
+                if k in rec_lookup:
+                    r["price_check"] = rec_lookup[k]
+            # ticker 级别聚合 horizon_hit（哪个周期最多成功）
             horizon_hits = {"1d": 0, "3d": 0, "5d": 0, "20d": 0, "60d": 0}
             horizon_total = {"1d": 0, "3d": 0, "5d": 0, "20d": 0, "60d": 0}
             for r in tk.get("recommendations") or []:
@@ -128,9 +133,11 @@ def get_jp_social_with_backtest(*, lookback_hours: int = DEFAULT_LOOKBACK_HOURS,
                         horizon_total[h] += 1
                         if outcome == "success":
                             horizon_hits[h] += 1
-            tk["horizon_hit"] = {h: (horizon_hits[h], horizon_total[h])
+            tk["horizon_hit"] = {h: [horizon_hits[h], horizon_total[h]]
                                   for h in horizon_hits}
-        sig["creator_accuracy"] = summarize_creator_accuracy(recs_with_prices)
+        # summarize_creator_accuracy 返回 {rule, horizons, creators:[...]}, 取 creators list
+        acc_full = summarize_creator_accuracy(recs_list)
+        sig["creator_accuracy"] = acc_full.get("creators", []) if isinstance(acc_full, dict) else acc_full
     except Exception as exc:
         sig["backtest_error"] = str(exc)
         sig["creator_accuracy"] = []

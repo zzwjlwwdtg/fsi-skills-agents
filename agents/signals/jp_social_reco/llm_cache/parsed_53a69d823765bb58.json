@@ -1,0 +1,62 @@
+{
+  "recommendations": [
+    {
+      "code": "5803",
+      "moomoo_code": "JP.5803",
+      "yfinance_code": "5803.T",
+      "company_name": "フジクラ",
+      "side": "watch",
+      "conviction": 4,
+      "horizon": "swing",
+      "thesis": "ストップ高後の急騰銘柄。出来高が落ち着くまで2〜3日様子見、フィボナッチ61.8%戻し（約6400円）が押し目候補として意識される。",
+      "risks": [
+        "急騰直後で過熱感",
+        "3〜4日目の反転下落リスク",
+        "配信者の煽り・ポジショントーク色",
+        "会員制テクニカル勉強会への誘導(PR色)"
+      ],
+      "evidence": "藤倉ストップだけだもんね…フィボナスの61.8%戻しラインってなってくるとここ、えっと、6375、ま、大体6400円ぐらいか",
+      "creator": "SHO1112",
+      "source_type": "youtube_subtitle",
+      "source_url": "https://www.youtube.com/watch?v=Npbgfh_rUj8",
+      "published_at": "2026-06-21T00:00:00Z",
+      "item_id": "Npbgfh_rUj8",
+      "extraction_method": "llm_Claude",
+      "opend_verified": false,
+      "opend_error": "",
+      "last_price": null,
+      "volume": null,
+      "turnover": null,
+      "score": 0
+    },
+    {
+      "code": "1605",
+      "moomoo_code": "JP.1605",
+      "yfinance_code": "1605.T",
+      "company_name": "INPEX",
+      "side": "watch",
+      "conviction": 5,
+      "horizon": "medium",
+      "thesis": "中東停戦合意で原油急落、株価約30%下落。PER11倍/PBR0.79倍のバリュー株、配当利回り3.3%前後で5期連続増配方針、純利益3000億円超の安定収益。押し目買いの試験中。",
+      "risks": [
+        "原油・LNG価格下落の継続",
+        "為替（円高方向）リスク",
+        "配当株人気の下火",
+        "配信者は具体的買値を出していない（コンテンツ誘導）"
+      ],
+      "evidence": "現在株価下がってきておりますのでそこについて触れながら、ま、大体どのくらいで買えば良さそうか試験を述べていきます…原油で言うと56ドル、カスで言うと122円ですね。ま、このラインであれば準利益3000億円のラインを確保しやすい",
+      "creator": "higedura24",
+      "source_type": "youtube_subtitle",
+      "source_url": "https://www.youtube.com/watch?v=u4HwzHzTjfs",
+      "published_at": "2026-06-17T00:00:00Z",
+      "item_id": "u4HwzHzTjfs",
+      "extraction_method": "llm_Claude",
+      "opend_verified": false,
+      "opend_error": "",
+      "last_price": null,
+      "volume": null,
+      "turnover": null,
+      "score": 0
+    }
+  ]
+}
