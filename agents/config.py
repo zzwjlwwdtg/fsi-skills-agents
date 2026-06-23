@@ -85,4 +85,11 @@ SIGNALS_DIR = os.path.join(BASE_DIR, "signals")
 # 按日切割的 log（UTF-8，由 Python 的 FileHandler 直接写，避免 PowerShell 双写导致编码错乱）
 _LOG_DIR = os.path.join(BASE_DIR, "logs")
 os.makedirs(_LOG_DIR, exist_ok=True)
-LOG_PATH = os.path.join(_LOG_DIR, f"run_{_dt.now().strftime('%Y%m%d')}.log")
+
+def get_today_log_path():
+    """返回当前 UTC/本地日期对应的 log 文件路径，跨午夜自动切换。"""
+    return os.path.join(_LOG_DIR, f"run_{_dt.now().strftime('%Y%m%d')}.log")
+
+# 保留 LOG_PATH 作为启动时刻快照，仅用于向后兼容旧代码；
+# 真正写入应使用 get_today_log_path() 或 notifier 里的 _DailyLogHandler
+LOG_PATH = get_today_log_path()

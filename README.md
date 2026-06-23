@@ -157,6 +157,18 @@ weekly.bat     :: 周末跑一次模块准确率回测，刷 signals/module_accu
 
 每个 tag 对应的主要变更。详细 diff 见 [GitHub Releases](https://github.com/zzwjlwwdtg/fsi-skills-agents/releases)。
 
+### [v0.2.1](https://github.com/zzwjlwwdtg/fsi-skills-agents/releases/tag/v0.2.1) — 2026-06-23
+
+财报期权隐含 move 屏蔽 + 跨午夜日志切换
+
+- **新增** [`option_walls.get_earnings_implied_move(stock)`](agents/option_walls.py)：读财报当周 ATM straddle 算 implied ±%（含 ATM±1 smoothed）+ C/P vol ratio + IV
+- **新增** [`decision_agent._apply_earnings_guard()`](agents/decision_agent.py)：按 `leveraged_im = im × ETF leverage` 分档屏蔽
+  - `> 20%` → 强制 HOLD；`12-20%` → conf-3（<6 降 HOLD）；`6-12%` → conf-2；T-1/T-0 一律 HOLD
+- orchestrator 每 cycle 注入 `events.earnings_implied_move`（MU/NVDA 等关联股 30 天内）
+- 回测 ([`_backtest_earnings_implied_move.py`](agents/_backtest_earnings_implied_move.py))：MU 5 年 20 次财报，MULL 实测 beta=2.08x（验证设定）；MULL |move|>20% 概率 25%；2024-12-18 MULL 单日 -32.74%
+- 实战：MU 6-25 财报，MULL/DRAM `WATCH_BUY` 自动降 HOLD
+- **bug 修复**：[`config.LOG_PATH`](agents/config.py) 跨午夜不切——新增 `get_today_log_path()` + [`notifier._DailyLogHandler`](agents/notifier.py)，emit 时按当天日期切换文件
+
 ### [v0.2.0](https://github.com/zzwjlwwdtg/fsi-skills-agents/releases/tag/v0.2.0) — 2026-06-22
 
 JP Social Reco 接入 + Block ⑫

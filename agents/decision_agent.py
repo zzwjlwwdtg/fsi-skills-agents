@@ -307,6 +307,92 @@ def _apply_uncertain_guard(result: dict, ev: int) -> dict:
     }
 
 
+def _apply_earnings_guard(result: dict, ticker: str, events: dict) -> dict:
+    """关联个股财报临近时，按期权隐含 move 屏蔽 BUY/WATCH_BUY。
+
+    events 期望含 "earnings_implied_move" : {<etf_ticker>: {
+        stock, earnings_date, days_to_earnings,
+        implied_move_pct, smoothed_implied_move_pct (optional),
+        leverage  # ETF 杠杆倍数
+    }}
+    无该字段时函数无副作用直接返回。
+
+    规则（用 leveraged_im = im * leverage）：
+      · days_to_earnings ≤ 1 且 BUY/WATCH_BUY → 强制 HOLD（财报当日不抢仓）
+      · leveraged_im > 20%  → 强制 HOLD（极端单日波动，杠杆放大）
+      · leveraged_im 12-20% → conf -3，<6 降 HOLD
+      · leveraged_im 6-12%  → conf -2
+      · leveraged_im < 6%   → 不动
+    """
+    if not ticker:
+        return result
+    em_map = events.get("earnings_implied_move") or {}
+    em = em_map.get(ticker) or em_map.get(ticker.replace("US.", ""))
+    if not em or em.get("error"):
+        return result
+    action = result.get("action")
+    if action not in ("BUY", "WATCH_BUY", "WATCH_BUY_LONG_HOLD"):
+        return result
+
+    im = em.get("smoothed_implied_move_pct") or em.get("implied_move_pct")
+    if not im or im <= 0:
+        return result
+    lev = float(em.get("leverage") or 1.0)
+    leveraged_im = im * lev
+    days = em.get("days_to_earnings", 99)
+    stock = em.get("stock", "?")
+    conf = result.get("confidence") or 0
+
+    # T-1 / T-0 强制屏蔽
+    if days <= 1:
+        return {
+            **result,
+            "action":       "HOLD",
+            "confidence":   conf,
+            "reason":       f"earnings_blackout ({stock} 财报 T-{days}, 跨日 IM={leveraged_im:.1f}%)",
+            "stop_ref":     None,
+            "demoted_from": action,
+            "earnings_guard": True,
+        }
+
+    # 高隐含波动强制屏蔽
+    if leveraged_im > 20:
+        return {
+            **result,
+            "action":       "HOLD",
+            "confidence":   conf,
+            "reason":       f"earnings_high_iv ({stock} T-{days}, leveraged_IM={leveraged_im:.1f}% > 20%)",
+            "stop_ref":     None,
+            "demoted_from": action,
+            "earnings_guard": True,
+        }
+
+    # 中高 / 中等 隐含波动 → 降信心
+    if leveraged_im > 12:
+        new_conf = max(0, conf - 3)
+        new_action = "HOLD" if new_conf < 6 else action
+        return {
+            **result,
+            "action":       new_action,
+            "confidence":   new_conf,
+            "reason":       (result.get("reason", "") +
+                             f" + earnings_iv_high ({stock} T-{days}, lev_IM={leveraged_im:.1f}%, conf-3)").strip(),
+            "stop_ref":     result.get("stop_ref") if new_action == action else None,
+            "demoted_from": action if new_action != action else result.get("demoted_from"),
+            "earnings_guard": True,
+        }
+    if leveraged_im > 6:
+        new_conf = max(0, conf - 2)
+        return {
+            **result,
+            "confidence":   new_conf,
+            "reason":       (result.get("reason", "") +
+                             f" + earnings_iv_mid ({stock} T-{days}, lev_IM={leveraged_im:.1f}%, conf-2)").strip(),
+            "earnings_guard": True,
+        }
+    return result
+
+
 # ── ETF规则引擎 ───────────────────────────────────────────────────────────────
 
 def _etf_rules(market: dict, events: dict, macro: dict, regime: str = "neutral",
@@ -724,6 +810,7 @@ def get_decision(market: dict, events: dict, macro: dict | None = None,
         3,
     )
     result = _apply_uncertain_guard(result, ev)
+    result = _apply_earnings_guard(result, market.get("ticker", ""), events)
     result = _apply_trump_override(result, trump_sig)
     return result
 

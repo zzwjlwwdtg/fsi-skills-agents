@@ -312,7 +312,7 @@ def _run_report(session_type: str) -> None:
         # 屏幕上也是用户最后看到的，重要总结不会被顶走
         try:
             from ai_prompt import auto_analyze, print_analysis
-            from config import LOG_PATH
+            from config import get_today_log_path
             logger.info("\n" + "█" * 64)
             logger.info(t("█  Claude 综合解读（说人话）  █",
                           "█  Claude 総合解読（わかりやすく）  █"))
@@ -329,7 +329,7 @@ def _run_report(session_type: str) -> None:
                     ))
                 header = t(f"{provider} 早盘策略", f"{provider} 寄付戦略")
                 logger.info(f"\n{'='*64}\n{header}:\n{'='*64}")
-                print_analysis(r["output"], log_path=LOG_PATH, provider=provider)
+                print_analysis(r["output"], log_path=get_today_log_path(), provider=provider)
                 logger.info(f"{'='*64}\n  " +
                             t(f"详见: {r['analysis_path']}",
                               f"詳細: {r['analysis_path']}"))
@@ -358,7 +358,7 @@ def _run_report(session_type: str) -> None:
         # === 最后：Claude CLI 综合复盘（基于上述全部数据"说人话"） ===
         try:
             from ai_prompt import auto_analyze, print_analysis
-            from config import LOG_PATH
+            from config import get_today_log_path
             logger.info("\n" + "█" * 64)
             logger.info(t("█  Claude 综合复盘（说人话）  █",
                           "█  Claude 総合復盤（わかりやすく）  █"))
@@ -377,7 +377,7 @@ def _run_report(session_type: str) -> None:
                     ))
                 header = t(f"{provider} 复盘总结", f"{provider} 復盤まとめ")
                 logger.info(f"\n{'='*64}\n{header}:\n{'='*64}")
-                print_analysis(r["output"], log_path=LOG_PATH, provider=provider)
+                print_analysis(r["output"], log_path=get_today_log_path(), provider=provider)
                 logger.info(f"{'='*64}\n  " +
                             t(f"详见: {r['analysis_path']}",
                               f"詳細: {r['analysis_path']}"))
@@ -722,6 +722,48 @@ def run_cycle(window: str | None = None) -> None:
         _ensure_current_regime()
     macro = _build_macro()
     equity_events = get_events_signal()
+    # 关联个股财报 implied move：MU 财报前 30 天内自动注入到 events，
+    # decision_agent._apply_earnings_guard 据此屏蔽 DRAM/MULL（必要时还有 SOXL/TQQQ→NVDA）
+    try:
+        from option_walls import (
+            get_earnings_implied_move,
+            _ETF_EARNINGS_LINKS,
+            _next_earnings_for,
+        )
+        from config import LEVERAGE_FACTORS
+        im_map: dict = {}
+        for etf, related_stocks in _ETF_EARNINGS_LINKS.items():
+            er = _next_earnings_for(etf)  # (stock, date, days_to) 或 None
+            if er is None:
+                continue
+            stock, ed, _ = er
+            try:
+                em = get_earnings_implied_move(stock, ed)
+            except Exception as ee:
+                logger.error(t(f"earnings IM {stock} 失败: {ee}",
+                               f"earnings IM {stock} 失敗: {ee}"))
+                continue
+            if em.get("error"):
+                continue
+            em["leverage"] = LEVERAGE_FACTORS.get(f"US.{etf}", 1.0)
+            im_map[etf] = em
+            im_map[f"US.{etf}"] = em
+        if im_map:
+            equity_events["earnings_implied_move"] = im_map
+            parts = []
+            for k, v in im_map.items():
+                if k.startswith("US."):
+                    continue
+                im_pct = v.get("smoothed_implied_move_pct") or v.get("implied_move_pct") or 0
+                parts.append(
+                    f"{k}→{v.get('stock')}(T-{v.get('days_to_earnings')}, "
+                    f"IM≈{im_pct:.1f}%×{v.get('leverage')})"
+                )
+            logger.info(t(f"  关联财报 IM: {', '.join(parts)}",
+                          f"  関連決算 IM: ({len(parts)} 件)"))
+    except Exception as exc:
+        logger.error(t(f"关联财报 IM 注入失败: {exc}",
+                       f"関連決算 IM 注入失敗: {exc}"))
 
     # 夜盘速览（开盘前最关键的领先指标）
     try:

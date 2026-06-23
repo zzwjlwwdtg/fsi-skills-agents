@@ -359,6 +359,186 @@ def find_walls(ticker: str, max_expiries: int = 3) -> dict:
     return result
 
 
+# ── 财报隐含波动 (implied move from ATM straddle) ──────────────────────────
+def get_earnings_implied_move(stock: str, earnings_date: str | None = None,
+                              force: bool = False) -> dict:
+    """读 stock 财报当周 ATM straddle，算市场对财报的隐含 ±%。
+
+    用途：让 DRAM/MULL 在 MU 财报前根据期权市场预期单日 move 来决定是否屏蔽。
+
+    Args:
+        stock: 个股 ticker (例: "MU")
+        earnings_date: 财报日 YYYY-MM-DD；不传则用 _TICKER_EARNINGS 里最近一个
+        force: 跳过缓存
+    Returns:
+        {
+          stock, earnings_date, days_to_earnings,
+          expiry,               # 实际用的期权到期日（财报日 ≤ expiry）
+          spot, atm_strike,
+          atm_call_mid, atm_put_mid,
+          straddle_price,       # ATM call + ATM put
+          implied_move_pct,     # straddle / spot * 100
+          atm_iv_call, atm_iv_put,
+          cp_volume_ratio,      # 财报到期日 ATM±5% 的 call vol / put vol
+          smoothed,             # 是否用 ATM±1 strike 平均（更稳）
+        }
+    """
+    from datetime import date as _date, timedelta as _td
+
+    # 财报日：未传则查表取最近一个（30 天内）
+    if earnings_date is None:
+        today = _date.today()
+        best = None
+        for d_str in _TICKER_EARNINGS.get(stock, []):
+            try:
+                d = datetime.strptime(d_str, "%Y-%m-%d").date()
+            except ValueError:
+                continue
+            days = (d - today).days
+            if 0 <= days <= 30 and (best is None or days < best[1]):
+                best = (d_str, days)
+        if best is None:
+            return {"stock": stock, "error": "no_upcoming_earnings"}
+        earnings_date, days_to = best
+    else:
+        try:
+            e_date = datetime.strptime(earnings_date, "%Y-%m-%d").date()
+        except ValueError:
+            return {"stock": stock, "error": "bad_earnings_date_format"}
+        days_to = (e_date - _date.today()).days
+
+    # 缓存（1 小时 TTL，财报临近时手动 force=True 刷）
+    cache = Path(SIGNALS_DIR) / f"earnings_im_{stock}_{datetime.now().strftime('%Y%m%d')}.json"
+    if not force and cache.exists():
+        age = time.time() - cache.stat().st_mtime
+        if age < CACHE_TTL_SEC:
+            try:
+                return json.loads(cache.read_text(encoding="utf-8"))
+            except (json.JSONDecodeError, OSError):
+                pass
+
+    result: dict = {
+        "stock": stock,
+        "earnings_date": earnings_date,
+        "days_to_earnings": days_to,
+        "ts": datetime.now().isoformat(),
+    }
+    try:
+        import yfinance as yf
+        t = yf.Ticker(stock)
+        # 现价
+        try:
+            spot = float(t.info.get("regularMarketPrice"))
+        except (TypeError, ValueError):
+            hist = t.history(period="1d")
+            spot = float(hist["Close"].iloc[-1]) if not hist.empty else None
+        if not spot or spot <= 0:
+            result["error"] = "no_spot_price"
+            _save_cache(cache, result)
+            return result
+        result["spot"] = round(spot, 2)
+
+        # 找财报日 >= 第一个期权到期日
+        all_expiries = t.options or []
+        if not all_expiries:
+            result["error"] = "no_option_chain"
+            _save_cache(cache, result)
+            return result
+
+        e_d = datetime.strptime(earnings_date, "%Y-%m-%d").date()
+        chosen_exp = None
+        for exp in all_expiries:
+            try:
+                ed = datetime.strptime(exp, "%Y-%m-%d").date()
+            except ValueError:
+                continue
+            if ed >= e_d:
+                chosen_exp = exp
+                break
+        if chosen_exp is None:
+            result["error"] = "no_expiry_after_earnings"
+            _save_cache(cache, result)
+            return result
+        result["expiry"] = chosen_exp
+
+        ch = t.option_chain(chosen_exp)
+        calls, puts = ch.calls.copy(), ch.puts.copy()
+        if calls.empty or puts.empty:
+            result["error"] = "empty_chain"
+            _save_cache(cache, result)
+            return result
+
+        # ATM strike：离 spot 最近
+        calls["dist"] = (calls["strike"] - spot).abs()
+        puts["dist"]  = (puts["strike"]  - spot).abs()
+        atm_call_row = calls.nsmallest(1, "dist").iloc[0]
+        atm_put_row  = puts.nsmallest(1, "dist").iloc[0]
+        atm_strike   = float(atm_call_row["strike"])
+        result["atm_strike"] = atm_strike
+
+        def _mid(row):
+            bid = float(row.get("bid") or 0)
+            ask = float(row.get("ask") or 0)
+            last = float(row.get("lastPrice") or 0)
+            if bid > 0 and ask > 0:
+                return (bid + ask) / 2
+            return last  # fallback
+
+        call_mid = _mid(atm_call_row)
+        put_mid  = _mid(atm_put_row)
+        result["atm_call_mid"] = round(call_mid, 3)
+        result["atm_put_mid"]  = round(put_mid,  3)
+        straddle = call_mid + put_mid
+        result["straddle_price"] = round(straddle, 3)
+        result["implied_move_pct"] = round(straddle / spot * 100, 2) if straddle > 0 else None
+
+        # 平滑：取 ATM±1 strike 的 straddle 均值（如果 strike 链够密）
+        try:
+            calls_s = calls.sort_values("strike").reset_index(drop=True)
+            puts_s  = puts.sort_values("strike").reset_index(drop=True)
+            idx_c = (calls_s["strike"] - spot).abs().idxmin()
+            idx_p = (puts_s["strike"]  - spot).abs().idxmin()
+            if 1 <= idx_c <= len(calls_s) - 2 and 1 <= idx_p <= len(puts_s) - 2:
+                straddles = []
+                for dc, dp in zip([-1, 0, 1], [-1, 0, 1]):
+                    cm = _mid(calls_s.iloc[idx_c + dc])
+                    pm = _mid(puts_s .iloc[idx_p + dp])
+                    if cm > 0 and pm > 0:
+                        straddles.append(cm + pm)
+                if len(straddles) >= 2:
+                    avg = sum(straddles) / len(straddles)
+                    result["smoothed_straddle"] = round(avg, 3)
+                    result["smoothed_implied_move_pct"] = round(avg / spot * 100, 2)
+                    result["smoothed"] = True
+        except Exception:
+            pass
+
+        # IV (yfinance 提供 impliedVolatility，已经是 decimal e.g. 0.45)
+        try:
+            iv_call = float(atm_call_row.get("impliedVolatility") or 0)
+            iv_put  = float(atm_put_row .get("impliedVolatility") or 0)
+            result["atm_iv_call"] = round(iv_call * 100, 1) if iv_call > 0 else None
+            result["atm_iv_put"]  = round(iv_put  * 100, 1) if iv_put  > 0 else None
+        except Exception:
+            pass
+
+        # C/P 成交量比：ATM ±5% 内
+        lo, hi = spot * 0.95, spot * 1.05
+        c_atm = calls[(calls["strike"] >= lo) & (calls["strike"] <= hi)]
+        p_atm = puts [(puts["strike"]  >= lo) & (puts["strike"]  <= hi)]
+        c_vol = int(c_atm["volume"].fillna(0).sum())
+        p_vol = int(p_atm["volume"].fillna(0).sum())
+        result["call_volume_atm"] = c_vol
+        result["put_volume_atm"]  = p_vol
+        result["cp_volume_ratio"] = round(c_vol / p_vol, 2) if p_vol > 0 else None
+
+    except Exception as e:
+        result["error"] = str(e)
+
+    _save_cache(cache, result)
+    return result
+
+
 def _convert_level(
     strike: float | None,
     leveraged_spot: float | None,

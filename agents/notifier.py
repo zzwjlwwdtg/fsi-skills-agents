@@ -8,16 +8,63 @@ import logging
 from datetime import datetime
 from pathlib import Path
 
-from config import SIGNALS_DIR, LOG_PATH
+from config import SIGNALS_DIR, get_today_log_path
 
 os.makedirs(SIGNALS_DIR, exist_ok=True)
 import io
+
+
+class _DailyLogHandler(logging.Handler):
+    """跨午夜自动切换 run_YYYYMMDD.log 的 FileHandler 代理。
+
+    每条记录写入前比对当前日期，与底层 FileHandler 的日期不同则关闭旧句柄、
+    打开新文件。避免 orchestrator 长跑数日后所有日志仍堆在启动日。
+    """
+
+    def __init__(self):
+        super().__init__()
+        self._current_date = None
+        self._inner: logging.FileHandler | None = None
+        self._rotate_if_needed()
+
+    def _rotate_if_needed(self):
+        today = datetime.now().strftime("%Y%m%d")
+        if today != self._current_date:
+            if self._inner is not None:
+                try:
+                    self._inner.close()
+                except Exception:
+                    pass
+            self._inner = logging.FileHandler(get_today_log_path(), encoding="utf-8")
+            if self.formatter is not None:
+                self._inner.setFormatter(self.formatter)
+            self._current_date = today
+
+    def setFormatter(self, fmt):
+        super().setFormatter(fmt)
+        if self._inner is not None:
+            self._inner.setFormatter(fmt)
+
+    def emit(self, record):
+        self._rotate_if_needed()
+        if self._inner is not None:
+            self._inner.emit(record)
+
+    def close(self):
+        if self._inner is not None:
+            try:
+                self._inner.close()
+            except Exception:
+                pass
+        super().close()
+
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
     handlers=[
-        logging.FileHandler(LOG_PATH, encoding="utf-8"),
+        _DailyLogHandler(),
         logging.StreamHandler(stream=io.TextIOWrapper(
             __import__("sys").stdout.buffer, encoding="utf-8", errors="replace", line_buffering=True
         )),
