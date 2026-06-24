@@ -1,9 +1,10 @@
 @echo off
 chcp 65001 > nul
+setlocal enabledelayedexpansion
 
 set "PY=C:\Users\masa\AppData\Local\Programs\Python\Python312\python.exe"
 set "SCRIPT_DIR=%~dp0"
-REM FRED_API_KEY + MOOMOO_ACC_ID 通过 secrets.local.json 读
+REM Secrets (FRED_API_KEY, MOOMOO_ACC_ID) loaded from secrets.local.json
 set "PYTHONUTF8=1"
 set "OUTPUT_LANG=ja"
 
@@ -17,6 +18,23 @@ if "%CLAUDE_DECISION_FALLBACK_CODEX%"=="" set "CLAUDE_DECISION_FALLBACK_CODEX=0"
 
 cd /d "%SCRIPT_DIR%"
 if not exist logs mkdir logs
+
+REM Single-instance guard (Japanese-mode orchestrator)
+if exist ".orchestrator.lock" (
+    set /p ORCH_PID=<.orchestrator.lock
+    tasklist /FI "PID eq !ORCH_PID!" /FI "IMAGENAME eq python.exe" 2>nul | find /I "python.exe" >nul
+    if not errorlevel 1 (
+        echo ============================================================
+        echo   [WARN] orchestrator already running ^(PID=!ORCH_PID!^)
+        echo   This run_ja.bat will NOT start a second instance.
+        echo   To restart: taskkill /PID !ORCH_PID! /F ^&^& del .orchestrator.lock
+        echo ============================================================
+        pause
+        endlocal
+        exit /b 1
+    )
+    echo [INFO] stale lock for dead PID !ORCH_PID! - python will clear it
+)
 
 echo ============================================================
 echo  Trading Agents (Japanese mode)
@@ -47,3 +65,4 @@ REM System reports (signal tables, leaderboards) remain Chinese (terse, mostly n
 "%PY%" -X utf8 orchestrator.py
 
 pause
+endlocal

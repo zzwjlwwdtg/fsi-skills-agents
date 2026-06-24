@@ -4,7 +4,7 @@ setlocal
 
 set "PY=C:\Users\masa\AppData\Local\Programs\Python\Python312\python.exe"
 set "SCRIPT_DIR=%~dp0"
-REM FRED_API_KEY 现在通过 secrets.local.json 读（config.py 自动加载）
+REM Secrets (FRED_API_KEY etc.) loaded from secrets.local.json by config.py
 set "PYTHONUTF8=1"
 set "PYTHONIOENCODING=utf-8"
 set "TRADER_DRY_RUN=1"
