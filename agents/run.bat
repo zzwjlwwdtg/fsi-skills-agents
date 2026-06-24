@@ -19,6 +19,10 @@ if "%CLAUDE_DECISION_FALLBACK_CODEX%"=="" set "CLAUDE_DECISION_FALLBACK_CODEX=0"
 cd /d "%SCRIPT_DIR%"
 if not exist logs mkdir logs
 
+REM Auto-clean zombie python.exe from this project (stuck-at-pause test runs etc.)
+REM Protects the active orchestrator/snapshot via their lock files.
+"%PY%" -X utf8 -u _cleanup_zombies.py
+
 REM Single-instance guard: refuse to start if another orchestrator is alive.
 REM orchestrator.py also locks via .orchestrator.lock, but this gives an
 REM instant message in the bat window instead of waiting for python startup.

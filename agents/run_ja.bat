@@ -19,6 +19,9 @@ if "%CLAUDE_DECISION_FALLBACK_CODEX%"=="" set "CLAUDE_DECISION_FALLBACK_CODEX=0"
 cd /d "%SCRIPT_DIR%"
 if not exist logs mkdir logs
 
+REM Auto-clean zombie python.exe from this project
+"%PY%" -X utf8 -u _cleanup_zombies.py
+
 REM Single-instance guard (Japanese-mode orchestrator)
 if exist ".orchestrator.lock" (
     set /p ORCH_PID=<.orchestrator.lock

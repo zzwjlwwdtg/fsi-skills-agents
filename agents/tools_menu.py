@@ -86,6 +86,11 @@ def cmd_logs():
         pause()
 
 
+def cmd_cleanup():
+    run(["_cleanup_zombies.py"])
+    pause()
+
+
 def cmd_moomoo_ai():
     """打开/创建今日 moomoo AI 手动输入文件，让用户从 moomoo app 复制粘贴 AI 回答。"""
     today = datetime.now().strftime("%Y-%m-%d")
@@ -117,6 +122,7 @@ MENU = [
     ("r", "trader reset state",  "清空 trader_state.json (账户不动)",      cmd_reset),
     ("l", "show today log",      "记事本打开今日 log",                     cmd_logs),
     ("m", "moomoo AI 输入",      "粘贴 moomoo app 里 AI 回答给 Claude 复盘", cmd_moomoo_ai),
+    ("z", "cleanup zombies",     "杀本项目残留 python.exe（保护活的 orchestrator）", cmd_cleanup),
 ]
 
 
