@@ -20,10 +20,25 @@ DecisionAgent — 10分制信号引擎 + Regime Detection。
 """
 
 import json
+import os
 from openai import OpenAI
 
 from config import (OPENAI_API_KEY, DECISION_MODEL, RSI_OVERBOUGHT, RSI_OVERSOLD,
                     LEVERAGE_FACTORS)
+
+
+def _is_technical_only() -> bool:
+    """技术面 only 模式：消息面信号（Trump / breaking_news / 事件日历）
+    全部退化为参考，不再注入到决策。
+
+    保留生效的是：
+      · regime（VIX/F&G/yield/单日暴跌 — 都是技术/宏观指标，不是消息）
+      · confluence + quant_signal（K 线技术）
+      · earnings IM guard（期权市场隐含定价，不是新闻）
+
+    默认 ON（env var TECHNICAL_ONLY=0 才关）。
+    """
+    return os.environ.get("TECHNICAL_ONLY", "1") != "0"
 
 
 def _scaled_pct(pct: float, ticker: str | None) -> float:
@@ -139,6 +154,8 @@ def _event_score(days_ev: int, breaking: bool, event_impact: str = "moderate") -
     _apply_uncertain_guard 把强多头降 HOLD。新版只 critical 级才给 2，
     high 给 1（不到 ≥2 降级阈值），让暴涨日强信号通过。
     """
+    if _is_technical_only():
+        return 0    # 技术面 only：消息面（事件 + breaking）只作参考
     if event_impact == "critical":
         base = 2 if days_ev <= 1 else (1 if days_ev <= 3 else 0)
     elif event_impact == "high":
@@ -161,6 +178,8 @@ def _trump_score(trump_sig: dict | None) -> int:
       · bullish + large   → 0（利好不阻止买入）
       · tariff_alert + score<0 → +1（trump-code 历史: SHORT 70% 错，提升不确定）
     """
+    if _is_technical_only():
+        return 0    # 技术面 only：Trump 信号只作参考，不进决策
     if not trump_sig or trump_sig.get("fallback"):
         return 0
     mag = trump_sig.get("magnitude", "small")
@@ -218,6 +237,8 @@ def _compute_buy_stop_ref(market: dict) -> float | None:
 def _apply_trump_override(result: dict, trump_sig: dict | None) -> dict:
     """强 Trump 信号 override：bearish large/extreme 降级低信心多头到 CAUTION；
     bullish large/extreme 给 WATCH_BUY 加 conf+1。"""
+    if _is_technical_only():
+        return result    # 技术面 only：Trump 不再 override 决策
     if not trump_sig or trump_sig.get("fallback"):
         return result
     if trump_sig.get("magnitude") not in ("large", "extreme"):
@@ -288,6 +309,8 @@ def get_regime(macro: dict, market: dict) -> str:
 # 信号在事件不确定的市场里大概率被打脸；同时防止"TQQQ CAUTION + SQQQ
 # WATCH_BUY"这种对称矛盾（对方向 ETF 不知道自己是反向的）。
 def _apply_uncertain_guard(result: dict, ev: int) -> dict:
+    if _is_technical_only():
+        return result    # 技术面 only：不让消息面 ev 把多头降级
     if ev < 2:
         return result
     action = result.get("action")

@@ -429,9 +429,12 @@ def get_trump_signal(hours: int = 24) -> dict:
 
 # ── 显示工具 ──────────────────────────────────────────────────────────────
 def format_trump_banner(sig: dict) -> list[str]:
+    import os as _os
+    tech_only = _os.environ.get("TECHNICAL_ONLY", "1") != "0"
+    label = "Trump Signal [参考]" if tech_only else "Trump Signal"
     W = 76
     lines = ["+" + "=" * (W - 2) + "+",
-             f"|  Trump Signal  |  {sig['ts'][:16]} (lookback {sig['lookback_hours']}h)".ljust(W - 1) + "|",
+             f"|  {label}  |  {sig['ts'][:16]} (lookback {sig['lookback_hours']}h)".ljust(W - 1) + "|",
              "+" + "=" * (W - 2) + "+"]
     if sig.get("fallback"):
         lines.append("  ⚠ CLI fallback：本次未解析，可能调用失败")

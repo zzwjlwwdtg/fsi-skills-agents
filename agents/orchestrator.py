@@ -834,6 +834,18 @@ def main() -> None:
                   f"  レポート時刻: 寄付後 + 引け後（ET 9:30 / 16:00）"))
     logger.info(t(f"  60分钟K  : 可操作信号时自动附加入场参考",
                   f"  60分足  : 売買シグナル時に自動でエントリー参考付加"))
+    # 决策模式
+    from decision_agent import _is_technical_only
+    if _is_technical_only():
+        logger.info(t(
+            "  决策模式 : [TECHNICAL_ONLY] 消息面（Trump/事件/breaking）仅作参考，不进决策",
+            "  決定モード: [TECHNICAL_ONLY] ニュース面は参考のみ、決定に注入しない",
+        ))
+    else:
+        logger.info(t(
+            "  决策模式 : [FULL] 消息面 + 技术面综合",
+            "  決定モード: [FULL] ニュース + テクニカル統合",
+        ))
     logger.info("=" * 64)
 
     startup_window = _in_daily_window()
