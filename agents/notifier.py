@@ -244,9 +244,11 @@ def emit(market: dict, events: dict, decision: dict) -> None:
         logger.info(t(f"  ⚡ 突发新闻{gold_suffix}", f"  ⚡ 速報ニュース{gold_suffix}"))
     if gold_bias and not breaking:
         logger.info(t(f"  黄金偏向: {gold_bias}", f"  金バイアス: {gold_bias}"))
+    from decision_agent import _conf_scale
+    _scale = _conf_scale()
     logger.info(t(
-        f"  信号: {icon}  置信度:{confidence}/10  依据:{reason_zh}  行情:{regime}  [{engine}]",
-        f"  シグナル: {icon}  信頼度:{confidence}/10  根拠:{reason_zh}  地合い:{regime}  [{engine}]",
+        f"  信号: {icon}  置信度:{confidence}/{_scale}  依据:{reason_zh}  行情:{regime}  [{engine}]",
+        f"  シグナル: {icon}  信頼度:{confidence}/{_scale}  根拠:{reason_zh}  地合い:{regime}  [{engine}]",
     ))
     if detail:
         logger.info(t(f"  解释: {detail}", f"  解説: {detail}"))
@@ -262,9 +264,9 @@ def emit(market: dict, events: dict, decision: dict) -> None:
             ev_ja_suffix = "[参考]" if ev_in_total == 0 and ev_disp > 0 else ""
             logger.info(t(
                 f"  评分: 技术{sb['tech']} + 宏观{sb['macro']} + 事件{ev_disp}{ev_suffix}"
-                f" = 原始{sb['raw']}  →  置信度{confidence}/10",
+                f" = 原始{sb['raw']}  →  置信度{confidence}/{_scale}",
                 f"  スコア: テクニカル{sb['tech']} + マクロ{sb['macro']} + イベント{ev_disp}{ev_ja_suffix}"
-                f" = 素点{sb['raw']}  →  信頼度{confidence}/10",
+                f" = 素点{sb['raw']}  →  信頼度{confidence}/{_scale}",
             ))
         elif "bear_raw" in sb:
             logger.info(t(

@@ -257,10 +257,19 @@ def _apply_trump_override(result: dict, trump_sig: dict | None) -> dict:
 
 def _normalize_confidence(raw_score: float) -> int:
     """
-    把累计原始分（理论上限 ~15）映射到用户感知友好的 1-10 区间。
-    经验调整：raw 0 → 1, raw 3 → 4, raw 5 → 6, raw 7 → 8, raw 9+ → 10
+    映射原始累计分到置信度。
+      · 完整模式 (TECHNICAL_ONLY=0)：1-10，raw 0→1 / 3→4 / 5→6 / 9+→10
+      · 技术面 only (TECHNICAL_ONLY=1)：1-5，raw 0→1 / 2→2 / 4→3 / 6→4 / 8+→5
+        基于"事件/Trump 不入总分，5 分制更直观对应技术强度"。
     """
+    if _is_technical_only():
+        return max(1, min(round(raw_score / 2 + 1), 5))
     return max(1, min(round(raw_score + 1), 10))
+
+
+def _conf_scale() -> int:
+    """当前置信度量程上限（5 或 10）。给 notifier / UI 显示用。"""
+    return 5 if _is_technical_only() else 10
 
 
 # ── Regime Detection ──────────────────────────────────────────────────────────
@@ -390,27 +399,31 @@ def _apply_earnings_guard(result: dict, ticker: str, events: dict) -> dict:
             "earnings_guard": True,
         }
 
-    # 中高 / 中等 隐含波动 → 降信心
+    # 中高 / 中等 隐含波动 → 降信心（阈值按 scale 等比缩放）
+    scale = _conf_scale()
+    drop_strong = 3 if scale == 10 else 2  # /5 时 -2 等比 /10 时 -3
+    drop_mild   = 2 if scale == 10 else 1
+    threshold   = scale // 2 + 1           # /10→6 (mid+1), /5→3
     if leveraged_im > 12:
-        new_conf = max(0, conf - 3)
-        new_action = "HOLD" if new_conf < 6 else action
+        new_conf = max(0, conf - drop_strong)
+        new_action = "HOLD" if new_conf < threshold else action
         return {
             **result,
             "action":       new_action,
             "confidence":   new_conf,
             "reason":       (result.get("reason", "") +
-                             f" + earnings_iv_high ({stock} T-{days}, lev_IM={leveraged_im:.1f}%, conf-3)").strip(),
+                             f" + earnings_iv_high ({stock} T-{days}, lev_IM={leveraged_im:.1f}%, conf-{drop_strong})").strip(),
             "stop_ref":     result.get("stop_ref") if new_action == action else None,
             "demoted_from": action if new_action != action else result.get("demoted_from"),
             "earnings_guard": True,
         }
     if leveraged_im > 6:
-        new_conf = max(0, conf - 2)
+        new_conf = max(0, conf - drop_mild)
         return {
             **result,
             "confidence":   new_conf,
             "reason":       (result.get("reason", "") +
-                             f" + earnings_iv_mid ({stock} T-{days}, lev_IM={leveraged_im:.1f}%, conf-2)").strip(),
+                             f" + earnings_iv_mid ({stock} T-{days}, lev_IM={leveraged_im:.1f}%, conf-{drop_mild})").strip(),
             "earnings_guard": True,
         }
     return result
