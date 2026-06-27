@@ -154,8 +154,8 @@ def _event_score(days_ev: int, breaking: bool, event_impact: str = "moderate") -
     _apply_uncertain_guard 把强多头降 HOLD。新版只 critical 级才给 2，
     high 给 1（不到 ≥2 降级阈值），让暴涨日强信号通过。
     """
-    if _is_technical_only():
-        return 0    # 技术面 only：消息面（事件 + breaking）只作参考
+    # TECHNICAL_ONLY 模式下仍按真实分数计算，仅在 _etf_rules 里不计入总分。
+    # 这样 score_breakdown 仍能展示 event=N 作为参考。
     if event_impact == "critical":
         base = 2 if days_ev <= 1 else (1 if days_ev <= 3 else 0)
     elif event_impact == "high":
@@ -178,8 +178,8 @@ def _trump_score(trump_sig: dict | None) -> int:
       · bullish + large   → 0（利好不阻止买入）
       · tariff_alert + score<0 → +1（trump-code 历史: SHORT 70% 错，提升不确定）
     """
-    if _is_technical_only():
-        return 0    # 技术面 only：Trump 信号只作参考，不进决策
+    # TECHNICAL_ONLY 下仍计算 trump_score 供 banner / 复盘参考，
+    # 实际决策路径通过 _apply_uncertain_guard / _apply_trump_override 拦截。
     if not trump_sig or trump_sig.get("fallback"):
         return 0
     mag = trump_sig.get("magnitude", "small")
@@ -465,11 +465,15 @@ def _etf_rules(market: dict, events: dict, macro: dict, regime: str = "neutral",
     if   pct_eff_b >= 5: bull_boost += 2
     elif pct_eff_b >= 2: bull_boost += 1
 
-    bear = tb + mb + ev + qb_bear
+    # TECHNICAL_ONLY: event 分数仍计算（用于 score_breakdown 展示），
+    # 但不再计入 bear 总分；breaking_news 分支也跳过。
+    tech_only = _is_technical_only()
+    ev_in_total = 0 if tech_only else ev
+    bear = tb + mb + ev_in_total + qb_bear
     bull = tbu + mbu + qb_bull + bull_boost
 
     # 突发新闻 → 仅在技术面无明显方向时观望；极端技术信号优先于新闻
-    if breaking:
+    if breaking and not tech_only:
         # 极端看跌（技术bear ≥3 + 任一极端指标）→ 仍 REDUCE
         if tb >= 3 and (rsi > RSI_OVERBOUGHT or bb_zone == "above"):
             return {"action": "REDUCE",
@@ -498,8 +502,11 @@ def _etf_rules(market: dict, events: dict, macro: dict, regime: str = "neutral",
     _lev = LEVERAGE_FACTORS.get(market.get("ticker", ""), 1.0)
     prev_pct_scaled = _scaled_pct(market.get("prev_pct", 0) or 0, market.get("ticker"))
     trump_mag = (events.get("trump_signal") or {}).get("magnitude", "small")
-    if (not breaking
-        and trump_mag not in ("large", "extreme")
+    # TECH_ONLY 下不让 breaking_news / trump_mag 阻断 V 反弹（消息面只参考）
+    breaking_block = breaking and not tech_only
+    trump_block    = trump_mag in ("large", "extreme") and not tech_only
+    if (not breaking_block
+        and not trump_block
         and prev_pct_scaled <= -3.0
         and pct_eff_b >= 2.0
         and rsi < 45
@@ -583,7 +590,7 @@ def _etf_rules(market: dict, events: dict, macro: dict, regime: str = "neutral",
         return {"action": "REDUCE",
                 "confidence": _normalize_confidence(bear),
                 "reason": reason, "stop_ref": None,
-                "score_breakdown": {"tech": tb, "macro": mb, "event": ev, "quant": qb_bear, "raw": bear}}
+                "score_breakdown": {"tech": tb, "macro": mb, "event": ev, "quant": qb_bear, "raw": bear, "event_in_total": ev_in_total}}
 
     if bear >= caution_thresh and bear > bull:
         if rsi > 82 and vol_rat < 0.80:
@@ -597,9 +604,9 @@ def _etf_rules(market: dict, events: dict, macro: dict, regime: str = "neutral",
         return {"action": "CAUTION",
                 "confidence": _normalize_confidence(bear),
                 "reason": reason, "stop_ref": None,
-                "score_breakdown": {"tech": tb, "macro": mb, "event": ev, "quant": qb_bear, "raw": bear}}
+                "score_breakdown": {"tech": tb, "macro": mb, "event": ev, "quant": qb_bear, "raw": bear, "event_in_total": ev_in_total}}
 
-    if days_ev <= 1 and risk_lvl == "high":
+    if days_ev <= 1 and risk_lvl == "high" and not tech_only:
         return {"action": "HOLD",
                 "confidence": _normalize_confidence(max(bear, 2)),
                 "reason": "major event tomorrow", "stop_ref": None}
@@ -616,8 +623,9 @@ def _etf_rules(market: dict, events: dict, macro: dict, regime: str = "neutral",
                 "confidence": _normalize_confidence(bull),
                 "reason": reason,
                 "stop_ref": _compute_buy_stop_ref(market),
-                "score_breakdown": {"tech": tbu, "macro": mbu, "event": 0, "quant": qb_bull,
-                                    "boost": bull_boost, "raw": bull}}
+                "score_breakdown": {"tech": tbu, "macro": mbu, "event": ev, "quant": qb_bull,
+                                    "boost": bull_boost, "raw": bull,
+                                    "event_in_total": ev_in_total}}
 
     return {"action": "HOLD",
             "confidence": _normalize_confidence(max(bear, bull)),
