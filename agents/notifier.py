@@ -261,11 +261,15 @@ def emit(market: dict, events: dict, decision: dict) -> None:
             ev_disp = sb.get('event', 0)
             ev_in_total = sb.get('event_in_total', ev_disp)
             ev_suffix = "[参考]" if ev_in_total == 0 and ev_disp > 0 else ""
-            ev_ja_suffix = "[参考]" if ev_in_total == 0 and ev_disp > 0 else ""
+            # v0.3+ 加权后缀
+            tw = sb.get("tech_weighted")
+            tech_str = f"{sb['tech']}"
+            if sb.get("calibrated") and tw is not None and tw != sb["tech"]:
+                tech_str = f"{sb['tech']}(加权{tw})"
             logger.info(t(
-                f"  评分: 技术{sb['tech']} + 宏观{sb['macro']} + 事件{ev_disp}{ev_suffix}"
+                f"  评分: 技术{tech_str} + 宏观{sb['macro']} + 事件{ev_disp}{ev_suffix}"
                 f" = 原始{sb['raw']}  →  置信度{confidence}/{_scale}",
-                f"  スコア: テクニカル{sb['tech']} + マクロ{sb['macro']} + イベント{ev_disp}{ev_ja_suffix}"
+                f"  スコア: テクニカル{tech_str} + マクロ{sb['macro']} + イベント{ev_disp}{ev_suffix}"
                 f" = 素点{sb['raw']}  →  信頼度{confidence}/{_scale}",
             ))
         elif "bear_raw" in sb:

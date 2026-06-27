@@ -46,6 +46,7 @@ agents/signals/manual_moomoo_ai_*.txt
 agents/signals/claude_gate_prompt_*.md
 agents/signals/claude_gate_raw_*.txt
 agents/signals/earnings_im_*.json
+agents/signals/confidence_calibration.json
 
 # 账户状态（包含模拟仓位 + 实际 ACC_ID）
 agents/trader_state.json

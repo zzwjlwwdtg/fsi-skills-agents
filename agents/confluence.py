@@ -5,11 +5,33 @@ Confluence — 多指标共振分析。
 统计当前各类技术指标多空方向，输出共振强度和明细。
 
 共振越多 → 当前点位方向越明确 → 信号越可靠。
+
+v0.3+: 支持回测加权（_calibrate_confidence.py 生成 signals/confidence_calibration.json）。
+存在校准文件时，bull_weighted / bear_weighted 字段填充加权 raw（按命中率提升权重），
+否则退化为 bull_count / bear_count（每信号 1 分）。
 """
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 from i18n import t
+
+# ── 校准缓存（启动时一次性读，运行期间不变）─────────────────────────────
+_CALIB_PATH = Path(__file__).parent / "signals" / "confidence_calibration.json"
+try:
+    _CALIB = json.loads(_CALIB_PATH.read_text(encoding="utf-8")) if _CALIB_PATH.exists() else None
+except Exception:
+    _CALIB = None
+
+
+def _signal_weight(side: str, key: str) -> float:
+    """side: 'bull' | 'bear'；key: BULL_RULES / BEAR_RULES 里的稳定 key。
+    无校准 / key 未知 → 1.0（向后兼容：未校准时退化为 1 分/signal）。"""
+    if _CALIB is None:
+        return 1.0
+    return float(_CALIB.get(f"{side}_weights", {}).get(key, {}).get("weight", 1.0))
 
 
 def get_confluence(market: dict) -> dict:
@@ -259,6 +281,47 @@ def get_confluence(market: dict) -> dict:
     bear_n = len(bear)
     net    = bull_n - bear_n
 
+    # ── 加权评分（v0.3+ 回测校准）──────────────────────────────────
+    # 用与 _calibrate_confidence.py 一致的 stable key 数集，独立累加权重。
+    # 校准未跑过时 _signal_weight 返回 1.0 → bull_weighted == bull_count。
+    _bull_signal_keys = []
+    if trend == "up":                     _bull_signal_keys.append("trend_up")
+    if ma_stack == "bull":                _bull_signal_keys.append("ma_stack_bull")
+    if ma_cross == "golden":              _bull_signal_keys.append("ma_cross_golden")
+    if rsi_zone == "oversold":            _bull_signal_keys.append("rsi_oversold")
+    if rsi_cross == "dn_30":              _bull_signal_keys.append("rsi_cross_dn30")
+    if cci_zone == "oversold":            _bull_signal_keys.append("cci_oversold")
+    if cci_cross == "dn_100":             _bull_signal_keys.append("cci_cross_dn100")
+    if vol_zone == "expand" and trend == "up":
+                                          _bull_signal_keys.append("vol_expand_up")
+    if new_high and rsi_zone != "overbought" and vol_zone != "shrink":
+                                          _bull_signal_keys.append("new_high_healthy")
+    if bb_zone == "below":                _bull_signal_keys.append("bb_below")
+    if pct_zone == "surge":               _bull_signal_keys.append("pct_surge")
+    elif pct_zone == "pop":               _bull_signal_keys.append("pct_pop")
+    elif pct_zone == "mild_pop":          _bull_signal_keys.append("pct_mild_pop")
+
+    _bear_signal_keys = []
+    if trend == "down":                   _bear_signal_keys.append("trend_down")
+    if ma_stack == "bear":                _bear_signal_keys.append("ma_stack_bear")
+    if ma_cross == "death":               _bear_signal_keys.append("ma_cross_death")
+    if rsi_zone == "overbought":          _bear_signal_keys.append("rsi_overbought")
+    if rsi_cross == "up_70":              _bear_signal_keys.append("rsi_cross_up70")
+    if cci_zone == "overbought":          _bear_signal_keys.append("cci_overbought")
+    if cci_cross == "up_100":             _bear_signal_keys.append("cci_cross_up100")
+    if vol_zone == "expand" and trend == "down":
+                                          _bear_signal_keys.append("vol_expand_down")
+    if new_high and rsi_zone == "overbought" and vol_zone == "shrink":
+                                          _bear_signal_keys.append("new_high_diverge")
+    if bb_zone == "above":                _bear_signal_keys.append("bb_above")
+    if pct_zone == "crash":               _bear_signal_keys.append("pct_crash")
+    elif pct_zone == "drop":              _bear_signal_keys.append("pct_drop")
+    elif pct_zone == "mild_drop":         _bear_signal_keys.append("pct_mild_drop")
+
+    bull_weighted = round(sum(_signal_weight("bull", k) for k in _bull_signal_keys), 2)
+    bear_weighted = round(sum(_signal_weight("bear", k) for k in _bear_signal_keys), 2)
+    calibrated = _CALIB is not None
+
     if bull_n + bear_n == 0:
         strength, stars = t("无明确信号", "明確なシグナルなし"), "─"
     elif net >= 5:  strength, stars = t("极强多头共振", "極強気共振"),   "★★★"
@@ -272,13 +335,18 @@ def get_confluence(market: dict) -> dict:
     else:           strength, stars = t("极强空头共振", "極弱気共振"),   "▼▼▼"
 
     return {
-        "bull_signals": bull,
-        "bear_signals": bear,
-        "bull_count":   bull_n,
-        "bear_count":   bear_n,
-        "net":          net,
-        "strength":     strength,
-        "stars":        stars,
+        "bull_signals":  bull,
+        "bear_signals":  bear,
+        "bull_count":    bull_n,
+        "bear_count":    bear_n,
+        "bull_weighted": bull_weighted,
+        "bear_weighted": bear_weighted,
+        "bull_keys":     _bull_signal_keys,
+        "bear_keys":     _bear_signal_keys,
+        "calibrated":    calibrated,
+        "net":           net,
+        "strength":      strength,
+        "stars":         stars,
     }
 
 

@@ -14,6 +14,10 @@ REM Weekly: refresh module accuracy report (5-10 min)
 REM Output: signals/module_accuracy.md (auto-injected into Claude prompt)
 "%PY%" -X utf8 -u _backtest_modules_accuracy.py
 
+REM Weekly: recalibrate confluence weights + confidence percentiles (~1-2 min)
+REM Output: signals/confidence_calibration.json (read by confluence.py + decision_agent.py)
+"%PY%" -X utf8 -u _calibrate_confidence.py
+
 echo.
 pause
 endlocal

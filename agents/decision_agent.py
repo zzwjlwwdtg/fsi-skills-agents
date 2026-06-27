@@ -255,14 +255,28 @@ def _apply_trump_override(result: dict, trump_sig: dict | None) -> dict:
     return result
 
 
-def _normalize_confidence(raw_score: float) -> int:
-    """
-    映射原始累计分到置信度。
-      · 完整模式 (TECHNICAL_ONLY=0)：1-10，raw 0→1 / 3→4 / 5→6 / 9+→10
-      · 技术面 only (TECHNICAL_ONLY=1)：1-5，raw 0→1 / 2→2 / 4→3 / 6→4 / 8+→5
-        基于"事件/Trump 不入总分，5 分制更直观对应技术强度"。
+def _normalize_confidence(raw_score: float, side: str = "bull") -> int:
+    """映射原始分到置信度。
+
+    · 完整模式 (TECHNICAL_ONLY=0)：1-10，round(raw + 1)
+    · 技术面 only：
+        - 有校准（signals/confidence_calibration.json 存在）→ **分位数映射**
+          raw < p20=1，p20-p40=2，p40-p60=3，p60-p80=4，>p80=5
+        - 无校准 → 线性 round(raw/2 + 1)
+    side: bull / bear（决定查哪组分位）
     """
     if _is_technical_only():
+        calib = _load_calibration()
+        if calib is not None:
+            pkey = f"{side}_percentiles"
+            p = calib.get(pkey)
+            # 兜底：分位全 0（如 bear 权重全 0 → 历史 bear_weighted 全 0）→ 线性退化
+            if p and max(p["p80"], p["p60"], p["p40"], p["p20"]) > 0:
+                if raw_score <  p["p20"]: return 1
+                if raw_score <  p["p40"]: return 2
+                if raw_score <  p["p60"]: return 3
+                if raw_score <  p["p80"]: return 4
+                return 5
         return max(1, min(round(raw_score / 2 + 1), 5))
     return max(1, min(round(raw_score + 1), 10))
 
@@ -270,6 +284,24 @@ def _normalize_confidence(raw_score: float) -> int:
 def _conf_scale() -> int:
     """当前置信度量程上限（5 或 10）。给 notifier / UI 显示用。"""
     return 5 if _is_technical_only() else 10
+
+
+_CALIB_CACHE = {"loaded": False, "data": None}
+
+
+def _load_calibration() -> dict | None:
+    """读校准 JSON（缓存一次，避免每次调用 IO）。"""
+    if _CALIB_CACHE["loaded"]:
+        return _CALIB_CACHE["data"]
+    try:
+        from pathlib import Path
+        p = Path(__file__).parent / "signals" / "confidence_calibration.json"
+        if p.exists():
+            _CALIB_CACHE["data"] = json.loads(p.read_text(encoding="utf-8"))
+    except Exception:
+        _CALIB_CACHE["data"] = None
+    _CALIB_CACHE["loaded"] = True
+    return _CALIB_CACHE["data"]
 
 
 # ── Regime Detection ──────────────────────────────────────────────────────────
@@ -455,12 +487,18 @@ def _etf_rules(market: dict, events: dict, macro: dict, regime: str = "neutral",
     if confluence:
         tb  = confluence.get("bear_count", 0)
         tbu = confluence.get("bull_count", 0)
+        # v0.3+ 加权评分（_calibrate_confidence.py 输出），无校准时 weighted == count
+        tb_w  = confluence.get("bear_weighted", tb)
+        tbu_w = confluence.get("bull_weighted", tbu)
+        calibrated = confluence.get("calibrated", False)
     else:
         tb  = _tech_bear(rsi, vol_rat, trend, ma_stack, new_high, cci_zone, bb_zone, psar_signal,
                          macd_signal, macd_zone, adx_zone)
         tbu = _tech_bull(rsi, vol_rat, trend, ma_stack, cci_zone, bb_zone, psar_signal,
                          pct_chg=market.get("pct_chg", 0) or 0,
                          macd_signal=macd_signal, macd_zone=macd_zone, adx_zone=adx_zone)
+        tb_w, tbu_w = tb, tbu
+        calibrated = False
     mb  = _macro_bear(macro)
     mbu = _macro_bull(macro)
     ev  = _event_score(days_ev, breaking, events.get("next_event_impact", "moderate"))
@@ -481,6 +519,13 @@ def _etf_rules(market: dict, events: dict, macro: dict, regime: str = "neutral",
     # TECHNICAL_ONLY: event 分数仍计算（用于 score_breakdown 展示），
     # 但不再计入 bear 总分；breaking_news 分支也跳过。
     tech_only = _is_technical_only()
+
+    # v0.3+ 置信度计算输入：TECH_ONLY + 已校准时，用加权 tech raw（带分位映射）；
+    # 否则沿用旧逻辑（不加权 bull/bear 总分）。
+    def _conf_input(unweighted_total: float, weighted_tech: float) -> float:
+        if tech_only and calibrated:
+            return weighted_tech
+        return unweighted_total
     ev_in_total = 0 if tech_only else ev
     bear = tb + mb + ev_in_total + qb_bear
     bull = tbu + mbu + qb_bull + bull_boost
@@ -590,20 +635,24 @@ def _etf_rules(market: dict, events: dict, macro: dict, regime: str = "neutral",
                           or events.get("breaking_news", False))
             if not extreme_ok:
                 return {"action": "CAUTION",
-                        "confidence": _normalize_confidence(bear),
+                        "confidence": _normalize_confidence(_conf_input(bear, tb_w), side="bear"),
                         "reason": "bull_trending: REDUCE 信号但非极端，降级 CAUTION (反指标修复)",
                         "stop_ref": None,
-                        "score_breakdown": {"tech": tb, "macro": mb, "event": ev,
+                        "score_breakdown": {"tech": tb, "tech_weighted": tb_w,
+                                            "macro": mb, "event": ev,
                                             "quant": qb_bear, "raw": bear,
-                                            "downgraded_from_REDUCE": True}}
+                                            "downgraded_from_REDUCE": True,
+                                            "calibrated": calibrated}}
         reason = ("RSI extreme + vol shrink" if vol_rat < 0.80 and rsi > 82
                   else "RSI extreme + vol divergence" if rsi > 82
                   else "RSI overbought" if rsi > RSI_OVERBOUGHT
                   else "downtrend confirmed")
         return {"action": "REDUCE",
-                "confidence": _normalize_confidence(bear),
+                "confidence": _normalize_confidence(_conf_input(bear, tb_w), side="bear"),
                 "reason": reason, "stop_ref": None,
-                "score_breakdown": {"tech": tb, "macro": mb, "event": ev, "quant": qb_bear, "raw": bear, "event_in_total": ev_in_total}}
+                "score_breakdown": {"tech": tb, "tech_weighted": tb_w, "macro": mb,
+                                    "event": ev, "quant": qb_bear, "raw": bear,
+                                    "event_in_total": ev_in_total, "calibrated": calibrated}}
 
     if bear >= caution_thresh and bear > bull:
         if rsi > 82 and vol_rat < 0.80:
@@ -615,9 +664,11 @@ def _etf_rules(market: dict, events: dict, macro: dict, regime: str = "neutral",
         else:
             reason = "downtrend confirmed"
         return {"action": "CAUTION",
-                "confidence": _normalize_confidence(bear),
+                "confidence": _normalize_confidence(_conf_input(bear, tb_w), side="bear"),
                 "reason": reason, "stop_ref": None,
-                "score_breakdown": {"tech": tb, "macro": mb, "event": ev, "quant": qb_bear, "raw": bear, "event_in_total": ev_in_total}}
+                "score_breakdown": {"tech": tb, "tech_weighted": tb_w, "macro": mb,
+                                    "event": ev, "quant": qb_bear, "raw": bear,
+                                    "event_in_total": ev_in_total, "calibrated": calibrated}}
 
     if days_ev <= 1 and risk_lvl == "high" and not tech_only:
         return {"action": "HOLD",
@@ -633,18 +684,23 @@ def _etf_rules(market: dict, events: dict, macro: dict, regime: str = "neutral",
         else:
             reason = "uptrend + positive confluence"
         return {"action": "WATCH_BUY",
-                "confidence": _normalize_confidence(bull),
+                "confidence": _normalize_confidence(_conf_input(bull, tbu_w), side="bull"),
                 "reason": reason,
                 "stop_ref": _compute_buy_stop_ref(market),
-                "score_breakdown": {"tech": tbu, "macro": mbu, "event": ev, "quant": qb_bull,
+                "score_breakdown": {"tech": tbu, "tech_weighted": tbu_w,
+                                    "macro": mbu, "event": ev, "quant": qb_bull,
                                     "boost": bull_boost, "raw": bull,
-                                    "event_in_total": ev_in_total}}
+                                    "event_in_total": ev_in_total,
+                                    "calibrated": calibrated}}
 
     return {"action": "HOLD",
-            "confidence": _normalize_confidence(max(bear, bull)),
+            "confidence": _normalize_confidence(_conf_input(max(bear, bull), max(tb_w, tbu_w)),
+                                                 side="bull" if tbu_w >= tb_w else "bear"),
             "reason": "no clear signal", "stop_ref": None,
             "score_breakdown": {"bear_raw": bear, "bull_raw": bull,
-                                "quant_bear": qb_bear, "quant_bull": qb_bull}}
+                                "tech_weighted_bull": tbu_w, "tech_weighted_bear": tb_w,
+                                "quant_bear": qb_bear, "quant_bull": qb_bull,
+                                "calibrated": calibrated}}
 
 
 # ── 黄金规则引擎 ──────────────────────────────────────────────────────────────
