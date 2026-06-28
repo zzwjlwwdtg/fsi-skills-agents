@@ -306,6 +306,74 @@ def _load_calibration() -> dict | None:
 
 # ── Regime Detection ──────────────────────────────────────────────────────────
 
+def _vol_adjusted(base_pct: float, market: dict) -> float:
+    """波动率自适应阈值。base × (daily_vol / 3.0)，cap 2x base 防止极端高 vol 标的彻底失效。
+    无 vol_20d 数据 → 退化用杠杆倍数代理（1x→1.0, 2x→1.5, 3x→1.83 大概）。
+    daily_vol = vol_20d_annual / sqrt(252)
+    """
+    import math
+    vol_annual = market.get("vol_20d_annual")
+    if vol_annual and not math.isnan(vol_annual) and vol_annual > 0:
+        daily_vol = vol_annual / (252 ** 0.5)
+        thr = base_pct * (daily_vol / 3.0)
+        return round(min(thr, base_pct * 2), 2)   # cap 2x base
+    # fallback: 用杠杆倍数估算 daily_vol（QQQ 日波 ~1.5%，所以 1x≈1.5, 3x≈4.5）
+    lev = LEVERAGE_FACTORS.get(market.get("ticker") or "", 1.0)
+    if lev == 1.0 and market.get("ticker") and not market["ticker"].startswith("US."):
+        lev = LEVERAGE_FACTORS.get(f"US.{market['ticker']}", 1.0)
+    est_daily_vol = 1.5 * lev   # QQQ ~1.5%; TQQQ ~4.5%; MULL ~3%
+    return round(base_pct * (est_daily_vol / 3.0), 2)
+
+
+def _is_overheated(market: dict) -> tuple[bool, str | None]:
+    """A+B 方案的"过热"检测（波动率自适应阈值，用户原始 pct 直接比较）。
+    满足任一组合 → overheated：
+      · 组合 1: 5d 累积 > base20 ×(vol/3) + CCI > 180
+      · 组合 2: 10d 累积 > base30 ×(vol/3) + RSI > 68
+      · 组合 3: 当日 +8% ×(vol/3) + 前日 +5% ×(vol/3)
+    """
+    cci    = market.get("cci_20") or 0
+    rsi    = market.get("rsi_14") or 50
+    pct_today = market.get("pct_chg", 0) or 0
+    pct_prev  = market.get("prev_pct", 0) or 0
+    cum5  = market.get("cum_5d_pct",  0) or 0
+    cum10 = market.get("cum_10d_pct", 0) or 0
+
+    thr5  = _vol_adjusted(20, market)
+    thr10 = _vol_adjusted(30, market)
+    thr_day  = _vol_adjusted(8, market)
+    thr_prev = _vol_adjusted(5, market)
+
+    if cum5 > thr5 and cci > 180:
+        return True, f"5d={cum5:.1f}%>{thr5}% + CCI={cci:.0f}>180"
+    if cum10 > thr10 and rsi > 68:
+        return True, f"10d={cum10:.1f}%>{thr10}% + RSI={rsi:.0f}>68"
+    if pct_today > thr_day and pct_prev > thr_prev:
+        return True, f"连续暴涨 today={pct_today:.1f}%>{thr_day}% prev={pct_prev:.1f}%>{thr_prev}%"
+    return False, None
+
+
+def _caution_check(market: dict) -> tuple[bool, str | None]:
+    """CAUTION 第一层（轻预警，不强制减仓）。
+    满足全部：CCI>150 + 5d 累积 > vol_adj(15) + 破 BB 上轨/偏离 MA20>vol_adj(12)。
+    """
+    cci      = market.get("cci_20") or 0
+    cum5     = market.get("cum_5d_pct", 0) or 0
+    price    = market.get("price") or 0
+    bb_upper = market.get("bb_upper") or 0
+    dist_ma  = abs(market.get("dist_from_ma20_pct") or 0)
+
+    thr_cum = _vol_adjusted(15, market)
+    thr_dist = _vol_adjusted(12, market)
+    if cci > 150 and cum5 > thr_cum and (
+            (bb_upper > 0 and price > bb_upper) or dist_ma > thr_dist):
+        return True, f"CCI={cci:.0f}>150 + 5d={cum5:.1f}%>{thr_cum}% + " + (
+            "破 BB 上轨" if (bb_upper > 0 and price > bb_upper)
+            else f"偏离 MA20={dist_ma:.1f}%>{thr_dist}%"
+        )
+    return False, None
+
+
 def get_regime(macro: dict, market: dict) -> str:
     """
     市场状态识别。优先级: 单日暴跌 > crisis > overheated > recession_risk > bull_trending > neutral
@@ -329,6 +397,10 @@ def get_regime(macro: dict, market: dict) -> str:
         return "crisis"
     if pct_zone == "drop" and trend == "down":
         return "recession_risk"
+    # A+B 方案：多日累积 + 极端指标共振 → overheated（除单日+5%外的新触发）
+    is_oh, _ = _is_overheated(market)
+    if is_oh:
+        return "overheated"
     if pct_eff >= 5:
         return "overheated"
 
@@ -530,6 +602,23 @@ def _etf_rules(market: dict, events: dict, macro: dict, regime: str = "neutral",
     bear = tb + mb + ev_in_total + qb_bear
     bull = tbu + mbu + qb_bull + bull_boost
 
+    # ── A+B 方案 第一层：CAUTION 预警（CCI 深超买 + 5日累积涨 + 偏离均线）─────
+    # 趋势仍在但已过热 → 输出 CAUTION（不强制减仓，停止加仓）。
+    # 不改 regime，不影响其它路径；overheated（第二层）才降阈值放行 REDUCE。
+    is_caution, caution_reason = _caution_check(market)
+    if is_caution and bull >= bear:
+        return {"action": "CAUTION",
+                "confidence": _normalize_confidence(
+                    _conf_input(max(bull, 3), max(tbu_w, 1.0)), side="bull"),
+                "reason": f"过热预警: {caution_reason}",
+                "stop_ref": _compute_buy_stop_ref(market),
+                "score_breakdown": {"tech": tbu, "tech_weighted": tbu_w,
+                                    "macro": mbu, "event": ev, "quant": qb_bull,
+                                    "boost": bull_boost, "raw": bull,
+                                    "event_in_total": ev_in_total,
+                                    "calibrated": calibrated,
+                                    "caution_layer1": True}}
+
     # 突发新闻 → 仅在技术面无明显方向时观望；极端技术信号优先于新闻
     if breaking and not tech_only:
         # 极端看跌（技术bear ≥3 + 任一极端指标）→ 仍 REDUCE
@@ -610,7 +699,7 @@ def _etf_rules(market: dict, events: dict, macro: dict, regime: str = "neutral",
         "bull_extended":  (99, 99, 2), # 子类: 强动量延续 → REDUCE/CAUTION 全 disable，bull≥2 即买
         "bull_pulling":   (99, 99, 2), # 子类: 回调买入 bull → REDUCE 也 disable，dip 都是 BUY 机会
         "bull_chop":      (5, 3, 5),   # 子类: 波动放大 → 稍严，要求更高 bull conf
-        "overheated":     (4, 3, 5),   # 过热：bear≥4 减仓，bull≥5 才买
+        "overheated":     (3, 2, 5),   # A+B 方案：bear≥3 减仓（原 4），bull≥5 才买
         "recession_risk": (3, 2, 5),   # 衰退风险：快速减仓
         "crisis":         (2, 1, 6),   # 危机：极敏感，几乎不买
     }

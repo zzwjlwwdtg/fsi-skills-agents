@@ -492,6 +492,19 @@ def get_market_signal(ticker: str) -> dict:
         ma20    = float(ma20_s.iloc[-1])
         ma50    = float(ma50_s.iloc[-1])
         vol_avg20 = float(volumes.tail(20).mean())
+
+        # ── 多日累积涨幅 + 偏离均线 + 历史波动率（overheated regime / CAUTION 用） ──
+        def _cum_pct(n_days: int) -> float | None:
+            if len(all_closes) <= n_days:
+                return None
+            base = float(all_closes.iloc[-n_days - 1])
+            return round((price - base) / base * 100, 2) if base else None
+        cum_5d_pct  = _cum_pct(5)
+        cum_10d_pct = _cum_pct(10)
+        dist_from_ma20_pct = round((price - ma20) / ma20 * 100, 2) if ma20 else None
+        # 20 日日内收益率年化波动率（240 交易日）—— 给自适应阈值用
+        daily_ret = all_closes.pct_change().tail(20).dropna()
+        vol_20d_annual = round(float(daily_ret.std() * (252 ** 0.5) * 100), 2) if len(daily_ret) >= 10 else None
         vol_ratio = vol_today / vol_avg20 if vol_avg20 > 0 else 1.0
 
         is_new_high = price >= high_52w * 0.998
@@ -628,6 +641,11 @@ def get_market_signal(ticker: str) -> dict:
             "ma_cross":        ma_cross,
             "rsi_cross":       rsi_cross,
             "cci_cross":       cci_cross,
+            # 多日累积 + 偏离 + 波动率（CAUTION / overheated 用）
+            "cum_5d_pct":      cum_5d_pct,
+            "cum_10d_pct":     cum_10d_pct,
+            "dist_from_ma20_pct": dist_from_ma20_pct,
+            "vol_20d_annual":  vol_20d_annual,
             "bb_pct":          round(bb_pct, 3) if bb_pct == bb_pct else None,
             "bb_zone":         bb_zone,
             "bb_upper":        round(float(bb_upper.iloc[-1]), 2),
