@@ -493,6 +493,56 @@ def get_market_signal(ticker: str) -> dict:
         ma50    = float(ma50_s.iloc[-1])
         vol_avg20 = float(volumes.tail(20).mean())
 
+        # ── 顶/底背离检测（C 方案）：OOS 回测显示是反指标，已停用 ─────────────
+        # 保留检测函数供未来研究，但 _etf_rules 不再消费这些字段。
+        def _detect_div(price_series, ind_series, side: str,
+                          lookback: int = 25, min_gap: int = 4, ind_delta_min: float = 20) -> str | None:
+            """side: 'top' 看顶背离, 'bot' 看底背离."""
+            if len(price_series) < lookback + 5:
+                return None
+            p = price_series.iloc[-lookback:].reset_index(drop=True)
+            ind = ind_series.iloc[-lookback:].reset_index(drop=True)
+            # 找局部峰/谷（前后 2 根都更低/高）
+            peaks = []
+            for i in range(2, len(p) - 2):
+                if side == "top":
+                    if p.iloc[i] == p.iloc[i-2:i+3].max():
+                        peaks.append(i)
+                else:
+                    if p.iloc[i] == p.iloc[i-2:i+3].min():
+                        peaks.append(i)
+            # 间距过滤
+            filtered = []
+            for idx in peaks:
+                if not filtered or idx - filtered[-1] >= min_gap:
+                    filtered.append(idx)
+            if len(filtered) < 2:
+                return None
+            p1_i, p2_i = filtered[-2], filtered[-1]
+            p1_price, p2_price = p.iloc[p1_i], p.iloc[p2_i]
+            p1_ind, p2_ind = ind.iloc[p1_i], ind.iloc[p2_i]
+            if side == "top":
+                # 顶背离：价格新高 + 指标更低
+                if p2_price > p1_price * 1.005 and p2_ind < p1_ind - ind_delta_min:
+                    bars_since = lookback - 1 - p2_i
+                    return "confirmed" if bars_since >= 2 else "forming"
+            else:
+                # 底背离：价格新低 + 指标更高
+                if p2_price < p1_price * 0.995 and p2_ind > p1_ind + ind_delta_min:
+                    bars_since = lookback - 1 - p2_i
+                    return "confirmed" if bars_since >= 2 else "forming"
+            return None
+
+        try:
+            cci_series = pd.Series(cci)  # cci 已是 series（_compute_cci 返回）
+            cci_top_div = _detect_div(all_closes, cci_series, "top")
+            cci_bot_div = _detect_div(all_closes, cci_series, "bot")
+            rsi_series = _compute_rsi(all_closes)
+            rsi_top_div = _detect_div(all_closes, rsi_series, "top", ind_delta_min=8)
+            rsi_bot_div = _detect_div(all_closes, rsi_series, "bot", ind_delta_min=8)
+        except Exception:
+            cci_top_div = cci_bot_div = rsi_top_div = rsi_bot_div = None
+
         # ── 多日累积涨幅 + 偏离均线 + 历史波动率（overheated regime / CAUTION 用） ──
         def _cum_pct(n_days: int) -> float | None:
             if len(all_closes) <= n_days:
@@ -641,11 +691,16 @@ def get_market_signal(ticker: str) -> dict:
             "ma_cross":        ma_cross,
             "rsi_cross":       rsi_cross,
             "cci_cross":       cci_cross,
-            # 多日累积 + 偏离 + 波动率（CAUTION / overheated 用）
+            # 多日累积 + 偏离 + 波动率
             "cum_5d_pct":      cum_5d_pct,
             "cum_10d_pct":     cum_10d_pct,
             "dist_from_ma20_pct": dist_from_ma20_pct,
             "vol_20d_annual":  vol_20d_annual,
+            # 顶/底背离（C 方案 — 价格新高/低 + 指标反向）
+            "cci_top_divergence": cci_top_div,
+            "cci_bot_divergence": cci_bot_div,
+            "rsi_top_divergence": rsi_top_div,
+            "rsi_bot_divergence": rsi_bot_div,
             "bb_pct":          round(bb_pct, 3) if bb_pct == bb_pct else None,
             "bb_zone":         bb_zone,
             "bb_upper":        round(float(bb_upper.iloc[-1]), 2),

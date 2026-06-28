@@ -397,10 +397,8 @@ def get_regime(macro: dict, market: dict) -> str:
         return "crisis"
     if pct_zone == "drop" and trend == "down":
         return "recession_risk"
-    # A+B 方案：多日累积 + 极端指标共振 → overheated（除单日+5%外的新触发）
-    is_oh, _ = _is_overheated(market)
-    if is_oh:
-        return "overheated"
+    # 单日 +5%（缩放）→ overheated（保留旧版仅有的触发）
+    # A+B 方案的多日累积/双日暴涨 trigger 已回滚（OOS 证实在动量资产上反指标）
     if pct_eff >= 5:
         return "overheated"
 
@@ -602,23 +600,6 @@ def _etf_rules(market: dict, events: dict, macro: dict, regime: str = "neutral",
     bear = tb + mb + ev_in_total + qb_bear
     bull = tbu + mbu + qb_bull + bull_boost
 
-    # ── A+B 方案 第一层：CAUTION 预警（CCI 深超买 + 5日累积涨 + 偏离均线）─────
-    # 趋势仍在但已过热 → 输出 CAUTION（不强制减仓，停止加仓）。
-    # 不改 regime，不影响其它路径；overheated（第二层）才降阈值放行 REDUCE。
-    is_caution, caution_reason = _caution_check(market)
-    if is_caution and bull >= bear:
-        return {"action": "CAUTION",
-                "confidence": _normalize_confidence(
-                    _conf_input(max(bull, 3), max(tbu_w, 1.0)), side="bull"),
-                "reason": f"过热预警: {caution_reason}",
-                "stop_ref": _compute_buy_stop_ref(market),
-                "score_breakdown": {"tech": tbu, "tech_weighted": tbu_w,
-                                    "macro": mbu, "event": ev, "quant": qb_bull,
-                                    "boost": bull_boost, "raw": bull,
-                                    "event_in_total": ev_in_total,
-                                    "calibrated": calibrated,
-                                    "caution_layer1": True}}
-
     # 突发新闻 → 仅在技术面无明显方向时观望；极端技术信号优先于新闻
     if breaking and not tech_only:
         # 极端看跌（技术bear ≥3 + 任一极端指标）→ 仍 REDUCE
@@ -699,7 +680,7 @@ def _etf_rules(market: dict, events: dict, macro: dict, regime: str = "neutral",
         "bull_extended":  (99, 99, 2), # 子类: 强动量延续 → REDUCE/CAUTION 全 disable，bull≥2 即买
         "bull_pulling":   (99, 99, 2), # 子类: 回调买入 bull → REDUCE 也 disable，dip 都是 BUY 机会
         "bull_chop":      (5, 3, 5),   # 子类: 波动放大 → 稍严，要求更高 bull conf
-        "overheated":     (3, 2, 5),   # A+B 方案：bear≥3 减仓（原 4），bull≥5 才买
+        "overheated":     (4, 3, 5),   # 过热：bear≥4 减仓，bull≥5 才买
         "recession_risk": (3, 2, 5),   # 衰退风险：快速减仓
         "crisis":         (2, 1, 6),   # 危机：极敏感，几乎不买
     }
