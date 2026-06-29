@@ -171,6 +171,162 @@ def _drawdown_multiplier() -> float:
     return 0.0
 
 
+def _kelly_mult(ticker: str, min_trades: int = 10) -> float:
+    """读 trade_log.jsonl 该 ticker 历史已平仓交易，算 half-Kelly 仓位乘子。
+    样本 < min_trades 直接返回 1.0（无信号）。Cap [0.5, 1.5] 防极端。
+
+    Kelly = W - (1-W)/R   (W=胜率, R=avg_win/|avg_loss|)
+    Half Kelly = 0.5 × Kelly（行业惯例，full Kelly 过度激进）
+    """
+    try:
+        from pathlib import Path
+        from collections import defaultdict
+        log_path = Path(__file__).parent / "signals" / "trade_log.jsonl"
+        if not log_path.exists():
+            return 1.0
+        events = []
+        with open(log_path, encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line: continue
+                try:
+                    e = __import__("json").loads(line)
+                    if not e.get("dry_run", True) and e["ticker"] == ticker:
+                        events.append(e)
+                except Exception:
+                    continue
+        # 简化配对（同 ticker FIFO）
+        open_pos = []
+        closed = []
+        for ev in events:
+            if ev["side"] == "BUY":
+                open_pos.append({"qty": ev["qty"], "price": ev["price"]})
+            elif ev["side"] == "SELL":
+                rem = ev["qty"]
+                while rem > 0 and open_pos:
+                    p = open_pos[0]
+                    cq = min(rem, p["qty"])
+                    closed.append((ev["price"] - p["price"]) / p["price"] * 100)
+                    p["qty"] -= cq
+                    if p["qty"] <= 0:
+                        open_pos.pop(0)
+                    rem -= cq
+        n = len(closed)
+        if n < min_trades:
+            return 1.0
+        wins = [p for p in closed if p > 0]
+        losses = [p for p in closed if p <= 0]
+        if not losses:   # 100% 胜率 → cap 上限
+            return 1.5
+        if not wins:     # 0% 胜率 → 缩到下限
+            return 0.5
+        win_rate = len(wins) / n
+        avg_win  = sum(wins) / len(wins)
+        avg_loss = abs(sum(losses) / len(losses))
+        if avg_loss == 0:
+            return 1.5
+        R = avg_win / avg_loss
+        full_kelly = win_rate - (1 - win_rate) / R
+        half_kelly = 0.5 * full_kelly
+        # 把 half_kelly（理论范围 -0.5 到 +0.5）映射到仓位乘子（0.5 到 1.5）
+        mult = 1.0 + half_kelly
+        return max(0.5, min(1.5, mult))
+    except Exception:
+        return 1.0
+
+
+def _within_sitting_window(tstate: dict) -> bool:
+    """是否仍在 sitting confirm 期内（持仓 < SITTING_MIN_DAYS 天）。
+    用 first_entry_utc 作为基准；缺失则按 last_time_utc 兜底。"""
+    try:
+        from datetime import datetime as _dt, timedelta as _td, timezone as _tz
+        ts_str = tstate.get("first_entry_utc") or tstate.get("last_time_utc")
+        if not ts_str:
+            return False
+        entry_dt = _dt.fromisoformat(ts_str.replace("Z", "+00:00"))
+        return (_dt.now(_tz.utc) - entry_dt) < _td(days=SITTING_MIN_DAYS)
+    except Exception:
+        return False
+
+
+def _check_loss_streak() -> tuple[bool, str]:
+    """读 trade_log.jsonl 配对最近 N 笔；全亏 → 暂停。
+    返回 (is_paused, reason)。任何异常 → 不暂停。"""
+    try:
+        from pathlib import Path
+        from collections import defaultdict
+        log_path = Path(__file__).parent / "signals" / "trade_log.jsonl"
+        if not log_path.exists():
+            return False, ""
+        events = []
+        with open(log_path, encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line: continue
+                try:
+                    e = __import__("json").loads(line)
+                    if not e.get("dry_run", True):  # 只看真实成交
+                        events.append(e)
+                except Exception:
+                    continue
+        # 配对 FIFO
+        open_pos = defaultdict(list)
+        closed = []
+        for ev in events:
+            tk = ev["ticker"]
+            if ev["side"] == "BUY":
+                open_pos[tk].append({"qty": ev["qty"], "price": ev["price"], "ts": ev["ts"]})
+            elif ev["side"] == "SELL":
+                rem = ev["qty"]
+                while rem > 0 and open_pos[tk]:
+                    p = open_pos[tk][0]
+                    cq = min(rem, p["qty"])
+                    closed.append({"ts": ev["ts"], "pnl_pct": (ev["price"] - p["price"]) / p["price"] * 100})
+                    p["qty"] -= cq
+                    if p["qty"] <= 0:
+                        open_pos[tk].pop(0)
+                    rem -= cq
+        # 最近 N 笔
+        recent = closed[-LOSS_STREAK_THRESHOLD:]
+        if len(recent) < LOSS_STREAK_THRESHOLD:
+            return False, ""
+        all_losses = all(c["pnl_pct"] <= 0 for c in recent)
+        if all_losses:
+            avg_loss = sum(c["pnl_pct"] for c in recent) / len(recent)
+            return True, f"最近 {LOSS_STREAK_THRESHOLD} 笔全亏，平均 {avg_loss:.2f}%"
+        return False, ""
+    except Exception:
+        return False, ""
+
+
+def _is_loss_streak_paused() -> tuple[bool, str]:
+    """检查 trader_state 里的 pause_until 是否还有效。"""
+    state = _state_load()
+    pause = state.get(LOSS_STREAK_STATE_KEY, {})
+    if not pause:
+        return False, ""
+    try:
+        until = datetime.fromisoformat(pause["until"])
+        if datetime.now(timezone.utc) < until:
+            return True, pause.get("reason", "")
+    except Exception:
+        pass
+    # 过期了 → 清除
+    state.pop(LOSS_STREAK_STATE_KEY, None)
+    _state_save(state)
+    return False, ""
+
+
+def _trigger_loss_streak_pause(reason: str) -> None:
+    state = _state_load()
+    from datetime import timedelta
+    until = (datetime.now(timezone.utc) + timedelta(hours=LOSS_STREAK_PAUSE_HOURS)).isoformat()
+    state[LOSS_STREAK_STATE_KEY] = {"until": until, "reason": reason,
+                                    "triggered_at": datetime.now(timezone.utc).isoformat()}
+    _state_save(state)
+    logger.warning(f"[trader] 🛑 连续亏损暂停 → {until} ({reason})")
+
+
 def _update_nav_peak(current_nav: float) -> None:
     state = _state_load()
     meta  = state.get(NAV_PEAK_KEY, {"peak_nav": 0, "current_nav": 0})
@@ -297,6 +453,16 @@ LEVERAGED_PAIRS = {
 BUY_ACTIONS    = {"BUY", "WATCH_BUY"}
 SELL_ACTIONS   = {"SELL"}
 REDUCE_ACTIONS = {"REDUCE"}
+
+# 连续亏损暂停（P4.2）：最近 N 笔已平仓全亏 → 暂停新仓 PAUSE_HOURS 小时
+LOSS_STREAK_THRESHOLD = 3
+LOSS_STREAK_PAUSE_HOURS = 24
+LOSS_STREAK_STATE_KEY = "__loss_streak_pause"
+
+# Sitting 确认期（P4.1）：开仓后 N 天内信号驱动的 SELL/REDUCE 不放行
+# （trailing stop / TP / crisis regime override / earnings guard 仍正常）
+# 目的：抓 Livermore "sit through" 大趋势，避免在窗口里被瞬时反转信号洗出
+SITTING_MIN_DAYS = 3
 
 DRY_RUN = os.environ.get("TRADER_DRY_RUN", "0") == "1"
 
@@ -474,7 +640,8 @@ def _position_size_usd(ticker: str, conf: int = 6) -> float:
     elif pct < 0.80:  conf_mult = 1.00   # 满仓
     else:             conf_mult = 1.0 + (pct - 0.80) * 2.0   # boost 最高 1.40
 
-    final_pct = raw_pct * vix_mult * dd_mult * conf_mult
+    kelly_mult = _kelly_mult(ticker)
+    final_pct = raw_pct * vix_mult * dd_mult * conf_mult * kelly_mult
     final_pct = min(final_pct, POSITION_FRACTION_MAX)
     raw_size_usd = power * final_pct
 
@@ -643,6 +810,16 @@ def _place(code: str, side, qty: int, price: float, tag: str = "",
     logger.info(f"[trader-LIVE] {side_label} {qty:>5} {code:<8} @ {order_price:>8.2f} ({ref_label}) {rth_label} order={oid} {tag}")
     _log_trade(code, side_label.strip(), qty, order_price, str(oid), tag,
                decision=decision, mkt=mkt, window=window, extra=extra)
+    # SELL 后检查连续亏损（仅 LIVE / 真实成交才触发暂停）
+    if side == TrdSide.SELL:
+        try:
+            is_streak, reason = _check_loss_streak()
+            if is_streak:
+                already_paused, _ = _is_loss_streak_paused()
+                if not already_paused:
+                    _trigger_loss_streak_pause(reason)
+        except Exception:
+            pass
     return oid
 
 
@@ -687,6 +864,14 @@ def execute(ticker: str, decision: dict, mkt: dict, window: str | None,
     is_core = ticker in CORE_TICKERS
     action_for_sizing = (decision or {}).get("action")
     conf_for_sizing = (decision or {}).get("confidence") or 6
+
+    # ── 连续亏损暂停（P4.2）：BUY 全部跳过；SELL / REDUCE / 风控仍允许 ─────
+    if action_for_sizing in BUY_ACTIONS:
+        paused, p_reason = _is_loss_streak_paused()
+        if paused:
+            logger.info(f"[trader] {ticker} {action_for_sizing} 跳过：连续亏损暂停 ({p_reason})")
+            return
+
     size_usd = _position_size_usd(ticker, conf=conf_for_sizing)
     # 卫星票必须在今日 picks 里才允许 BUY；老仓 SELL/REDUCE 仍允许
     if not is_core and size_usd == 0:
@@ -885,11 +1070,20 @@ def execute(ticker: str, decision: dict, mkt: dict, window: str | None,
         if pos_qty <= 0:
             logger.info(f"[trader] {ticker} {action} 但无持仓，跳过")
             return
+        # Sitting 确认期（P4.1）：信号驱动的 SELL 不允许在持仓 < N 天内触发
+        # 硬性 stop（trailing/crisis/earnings guard）仍在上面早 return 路径放行
+        if _within_sitting_window(tstate):
+            logger.info(f"[trader] {ticker} SELL 跳过：sitting 确认期内（持仓 < {SITTING_MIN_DAYS} 天，信号 SELL 不放行）")
+            return
         qty  = pos_qty
         side = TrdSide.SELL
     elif action in REDUCE_ACTIONS:
         if pos_qty <= 0:
             logger.info(f"[trader] {ticker} REDUCE 但无持仓，跳过")
+            return
+        # Sitting：REDUCE 在持仓 < N 天内也跳过（除非是 crisis regime）
+        if _within_sitting_window(tstate) and (decision or {}).get("regime") != "crisis":
+            logger.info(f"[trader] {ticker} REDUCE 跳过：sitting 确认期内（非 crisis）")
             return
         qty  = max(1, pos_qty // 2)
         side = TrdSide.SELL
