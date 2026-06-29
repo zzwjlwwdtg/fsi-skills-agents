@@ -75,6 +75,34 @@ TARGET_PORT_VOL = {
     "crisis":         0.00,
 }
 POSITION_FRACTION_MAX    = 0.40   # 单笔最高 40% (避免 single trade 爆仓)
+
+# 相关性组总暴露上限（防止 TQQQ + SOXL + MULL 同时满仓 = 6x+ 实质杠杆）
+# 每个 ticker 归一个 group；BUY 前如该组当前暴露 + 新仓 > 上限，按比例缩减
+CORRELATION_GROUP = {
+    "US.TQQQ":  "tech_3x",
+    "US.SOXL":  "tech_3x",
+    "US.MULL":  "tech_2x",
+    "US.DRAM":  "tech_1x",   # 1x memory ETF
+    "US.NVDA":  "single_high_beta",
+    "US.AAPL":  "single_high_beta",
+    "US.TSLA":  "single_high_beta",
+    "US.META":  "single_high_beta",
+    "US.GOOGL": "single_high_beta",
+    "US.AMD":   "single_high_beta",
+    "US.GLD":   "defensive",
+    "US.TLT":   "defensive",
+    "US.SQQQ":  "inverse",
+    "US.SOXS":  "inverse",
+    "US.SH":    "inverse",
+}
+GROUP_CAP = {
+    "tech_3x":          0.50,   # 3x ETF 合计 ≤ 50% NAV（实际 beta = 150%）
+    "tech_2x":          0.30,
+    "tech_1x":          0.30,
+    "single_high_beta": 0.30,   # 高 beta 单股合计 ≤ 30%
+    "defensive":        0.30,
+    "inverse":          0.20,   # 反向工具占比小
+}
 ACCOUNT_POWER_FALLBACK   = 1_500_000
 
 # 每个核心 ticker 的年化波动率 (回测算出, 缓存值)
@@ -362,6 +390,42 @@ def _get_account_power() -> float:
     return ACCOUNT_POWER_FALLBACK
 
 
+def _group_current_exposure_usd(group: str) -> float:
+    """查询该 correlation group 当前所有 ticker 的 market value 总和。"""
+    if not group:
+        return 0.0
+    tickers_in_group = [tk for tk, g in CORRELATION_GROUP.items() if g == group]
+    try:
+        ctx = _ctx_get()
+        ret, pos = ctx.position_list_query(trd_env=TRD_ENV, acc_id=ACC_ID, code=None)
+    except Exception:
+        return 0.0
+    if ret != RET_OK or pos is None or pos.empty:
+        return 0.0
+    total = 0.0
+    for _, row in pos.iterrows():
+        code = str(row.get("code", ""))
+        if code in tickers_in_group:
+            qty = float(row.get("qty", 0) or 0)
+            price = float(row.get("nominal_price", 0) or row.get("cost_price", 0) or 0)
+            total += qty * price
+    return total
+
+
+def _group_cap_usd(ticker: str) -> tuple[float, str] | tuple[None, None]:
+    """返回 (该 group 剩余可买额度 USD, group_name)；无组归属或无 cap → (None, None)。"""
+    group = CORRELATION_GROUP.get(ticker)
+    if not group or group not in GROUP_CAP:
+        return None, None
+    power = _get_account_power()
+    if power <= 0:
+        return None, None
+    cap_usd = power * GROUP_CAP[group]
+    current = _group_current_exposure_usd(group)
+    remaining = max(0.0, cap_usd - current)
+    return remaining, group
+
+
 def _position_size_usd(ticker: str, conf: int = 6) -> float:
     """
     Vol-Target + DD Floor + VIX Multiplier (机构标准 sizing):
@@ -397,12 +461,33 @@ def _position_size_usd(ticker: str, conf: int = 6) -> float:
     # 3) 乘数
     vix_mult  = _vix_multiplier()
     dd_mult   = _drawdown_multiplier()
-    # conf 微调: conf 6 = 1.0, conf 10 = 1.4 (vol-target 已主导,conf 只是微调)
-    conf_mult = 1.0 + max(0, conf - 6) * 0.10
+    # conf → mult：低信心 = 试探仓 (probe)，高信心 = 满仓 + boost
+    # 自适应 5 分制 / 10 分制（按 conf/scale 归一化）
+    try:
+        from decision_agent import _conf_scale
+        scale = _conf_scale()
+    except Exception:
+        scale = 10
+    pct = conf / scale if scale > 0 else 0.5
+    if pct < 0.40:    conf_mult = 0.30   # probe 试探（20% 仓位级别）
+    elif pct < 0.60:  conf_mult = 0.65   # 半仓
+    elif pct < 0.80:  conf_mult = 1.00   # 满仓
+    else:             conf_mult = 1.0 + (pct - 0.80) * 2.0   # boost 最高 1.40
 
     final_pct = raw_pct * vix_mult * dd_mult * conf_mult
     final_pct = min(final_pct, POSITION_FRACTION_MAX)
-    return power * final_pct
+    raw_size_usd = power * final_pct
+
+    # ── 相关性组总暴露上限 ─────────────────────────────────────────
+    # 该 group 剩余可买额度 < raw_size_usd → 缩减到剩余额度
+    remaining, group = _group_cap_usd(ticker)
+    if remaining is not None and remaining < raw_size_usd:
+        if remaining <= 0:
+            logger.info(f"[trader] {ticker} 组 {group} 已满 (cap reached) → 跳过新仓")
+            return 0.0
+        logger.info(f"[trader] {ticker} 组 {group} 剩余 ${remaining:,.0f} < 计划 ${raw_size_usd:,.0f} → 缩减")
+        return remaining
+    return raw_size_usd
 
 
 # ---------- AI target loader (A 方案：Claude 结构化目标覆盖)----------
