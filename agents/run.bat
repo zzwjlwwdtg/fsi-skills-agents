@@ -42,8 +42,11 @@ if exist ".orchestrator.lock" (
     echo [INFO] stale lock for dead PID !ORCH_PID! - python will clear it
 )
 
+if "%TRADER_LIVE_FRACTION%"=="" set "TRADER_LIVE_FRACTION=1.0"
+
 echo Trading Agents starting...
 echo   TRADER_DRY_RUN=%TRADER_DRY_RUN%   (0=LIVE on moomoo SIMULATE, 1=dry log-only)
+echo   TRADER_LIVE_FRACTION=%TRADER_LIVE_FRACTION%   (gradual rollout: 0.1=10%% size, 1.0=full)
 echo   CLAUDE_DECISION_GATE=%CLAUDE_DECISION_GATE%   (1=Claude pre-trade approval required)
 echo   Tools menu: run tools.bat
 echo   Log: logs\run_YYYYMMDD.log

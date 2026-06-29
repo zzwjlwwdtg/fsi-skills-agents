@@ -26,6 +26,9 @@ REM Weekly: trade postmortem (BUY/SELL pairing + attribution)
 REM Output: signals/trade_postmortem.md (after enough live trades)
 "%PY%" -X utf8 -u _trade_postmortem.py
 
+REM Weekly: data source health check (yfinance / FRED / moomoo / Claude CLI / calibration / HMM)
+"%PY%" -X utf8 -u _data_source_health.py
+
 echo.
 pause
 endlocal

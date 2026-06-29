@@ -466,6 +466,11 @@ SITTING_MIN_DAYS = 3
 
 DRY_RUN = os.environ.get("TRADER_DRY_RUN", "0") == "1"
 
+# 灰度切换（P5.1）：LIVE 模式下也可以只用账户的一部分资金
+# LIVE_FRACTION = 0.1 → 实际 BUY size 缩到原计划的 10%；用于 paper → live 渐进上线
+# 范围 0.0 ~ 1.0，超出 cap 到 1.0
+LIVE_FRACTION = max(0.0, min(1.0, float(os.environ.get("TRADER_LIVE_FRACTION", "1.0"))))
+
 STATE_PATH    = Path(__file__).parent / "trader_state.json"
 UNIVERSE_PATH = Path(__file__).parent / "universe_state.json"
 
@@ -643,7 +648,7 @@ def _position_size_usd(ticker: str, conf: int = 6) -> float:
     kelly_mult = _kelly_mult(ticker)
     final_pct = raw_pct * vix_mult * dd_mult * conf_mult * kelly_mult
     final_pct = min(final_pct, POSITION_FRACTION_MAX)
-    raw_size_usd = power * final_pct
+    raw_size_usd = power * final_pct * LIVE_FRACTION   # 灰度切换
 
     # ── 相关性组总暴露上限 ─────────────────────────────────────────
     # 该 group 剩余可买额度 < raw_size_usd → 缩减到剩余额度

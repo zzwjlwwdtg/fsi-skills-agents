@@ -65,6 +65,11 @@
 - ❌ **CAUTION + overheated 多日累积阈值**（A+B 方案）：OOS n=58, 5d 下跌率 31% vs 基线 47.8%，**反指标**
 - ❌ **Trump signal / breaking news 直接进决策**：消息面信息会**先反映到技术面**，再二次注入 = 双重计费 + 滞后（TECHNICAL_ONLY 模式禁用）
 - ❌ **任何反转预测**：技术指标对反转的预测力极差
+- ❌ **crisis 触发自动 BUY 反向 ETF (SQQQ/SOXS/SH/PSQ)**（P4.4, 2026-06-29 OOS）：
+  - 20 次 crisis 触发，反向 ETF 5d 上涨率仅 26.5% (门槛 60%)
+  - 平均 5d 收益 **-9.6%**（应是 +2% 才达标）
+  - 解释：机构在 -5% 后通常 V 反弹买入恐慌盘，反向 ETF 被砸
+  - 决定：**不上线**，仅在 banner / notifier 显示"crisis 状态"作信息参考
 
 ---
 
