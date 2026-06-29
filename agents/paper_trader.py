@@ -151,6 +151,24 @@ def _update_nav_peak(current_nav: float) -> None:
         meta["peak_nav"] = float(current_nav)
     state[NAV_PEAK_KEY] = meta
     _state_save(state)
+    # 追加历史时序（每个 ET window 一次，给 benchmark 报告用）
+    try:
+        from pathlib import Path
+        from datetime import datetime, timezone
+        hist_path = Path(__file__).parent / "signals" / "nav_history.jsonl"
+        hist_path.parent.mkdir(parents=True, exist_ok=True)
+        peak = meta.get("peak_nav", current_nav) or current_nav
+        dd_pct = (current_nav - peak) / peak * 100 if peak > 0 else 0
+        entry = {
+            "ts":      datetime.now(timezone.utc).isoformat(),
+            "nav":     round(float(current_nav), 2),
+            "peak":    round(float(peak), 2),
+            "dd_pct":  round(dd_pct, 2),
+        }
+        with open(hist_path, "a", encoding="utf-8") as f:
+            f.write(__import__("json").dumps(entry, ensure_ascii=False) + "\n")
+    except Exception:
+        pass   # history is best-effort; trading must not fail because of logging
 
 CORE_TICKERS = {"US.TQQQ", "US.SOXL", "US.GLD", "US.DRAM", "US.MULL"}
 
@@ -433,13 +451,68 @@ def _get_realtime_price(code: str, fallback: float) -> float:
     return fallback
 
 
+def _log_trade(ticker: str, side: str, qty: int, price: float,
+                order_id: str | None, tag: str, decision: dict | None = None,
+                mkt: dict | None = None, window: str | None = None,
+                extra: dict | None = None) -> None:
+    """每笔成功成交（或 dry-run）追加到 signals/trade_log.jsonl，给复盘归因用。
+    永不影响主流程；任何异常吞掉。"""
+    try:
+        from pathlib import Path
+        path = Path(__file__).parent / "signals" / "trade_log.jsonl"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        decision = decision or {}
+        mkt = mkt or {}
+        entry = {
+            "ts":       datetime.now(timezone.utc).isoformat(),
+            "ticker":   ticker,
+            "side":     side,
+            "qty":      int(qty),
+            "price":    round(float(price), 2),
+            "order_id": order_id,
+            "tag":      tag,
+            "window":   window,
+            "dry_run":  DRY_RUN,
+            "decision": {
+                "action":     decision.get("action"),
+                "confidence": decision.get("confidence"),
+                "reason":     (decision.get("reason") or "")[:120],
+                "regime":     decision.get("regime"),
+                "engine":     decision.get("engine"),
+                "score_breakdown": decision.get("score_breakdown"),
+                "earnings_guard":  decision.get("earnings_guard"),
+                "uncertain":       decision.get("uncertain"),
+                "trump_override":  decision.get("trump_override"),
+            },
+            "market": {
+                "rsi":      mkt.get("rsi_14"),
+                "cci":      mkt.get("cci_20"),
+                "vol_ratio":mkt.get("vol_ratio"),
+                "trend":    mkt.get("trend"),
+                "ma_stack": mkt.get("ma_stack"),
+                "ma20":     mkt.get("ma20"),
+                "ma50":     mkt.get("ma50"),
+                "pct_chg":  mkt.get("pct_chg"),
+                "cum_5d":   mkt.get("cum_5d_pct"),
+                "cum_10d":  mkt.get("cum_10d_pct"),
+                "bb_pct":   mkt.get("bb_pct"),
+            },
+        }
+        if extra:
+            entry["context"] = extra
+        with open(path, "a", encoding="utf-8") as f:
+            f.write(__import__("json").dumps(entry, ensure_ascii=False) + "\n")
+    except Exception:
+        pass
+
+
 def _place(code: str, side, qty: int, price: float, tag: str = "",
-           buffer: float = 0.005, fill_outside_rth: bool = False):
+           buffer: float = 0.005, fill_outside_rth: bool = False,
+           decision: dict | None = None, mkt: dict | None = None,
+           window: str | None = None, extra: dict | None = None):
     """
     返回 order_id（实盘）或 'DRY'（dry-run）或 None（失败/跳过）。
-    buffer:             限价偏离 ref 的比例 (BUY 出高 / SELL 出低)；窗口决定
-    fill_outside_rth:   True 允许盘前盘后撮合（pre-market 用）
-                        同时触发: 用 yfinance 拉实时盘前价 替代 daily K 价
+    decision/mkt/window/extra：选填，仅供 trade_log 记录（不影响下单）。
     """
     if qty <= 0 or price <= 0:
         logger.warning(f"[trader] SKIP {side} {code} qty={qty} price={price}")
@@ -460,6 +533,8 @@ def _place(code: str, side, qty: int, price: float, tag: str = "",
     ref_label = f"ref {ref_price:.2f}" + (f" / daily {price:.2f}" if ref_price != price else "")
     if DRY_RUN:
         logger.info(f"[trader-DRY ] {side_label} {qty:>5} {code:<8} @ {order_price:>8.2f} ({ref_label}) {rth_label} {tag}")
+        _log_trade(code, side_label.strip(), qty, order_price, "DRY", tag,
+                   decision=decision, mkt=mkt, window=window, extra=extra)
         return "DRY"
     ctx = _ctx_get()
     try:
@@ -481,6 +556,8 @@ def _place(code: str, side, qty: int, price: float, tag: str = "",
         return None
     oid = info.iloc[0]["order_id"]
     logger.info(f"[trader-LIVE] {side_label} {qty:>5} {code:<8} @ {order_price:>8.2f} ({ref_label}) {rth_label} order={oid} {tag}")
+    _log_trade(code, side_label.strip(), qty, order_price, str(oid), tag,
+               decision=decision, mkt=mkt, window=window, extra=extra)
     return oid
 
 
@@ -747,6 +824,8 @@ def execute(ticker: str, decision: dict, mkt: dict, window: str | None,
         tag=place_tag,
         buffer=place_buffer,
         fill_outside_rth=win_cfg.get("fill_outside_rth", False),
+        decision=decision, mkt=mkt, window=window,
+        extra={"is_core": is_core, "size_usd": size_usd},
     )
     if oid is None:
         return
