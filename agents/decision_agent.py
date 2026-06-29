@@ -27,6 +27,19 @@ from config import (OPENAI_API_KEY, DECISION_MODEL, RSI_OVERBOUGHT, RSI_OVERSOLD
                     LEVERAGE_FACTORS)
 
 
+def _get_hmm_meta_state() -> str | None:
+    """读 signals/hmm_state.json 的 current_label。失败 → None。
+    用于 _etf_rules 仅做"更保守方向"的阈值微调（不会放宽）。"""
+    try:
+        from hmm_regime import load as _hmm_load
+        info = _hmm_load()
+        if info and info.get("current_prob", 0) >= 0.6:   # 状态置信度要够
+            return info.get("current_label")
+    except Exception:
+        pass
+    return None
+
+
 def _is_technical_only() -> bool:
     """技术面 only 模式：消息面信号（Trump / breaking_news / 事件日历）
     全部退化为参考，不再注入到决策。
@@ -690,6 +703,13 @@ def _etf_rules(market: dict, events: dict, macro: dict, regime: str = "neutral",
         reduce_thresh  = 5 if strong_up else 4
         caution_thresh = 4 if strong_up else 2
         bull_thresh    = 3
+
+    # ── HMM meta-regime（P4.3）：单向收紧 bull_thresh，不放宽 ────────────────
+    # 仅在 HMM 显示"波动/危机/熊"状态时让 BUY 更难触发；不会因 HMM 而放宽。
+    hmm_state = _get_hmm_meta_state()
+    if hmm_state in ("volatile_uncertain", "crisis", "bear_or_correction"):
+        bull_thresh += 1
+        caution_thresh = max(1, caution_thresh - 1)  # 同时让 CAUTION 更敏感
 
     if bear >= reduce_thresh:
         # 修复 #1: bull_trending 下 REDUCE 信号回测 14-25% 胜率（反指标）。
