@@ -892,8 +892,16 @@ def execute(ticker: str, decision: dict, mkt: dict, window: str | None,
     if not action or not price:
         return
     win_cfg = WINDOW_CFG.get(window, {})
-    conf_min = win_cfg.get("conf_min", CONFIDENCE_THRESHOLD)
+    conf_min_raw = win_cfg.get("conf_min", CONFIDENCE_THRESHOLD)
+    # conf_min 在配置里按 /10 量程写；实际 conf 可能是 /5（TECH_ONLY）→ 等比缩放
+    try:
+        from decision_agent import _conf_scale
+        scale = _conf_scale()
+    except Exception:
+        scale = 10
+    conf_min = conf_min_raw * scale / 10
     if conf < conf_min:
+        logger.info(f"[trader] {ticker} {action} conf {conf}/{scale} < min {conf_min:.1f} → 跳过")
         return
 
     state  = _state_load()
