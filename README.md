@@ -35,10 +35,15 @@ setup.bat
 :: 2. 配置 secrets（首次）
 copy secrets.example.json secrets.local.json
 :: 编辑 secrets.local.json 填入 FRED_API_KEY 和 MOOMOO_ACC_ID
+:: ⚠ secrets.local.json 已在 .gitignore，永远不要 commit — 详见 SECURITY.md
 
-:: 3. 启动 moomoo OpenD（一直开着）
+:: 3. 启用 pre-commit 安全钩子（首次）
+git config core.hooksPath .githooks
+:: 拦截 sk-... / ghp_... / AKIA... 等常见 secret 意外 commit
 
-:: 4. 选择运行模式
+:: 4. 启动 moomoo OpenD（一直开着）
+
+:: 5. 选择运行模式
 run.bat        :: 长跑（orchestrator，15min 循环 + 5 个 ET 窗口）
 snap.bat       :: 一键当日快照（regime + Trump + 信号 + 期权 + Claude 解读）
 tools.bat      :: 工具菜单（trader status / regime / picks / flatten 等）
@@ -55,6 +60,8 @@ weekly.bat     :: 周末跑一次模块准确率回测，刷 signals/module_accu
 | [`agents/secrets.example.json`](agents/secrets.example.json) | 敏感配置模板（占位） | ✅ |
 | `agents/secrets.local.json` | **真实** FRED_API_KEY / MOOMOO_ACC_ID 等 | ❌（.gitignore） |
 | `.claude/settings.local.json` | Claude Code 权限白名单 | ✅ |
+| [`SECURITY.md`](SECURITY.md) | 敏感信息管理规则 / pre-commit hook / 漏洞报告方式 | ✅ |
+| [`.githooks/pre-commit`](.githooks/pre-commit) | 拦截误 commit 的 API key（`git config core.hooksPath .githooks` 启用） | ✅ |
 
 ## 入口脚本
 

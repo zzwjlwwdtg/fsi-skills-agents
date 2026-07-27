@@ -1,0 +1,77 @@
+#!/usr/bin/env bash
+# Pre-commit hook: scan staged files for common secret patterns.
+# Enable with: git config core.hooksPath .githooks
+#
+# What it catches:
+#   · OpenAI API keys   (sk-...)
+#   · Anthropic keys    (sk-ant-...)
+#   · GitHub tokens     (ghp_..., gho_..., ghu_..., ghs_..., ghr_...)
+#   · AWS access keys   (AKIA[0-9A-Z]{16})
+#   · Google API keys   (AIza[0-9A-Za-z\-_]{35})
+#   · Long hex strings  (32+ hex chars) — commonly used for API keys/hashes
+#   · Bearer tokens
+#   · Private keys      (BEGIN ... PRIVATE KEY)
+#
+# Whitelist:
+#   · Comment / docstring lines containing "example", "placeholder", "your_", "YOUR_"
+#   · Files under docs/ (documentation may show example key formats)
+#   · secrets.example.json (contains only placeholders by design)
+#
+# Bypass (dangerous, only for false positives):
+#   git commit --no-verify
+
+set -e
+
+STAGED=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null | grep -v '^\.githooks/' || true)
+[ -z "$STAGED" ] && exit 0
+
+FOUND=0
+while IFS= read -r file; do
+    [ -z "$file" ] && continue
+    # Skip binary files, docs, and the example secret template
+    case "$file" in
+        docs/*|*.png|*.jpg|*.jpeg|*.gif|*.pdf|*.zip|*.gz|*.tar) continue ;;
+        *secrets.example*) continue ;;
+    esac
+    [ -f "$file" ] || continue
+
+    # Run grep patterns; -n gives line numbers
+    hits=$(grep -nE \
+        -e 'sk-[A-Za-z0-9]{20,}' \
+        -e 'sk-ant-[A-Za-z0-9\-]{20,}' \
+        -e 'gh[pousr]_[A-Za-z0-9]{30,}' \
+        -e 'AKIA[0-9A-Z]{16}' \
+        -e 'AIza[0-9A-Za-z\-_]{35}' \
+        -e 'Bearer [A-Za-z0-9._\-]{20,}' \
+        -e 'BEGIN [A-Z ]*PRIVATE KEY' \
+        "$file" 2>/dev/null || true)
+
+    # Whitelist filter: drop lines containing example/placeholder/YOUR_ markers
+    hits=$(echo "$hits" | grep -viE '(example|placeholder|your_|YOUR_|_HERE|test.*fixture|dummy|fake_key|<[A-Z_]+>)' || true)
+
+    # Long-hex separately (32+ hex chars) — high false-positive rate, only alarm on suspicious context
+    hex_hits=$(grep -nE '[A-Fa-f0-9]{32,}' "$file" 2>/dev/null | \
+               grep -viE '(example|placeholder|hash|sha[0-9]+|md5|commit|checksum|test|dummy|YOUR_|_HERE)' || true)
+
+    combined="$hits"
+    [ -n "$hex_hits" ] && combined="$combined\n$hex_hits"
+
+    if [ -n "$hits" ] || [ -n "$hex_hits" ]; then
+        FOUND=1
+        echo ""
+        echo "❌ Possible secret in $file:"
+        echo "$combined" | sed 's/^/   /'
+    fi
+done <<< "$STAGED"
+
+if [ "$FOUND" -eq 1 ]; then
+    echo ""
+    echo "============================================================"
+    echo "  Pre-commit hook 检测到疑似 secret，commit 已拒绝。"
+    echo "  确认是误报？用: git commit --no-verify"
+    echo "  真是 secret？删掉再 commit；改到 secrets.local.json"
+    echo "============================================================"
+    exit 1
+fi
+
+exit 0
