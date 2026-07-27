@@ -1,5 +1,8 @@
 # fsi-skills Trading Agents
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/)
+
 多策略量化信号 + Claude CLI 综合解读 + moomoo 模拟仓自动下单系统。
 
 针对 **TQQQ / SOXL / DRAM / MULL / GLD** 等核心 ETF，日 K 主信号 + 15min K 辅助，结合
