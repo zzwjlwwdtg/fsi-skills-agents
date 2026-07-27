@@ -815,6 +815,13 @@ def _place(code: str, side, qty: int, price: float, tag: str = "",
     logger.info(f"[trader-LIVE] {side_label} {qty:>5} {code:<8} @ {order_price:>8.2f} ({ref_label}) {rth_label} order={oid} {tag}")
     _log_trade(code, side_label.strip(), qty, order_price, str(oid), tag,
                decision=decision, mkt=mkt, window=window, extra=extra)
+    # 主动推送 trade（Telegram/Discord，如已配置）
+    try:
+        from notifications import notify_trade
+        conf = (decision or {}).get("confidence") if decision else None
+        notify_trade(code, side_label.strip(), qty, order_price, tag=tag, conf=conf)
+    except Exception:
+        pass
     # SELL 后检查连续亏损（仅 LIVE / 真实成交才触发暂停）
     if side == TrdSide.SELL:
         try:
@@ -823,6 +830,8 @@ def _place(code: str, side, qty: int, price: float, tag: str = "",
                 already_paused, _ = _is_loss_streak_paused()
                 if not already_paused:
                     _trigger_loss_streak_pause(reason)
+                    from notifications import send_alert
+                    send_alert(f"⛔ 连续亏损暂停 24h: {reason}", level="warning")
         except Exception:
             pass
     return oid

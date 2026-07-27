@@ -565,6 +565,15 @@ def _etf_cycle(events_signal: dict, macro: dict, window: str | None = None,
 
             emit(mkt, events_signal, decision)
 
+            # 主动推送 crisis regime（dedup 5 min，避免同一 crisis 每 cycle 都推）
+            if decision.get("regime") == "crisis":
+                try:
+                    from notifications import notify_crisis
+                    notify_crisis(ticker, mkt.get("pct_chg", 0) or 0,
+                                   reason=decision.get("reason", "")[:80])
+                except Exception:
+                    pass
+
             try:
                 trade_execute(ticker, decision, mkt, window)
             except Exception as exc:
