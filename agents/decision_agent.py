@@ -40,6 +40,60 @@ def _get_hmm_meta_state() -> str | None:
     return None
 
 
+# ── 板块级 regime（比 SPY 大盘更贴合具体标的） ─────────────────────────────
+# 例：SOXL/DRAM/MULL 跟半导体 SMH，不跟大盘 SPY
+TICKER_TO_SECTOR = {
+    "US.TQQQ": "QQQ",   # 3x QQQ → 参考 Nasdaq
+    "US.SQQQ": "QQQ",
+    "US.SOXL": "SMH",   # 3x 半导体 → 参考 SMH
+    "US.SOXS": "SMH",
+    "US.DRAM": "SMH",   # 内存 ETF → 参考半导体
+    "US.MULL": "SMH",   # 2x MU → 参考半导体
+    "US.GLD":  "GLD",   # 黄金 → 参考自己
+    "US.TLT":  "TLT",   # 长期债券
+}
+_SECTOR_REGIME_CACHE = {"ts": 0, "data": {}}
+
+
+def _get_sector_regime(ticker: str) -> str | None:
+    """按 ticker → 板块基准 → 20d + 5d 涨跌算板块 regime。
+    返回：'sector_bear' / 'sector_weak' / 'sector_neutral' / 'sector_strong' / None。
+    仅做**单向收紧**（bear/weak → bull_thresh +1，绝不放宽）。
+    """
+    import time
+    import yfinance as yf
+    sector = TICKER_TO_SECTOR.get(ticker)
+    if not sector:
+        return None
+
+    # 板块数据 15 分钟缓存
+    now = time.time()
+    if now - _SECTOR_REGIME_CACHE["ts"] > 900:
+        _SECTOR_REGIME_CACHE["data"] = {}
+        _SECTOR_REGIME_CACHE["ts"] = now
+    if sector in _SECTOR_REGIME_CACHE["data"]:
+        return _SECTOR_REGIME_CACHE["data"][sector]
+
+    try:
+        df = yf.Ticker(sector).history(period="30d", interval="1d", auto_adjust=True)
+        if df.empty or len(df) < 21:
+            return None
+        close = df["Close"].astype(float)
+        price = float(close.iloc[-1])
+        p5  = ((price / float(close.iloc[-6])  - 1) * 100)
+        p20 = ((price / float(close.iloc[-21]) - 1) * 100)
+        # 用与 dashboard /api/sectors 一致的判定
+        if p20 <= -10:  regime = "sector_bear"
+        elif p5 <= -5:  regime = "sector_crisis"
+        elif p20 <= -5: regime = "sector_weak"
+        elif p5 <= -2:  regime = "sector_pullback"
+        else:           regime = None   # 不收紧
+    except Exception:
+        regime = None
+    _SECTOR_REGIME_CACHE["data"][sector] = regime
+    return regime
+
+
 def _is_technical_only() -> bool:
     """技术面 only 模式：消息面信号（Trump / breaking_news / 事件日历）
     全部退化为参考，不再注入到决策。
@@ -710,6 +764,13 @@ def _etf_rules(market: dict, events: dict, macro: dict, regime: str = "neutral",
     if hmm_state in ("volatile_uncertain", "crisis", "bear_or_correction"):
         bull_thresh += 1
         caution_thresh = max(1, caution_thresh - 1)  # 同时让 CAUTION 更敏感
+
+    # ── 板块级 regime（比大盘更贴合具体标的）：单向收紧 bull_thresh ─────
+    # 例：SOXL/DRAM/MULL 跟 SMH 半导体，半导体技术熊时 → bull_thresh +1
+    sector_regime = _get_sector_regime(market.get("ticker", ""))
+    if sector_regime in ("sector_bear", "sector_crisis", "sector_weak"):
+        bull_thresh += 1
+        caution_thresh = max(1, caution_thresh - 1)
 
     if bear >= reduce_thresh:
         # 修复 #1: bull_trending 下 REDUCE 信号回测 14-25% 胜率（反指标）。

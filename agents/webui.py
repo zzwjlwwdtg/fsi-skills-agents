@@ -313,11 +313,31 @@ def api_banners() -> dict:
     # Gold Macro: "综合方向: bullish   score=+2  conf=8/10"
     m = re.search(r"综合方向:\s*(\w+)\s+score=([+-]?\d+)\s+conf=(\d+)/(\d+)", content)
     if m:
-        banners["gold_macro"] = {
+        gold = {
             "direction": m.group(1),
             "score":     int(m.group(2)),
             "conf":      f"{m.group(3)}/{m.group(4)}",
+            "factors":   [],
         }
+        # 抓 4 因子明细：▼/▲/· 前缀 + 名称 + dir + weight
+        # 例："▼ 实际利率           dir=bearish  w=3  value=2.43 trend=rising"
+        factor_re = re.compile(r"^\s*([▼▲·])\s+(\S+)\s+dir=(\w+)\s+w=(\d+)(.*)$", re.MULTILINE)
+        for fm in factor_re.finditer(content):
+            arrow, name, direction, weight, rest = fm.group(1), fm.group(2), fm.group(3), fm.group(4), fm.group(5)
+            # extract value / pct_chg / trend if present
+            v_m = re.search(r"value=(\S+)", rest)
+            trend_m = re.search(r"trend=(\S+)", rest)
+            gold["factors"].append({
+                "arrow":     arrow,
+                "name":      name,
+                "direction": direction,
+                "weight":    int(weight),
+                "value":     v_m.group(1) if v_m else None,
+                "trend":     trend_m.group(1) if trend_m else None,
+            })
+            if len(gold["factors"]) >= 6:
+                break
+        banners["gold_macro"] = gold
 
     # 期权风险等级: low/medium/high  距下次三巫日 X天
     m = re.search(r"期权风险等级:\s*(\w+)\s*\|\s*距下次三巫日\s*(\d+)天", content)

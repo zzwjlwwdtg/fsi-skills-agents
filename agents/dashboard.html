@@ -369,10 +369,25 @@ async function loadBanners() {
   const g = b.gold_macro || {};
   const gdirColor = {bullish:'ok', bearish:'bad', neutral:'muted'}[g.direction] || 'muted';
   const goldZh = DIR_LABELS[g.direction] || '';
+  const FACTOR_ZH = {'实际利率':'实际利率','美元指数':'美元','10Y名义利率':'10Y 利率','Fed':'Fed 扩表','WTI':'WTI 油价','FOMC':'FOMC 政策'};
+  const factorRows = (g.factors || []).map(f => {
+    const key = f.name.replace(/资产负债表$/, '').split(/[（(]/)[0];
+    const zh = FACTOR_ZH[key] || f.name;
+    const dCls = {bullish:'ok', bearish:'bad', neutral:'muted'}[f.direction] || '';
+    const arrow = f.arrow || '·';
+    const tip = `${f.name}: ${f.direction} (权重 ${f.weight})${f.value ? ' · 当前值 '+f.value : ''}${f.trend ? ' · trend='+f.trend : ''}`;
+    return `<div style="display:flex; justify-content:space-between; padding:2px 0; font-size:11px" title="${tip}">
+      <span><span class="${dCls}" style="width:12px; display:inline-block">${arrow}</span> ${zh}</span>
+      <span class="${dCls}">${f.direction} <small>w=${f.weight}</small></span>
+    </div>`;
+  }).join('');
   $('gold-banner').innerHTML = g.direction ? `
     <div class="banner-num ${gdirColor}" style="text-align:center" title="bullish=看涨黄金 / bearish=看跌">${g.direction} ${g.score >= 0 ? '+' : ''}${g.score}</div>
-    <div style="text-align:center; font-size:12px; color:var(--fg); margin: 4px 0">看${goldZh.replace('偏','')}黄金</div>
-    <div class="stat"><span class="k term" title="4 因子（实际利率+美元+Fed 扩表+原油）综合置信度">Confidence</span><span class="v">${g.conf}</span></div>
+    <div style="text-align:center; font-size:12px; color:var(--fg); margin: 4px 0">看${goldZh.replace('偏','')}黄金 · Confidence ${g.conf}</div>
+    ${factorRows ? '<hr style="border:0; border-top:1px solid var(--border); margin: 6px 0"><div style="font-size:11px; color:var(--muted); margin-bottom:4px">4 因子分解 <small>(hover 看详情)</small></div>' + factorRows : ''}
+    <div style="margin-top:6px; font-size:10px; color:var(--muted); line-height:1.4">
+      ▼ 空头因子 · ▲ 多头因子 · · 中性 · <b>w</b>=权重（1-3）
+    </div>
   ` : '<small>无 Gold Macro 数据</small>';
 
   const o = b.options_risk || {};
