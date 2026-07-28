@@ -319,9 +319,11 @@ def api_banners() -> dict:
             "conf":      f"{m.group(3)}/{m.group(4)}",
             "factors":   [],
         }
-        # 抓 4 因子明细：▼/▲/· 前缀 + 名称 + dir + weight
+        # 抓 6 因子明细：▼/▲/· 前缀 + 名称（可含空格）+ dir + weight
         # 例："▼ 实际利率           dir=bearish  w=3  value=2.43 trend=rising"
-        factor_re = re.compile(r"^\s*([▼▲·])\s+(\S+)\s+dir=(\w+)\s+w=(\d+)(.*)$", re.MULTILINE)
+        # 例："· WTI 原油         dir=neutral  w=0  value=84.38 ..."
+        # name 用非贪婪 .+? 直到遇到 dir= 之前
+        factor_re = re.compile(r"^\s*([▼▲·])\s+(.+?)\s+dir=(\w+)\s+w=(\d+)(.*)$", re.MULTILINE)
         for fm in factor_re.finditer(content):
             arrow, name, direction, weight, rest = fm.group(1), fm.group(2), fm.group(3), fm.group(4), fm.group(5)
             # extract value / pct_chg / trend if present
@@ -348,6 +350,66 @@ def api_banners() -> dict:
         }
 
     return {"exists": True, **banners}
+
+
+def api_oil() -> dict:
+    """石油宏观：用 USO (油价 ETF) + WTI 期货 CL=F 综合。
+    输出：现价 / 5d% / 20d% / MA20 dist / trend / 简单方向标签。
+    """
+    import yfinance as yf
+    out = {"ts": datetime.now(timezone.utc).isoformat()}
+    for tk, key in [("CL=F", "wti_futures"), ("USO", "uso_etf")]:
+        try:
+            df = yf.Ticker(tk).history(period="30d", interval="1d", auto_adjust=True)
+            if df.empty or len(df) < 21:
+                out[key] = {"error": "no data"}
+                continue
+            close = df["Close"].astype(float)
+            price = float(close.iloc[-1])
+            pct_5d  = ((price / float(close.iloc[-6])  - 1) * 100)
+            pct_20d = ((price / float(close.iloc[-21]) - 1) * 100)
+            ma20    = float(close.tail(20).mean())
+            dist_ma = ((price - ma20) / ma20 * 100)
+            trend = "up" if price > ma20 else "down"
+            # 简单方向：油价上涨通常利多风险资产 + 通胀
+            direction = "neutral"
+            if pct_20d >= 8:  direction = "bullish"  # 显著上涨
+            elif pct_20d <= -8: direction = "bearish"
+            elif pct_5d >= 5:  direction = "bullish"
+            elif pct_5d <= -5: direction = "bearish"
+            out[key] = {
+                "ticker":    tk,
+                "price":     round(price, 2),
+                "pct_5d":    round(pct_5d, 2),
+                "pct_20d":   round(pct_20d, 2),
+                "dist_ma20": round(dist_ma, 2),
+                "trend":     trend,
+                "direction": direction,
+            }
+        except Exception as e:
+            out[key] = {"error": str(e)}
+    # 综合：优先 WTI 期货，fallback USO
+    primary = out.get("wti_futures") if not out.get("wti_futures", {}).get("error") else out.get("uso_etf", {})
+    if primary and not primary.get("error"):
+        out["direction"] = primary.get("direction")
+        out["price"]     = primary.get("price")
+        out["pct_5d"]    = primary.get("pct_5d")
+        out["pct_20d"]   = primary.get("pct_20d")
+        out["source"]    = "WTI 期货 (CL=F)" if not out.get("wti_futures", {}).get("error") else "USO 油价 ETF"
+        # 影响解读
+        notes = []
+        if primary["pct_20d"] >= 8:
+            notes.append("油价 20d 大涨 → 通胀压力上升，利好油气板块，利空高估值成长")
+        elif primary["pct_20d"] <= -8:
+            notes.append("油价 20d 大跌 → 通胀降温，利多科技/黄金")
+        elif primary["pct_5d"] >= 5:
+            notes.append("油价短期急升 → 关注地缘 / 供给紧张")
+        elif primary["pct_5d"] <= -5:
+            notes.append("油价短期急跌 → 需求疲软信号")
+        if not notes:
+            notes.append("油价窄幅震荡，宏观影响小")
+        out["notes"] = notes
+    return out
 
 
 def api_sectors() -> dict:
@@ -493,6 +555,8 @@ class Handler(BaseHTTPRequestHandler):
                 self._json(api_ai_analysis())
             elif path == "/api/sectors":
                 self._json(api_sectors())
+            elif path == "/api/oil":
+                self._json(api_oil())
             else:
                 self.send_error(404, f"route not found: {path}")
         except Exception as e:

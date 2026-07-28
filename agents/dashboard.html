@@ -201,8 +201,8 @@
     <div id="gold-banner"></div>
   </div>
   <div class="card">
-    <h2 title="用于生成 Trump / Gold / Options 卡的最新 snapshot 文件">快照来源</h2>
-    <div id="snap-info"></div>
+    <h2 title="WTI 原油 + USO ETF 综合。油价上涨=通胀压力+利多油气 / 下跌=通胀降温+利多科技">石油宏观 <small>Oil Macro</small></h2>
+    <div id="oil-banner"></div>
   </div>
 </div>
 
@@ -399,9 +399,25 @@ async function loadBanners() {
     <div class="stat"><span class="k term" title="三巫日 = 每季 3/6/9/12 月第三个周五，期指+期权+股指期权同时到期，波动放大">距三巫日</span><span class="v">${o.days_to_witching} 天</span></div>
   ` : '<small>无期权风险数据</small>';
 
-  $('snap-info').innerHTML = `
-    <div class="stat"><span class="k">快照文件</span><span class="v" style="font-size:11px">${b.snapshot_path || '-'}</span></div>
-    <div class="stat"><span class="k">生成时间</span><span class="v" style="font-size:11px">${(b.snapshot_mtime || '').slice(5,19)}</span></div>
+  // 石油宏观（独立端点，实时 yfinance）
+  loadOil();
+}
+
+async function loadOil() {
+  const o = await fetchJson('/api/oil');
+  if (!o || o.error) { $('oil-banner').innerHTML = '<small>石油数据不可用</small>'; return; }
+  const dirColor = {bullish:'ok', bearish:'bad', neutral:'muted'}[o.direction] || 'muted';
+  const dirZh = DIR_LABELS[o.direction] || '';
+  const p5cls  = o.pct_5d === undefined ? '' : (o.pct_5d > 0 ? 'ok' : 'bad');
+  const p20cls = o.pct_20d === undefined ? '' : (o.pct_20d > 0 ? 'ok' : 'bad');
+  const notesHtml = (o.notes || []).map(n => `<div style="font-size:10px; color:var(--muted); margin-top:2px" title="影响解读">💡 ${n}</div>`).join('');
+  $('oil-banner').innerHTML = `
+    <div class="banner-num ${dirColor}" style="text-align:center" title="综合方向：油价 20d/5d 涨跌 + 幅度">${o.direction || '?'} $${fmt(o.price)}</div>
+    <div style="text-align:center; font-size:12px; color:var(--fg); margin: 4px 0">${dirZh}</div>
+    <div class="stat" title="过去 5 天累积涨跌"><span class="k">5天</span><span class="v ${p5cls}">${o.pct_5d !== undefined ? (o.pct_5d>0?'+':'')+o.pct_5d.toFixed(2) : '-'}%</span></div>
+    <div class="stat" title="过去 20 天累积涨跌"><span class="k">20天</span><span class="v ${p20cls}">${o.pct_20d !== undefined ? (o.pct_20d>0?'+':'')+o.pct_20d.toFixed(2) : '-'}%</span></div>
+    <div class="stat"><span class="k">数据源</span><span class="v" style="font-size:11px">${o.source || '-'}</span></div>
+    ${notesHtml}
   `;
 }
 
