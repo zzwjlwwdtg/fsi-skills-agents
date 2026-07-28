@@ -330,6 +330,70 @@ def api_banners() -> dict:
     return {"exists": True, **banners}
 
 
+def api_sectors() -> dict:
+    """板块级 regime 概览 —— 用 yfinance 拉基准 ETF 最近走势，给 dashboard 板块卡。
+
+    每个板块返回：现价 / 5d% / 20d% / trend(vs MA20) / regime 标签
+    regime 判定（简版，不涉及 HMM）：
+      · 5d ≤ -5% → 危机
+      · 5d ≤ -2% → 弱势
+      · 5d 在 ±2% 内 → 中性
+      · 5d ≥ +2% → 强势
+      · 5d ≥ +5% → 过热
+    """
+    import yfinance as yf
+    SECTORS = [
+        {"key": "SPY",  "zh": "大盘 S&P500",   "linked": "参考"},
+        {"key": "QQQ",  "zh": "纳斯达克 100",   "linked": "TQQQ 3x"},
+        {"key": "SMH",  "zh": "半导体 SMH",    "linked": "SOXL 3x / DRAM / MULL"},
+        {"key": "GLD",  "zh": "黄金 GLD",     "linked": "GLD 1x"},
+    ]
+    out = []
+    for s in SECTORS:
+        try:
+            df = yf.Ticker(s["key"]).history(period="30d", interval="1d", auto_adjust=True)
+            if df.empty:
+                continue
+            close = df["Close"].astype(float)
+            price = float(close.iloc[-1])
+            pct_5d  = ((price / float(close.iloc[-6])  - 1) * 100) if len(close) >= 6  else None
+            pct_20d = ((price / float(close.iloc[-21]) - 1) * 100) if len(close) >= 21 else None
+            ma20    = float(close.tail(20).mean()) if len(close) >= 20 else None
+            trend   = "up" if ma20 and price > ma20 else "down"
+            dist_ma = ((price - ma20) / ma20 * 100) if ma20 else None
+            # regime 综合判定：短期（5d）+ 中期（20d）+ 均线相对位置
+            # 优先级：20d 深亏 → 技术熊 / 5d 深亏 → 危机 / 双正 → 强势 / 其它 → 中性
+            regime = "neutral"
+            regime_zh = "中性"
+            if pct_20d is not None and pct_20d <= -10:
+                regime, regime_zh = "bear", "技术熊"
+            elif pct_5d is not None and pct_5d <= -5:
+                regime, regime_zh = "crisis", "危机（单日大跌）"
+            elif pct_20d is not None and pct_20d <= -5:
+                regime, regime_zh = "weak", "弱势"
+            elif pct_5d is not None and pct_5d <= -2:
+                regime, regime_zh = "pullback", "回调"
+            elif pct_5d is not None and pct_20d is not None and pct_5d >= 5 and pct_20d >= 10:
+                regime, regime_zh = "overheated", "过热"
+            elif pct_5d is not None and pct_20d is not None and pct_5d >= 2 and pct_20d >= 2:
+                regime, regime_zh = "strong", "强势"
+            out.append({
+                "key":       s["key"],
+                "zh":        s["zh"],
+                "linked":    s["linked"],
+                "price":     round(price, 2),
+                "pct_5d":    round(pct_5d, 2) if pct_5d is not None else None,
+                "pct_20d":   round(pct_20d, 2) if pct_20d is not None else None,
+                "dist_ma20": round(dist_ma, 2) if dist_ma is not None else None,
+                "trend":     trend,
+                "regime":    regime,
+                "regime_zh": regime_zh,
+            })
+        except Exception as e:
+            out.append({"key": s["key"], "zh": s["zh"], "linked": s["linked"], "error": str(e)})
+    return {"sectors": out, "ts": datetime.now(timezone.utc).isoformat()}
+
+
 def api_ai_analysis() -> dict:
     """读最新 signals/ai_analysis_*.md 供 dashboard 展示 Claude 分析。
     覆盖：
@@ -407,6 +471,8 @@ class Handler(BaseHTTPRequestHandler):
                 self._json(api_banners())
             elif path == "/api/ai_analysis":
                 self._json(api_ai_analysis())
+            elif path == "/api/sectors":
+                self._json(api_sectors())
             else:
                 self.send_error(404, f"route not found: {path}")
         except Exception as e:

@@ -182,6 +182,14 @@
   </div>
 </div>
 
+<!-- Row 1.5: 板块状态（比 SPY 更贴合你的仓位） -->
+<div class="grid">
+  <div class="card">
+    <h2 title="按板块看走势 — 你的仓位对应哪个就重点看哪个">板块状态 <small>Sector Regimes</small></h2>
+    <div id="sectors" class="grid g4"></div>
+  </div>
+</div>
+
 <!-- Row 2: 2 banner 情绪卡 -->
 <div class="grid g3">
   <div class="card">
@@ -304,17 +312,43 @@ async function loadNav() {
   }
 }
 
+const HMM_LABELS = {
+  'bull_low_vol':       '温和牛市（低波动）',
+  'bull_normal':        '正常牛市',
+  'volatile_uncertain': '震荡不明',
+  'bear_or_correction': '熊市/回调',
+  'crisis':             '危机',
+  'neutral_chop':       '横盘震荡',
+};
+
+function ageInDays(iso) {
+  if (!iso) return null;
+  const diff = (Date.now() - new Date(iso).getTime()) / 86400000;
+  return Math.round(diff * 10) / 10;
+}
+
 async function loadHmm() {
   const h = await fetchJson('/api/hmm');
   if (!h || !h.exists) { $('hmm').innerHTML = '<small>HMM 状态未生成</small>'; return; }
   const cls = 'regime ' + (h.label || 'neutral');
+  const zh = HMM_LABELS[h.label] || '';
+  const age = ageInDays(h.ts);
+  const stale = age > 3;
+  const staleWarn = stale ? `<span class="warn" style="font-size:11px" title="数据超过 3 天没重算，可能与实际市场脱节。运行 hmm_regime.py 或等 weekly.bat 重算">⚠ ${age}天前更新</span>` : `<span class="ok" style="font-size:11px">✓ ${age}天前更新</span>`;
   $('hmm').innerHTML = `
-    <div class="banner-num" style="text-align:center"><span class="badge ${cls}" style="font-size:14px; padding:4px 12px" title="bull_low_vol=温和牛市 / volatile=震荡 / crisis=危机">${h.label || '?'}</span></div>
-    <div class="stat"><span class="k term" title="HMM 对当前状态的把握程度，越高越可靠">置信度</span><span class="v">${((h.prob || 0) * 100).toFixed(0)}%</span></div>
-    <div class="stat"><span class="k" title="HMM 内部状态编号（0-3）">State ID</span><span class="v">#${h.state}</span></div>
-    <div class="stat"><span class="k">更新</span><span class="v" style="font-size:10px">${(h.ts || '').slice(5,16)}</span></div>
+    <div class="banner-num" style="text-align:center">
+      <span class="badge ${cls}" style="font-size:14px; padding:4px 12px" title="HMM 判定的 SPY 大盘状态（不是杠杆 ETF）">${h.label || '?'}</span>
+    </div>
+    <div style="text-align:center; font-size:13px; color:var(--fg); margin: 4px 0">${zh}</div>
+    <div class="stat"><span class="k term" title="HMM 对当前状态的把握程度">置信度</span><span class="v">${((h.prob || 0) * 100).toFixed(0)}%</span></div>
+    <div class="stat"><span class="k">数据源</span><span class="v" title="HMM 用 SPY 日收益/波动率/VIX，反映大盘。杠杆 ETF 崩盘不一定触发换档" style="font-size:11px">SPY 大盘</span></div>
+    <div class="stat"><span class="k">数据新鲜度</span><span class="v">${staleWarn}</span></div>
   `;
 }
+
+const DIR_LABELS = {bullish: '偏多', bearish: '偏空', neutral: '中性', mixed: '分化'};
+const MAG_LABELS = {small: '小', medium: '中', large: '大', extreme: '极端'};
+const LEVEL_LABELS = {low: '低', medium: '中', high: '高'};
 
 async function loadBanners() {
   const b = await fetchJson('/api/banners');
@@ -324,23 +358,29 @@ async function loadBanners() {
   }
   const t = b.trump || {};
   const dirColor = {bullish:'ok', bearish:'bad', neutral:'muted'}[t.direction] || 'muted';
+  const trumpZh = DIR_LABELS[t.direction] || '';
   $('trump-banner').innerHTML = t.direction ? `
     <div class="banner-num ${dirColor}" style="text-align:center" title="bullish=利多风险资产 / bearish=利空 / neutral=中性">${t.direction} ${t.score >= 0 ? '+' : ''}${t.score}</div>
-    <div class="stat"><span class="k" title="过去 24 小时 Trump Truth Social 推文条数">推文数</span><span class="v">${t.posts}</span></div>
-    <div class="stat"><span class="k term" title="small/medium/large/extreme 四档，衡量单次事件影响力">幅度</span><span class="v">${t.magnitude}</span></div>
+    <div style="text-align:center; font-size:12px; color:var(--fg); margin: 4px 0">${trumpZh}</div>
+    <div class="stat"><span class="k" title="过去 24 小时推文条数">推文数</span><span class="v">${t.posts}</span></div>
+    <div class="stat"><span class="k term" title="small/medium/large/extreme 四档，衡量单次事件影响力">幅度</span><span class="v">${t.magnitude} <small>（${MAG_LABELS[t.magnitude]||''}）</small></span></div>
   ` : '<small>无 Trump 信号数据</small>';
 
   const g = b.gold_macro || {};
   const gdirColor = {bullish:'ok', bearish:'bad', neutral:'muted'}[g.direction] || 'muted';
+  const goldZh = DIR_LABELS[g.direction] || '';
   $('gold-banner').innerHTML = g.direction ? `
     <div class="banner-num ${gdirColor}" style="text-align:center" title="bullish=看涨黄金 / bearish=看跌">${g.direction} ${g.score >= 0 ? '+' : ''}${g.score}</div>
+    <div style="text-align:center; font-size:12px; color:var(--fg); margin: 4px 0">看${goldZh.replace('偏','')}黄金</div>
     <div class="stat"><span class="k term" title="4 因子（实际利率+美元+Fed 扩表+原油）综合置信度">Confidence</span><span class="v">${g.conf}</span></div>
   ` : '<small>无 Gold Macro 数据</small>';
 
   const o = b.options_risk || {};
   const oLevel = {low:'ok', medium:'warn', high:'bad'}[o.level] || 'muted';
+  const olZh = LEVEL_LABELS[o.level] || '';
   $('options-risk').innerHTML = o.level ? `
     <div class="banner-num ${oLevel}" style="text-align:center" title="LOW=平稳 / MEDIUM=关注 / HIGH=波动放大">${o.level.toUpperCase()}</div>
+    <div style="text-align:center; font-size:12px; color:var(--fg); margin: 4px 0">${olZh}风险</div>
     <div class="stat"><span class="k term" title="三巫日 = 每季 3/6/9/12 月第三个周五，期指+期权+股指期权同时到期，波动放大">距三巫日</span><span class="v">${o.days_to_witching} 天</span></div>
   ` : '<small>无期权风险数据</small>';
 
@@ -450,9 +490,42 @@ async function loadAI() {
   $('ai-analysis').innerHTML = marked.parse(clean);
 }
 
+const SECTOR_REGIME_CLS = {
+  bear:'bad', crisis:'bad', weak:'warn', pullback:'warn',
+  neutral:'info', strong:'ok', overheated:'warn',
+};
+
+async function loadSectors() {
+  const r = await fetchJson('/api/sectors');
+  if (!r || !r.sectors) { $('sectors').innerHTML = '<small>暂无板块数据</small>'; return; }
+  $('sectors').innerHTML = r.sectors.map(s => {
+    if (s.error) return `<div class="signal-card"><b>${s.zh}</b><br><small class="bad">${s.error}</small></div>`;
+    const p5cls  = s.pct_5d  === null ? '' : (s.pct_5d  > 0 ? 'ok' : 'bad');
+    const p20cls = s.pct_20d === null ? '' : (s.pct_20d > 0 ? 'ok' : 'bad');
+    const trendCls = s.trend === 'up' ? 'ok' : 'bad';
+    const regimeCls = SECTOR_REGIME_CLS[s.regime] || '';
+    return `
+    <div class="signal-card">
+      <div class="top-row">
+        <span class="ticker-name" title="基准 ETF 代码">${s.key} <small>${s.zh}</small></span>
+        <span class="price">$${fmt(s.price)}</span>
+      </div>
+      <div class="top-row">
+        <span class="badge ${regimeCls==='bad'?'bad':(regimeCls==='ok'?'ok':(regimeCls==='warn'?'warn':'info'))}" style="font-size:11px" title="基于 5d 涨跌幅：≤-5% 危机 / ≤-2% 弱势 / ±2% 中性 / ≥+2% 强势 / ≥+5% 过热">${s.regime_zh || s.regime}</span>
+        <small class="${trendCls}" title="MA20 之上=up / 之下=down">${s.trend === 'up' ? '↑ 站上MA20' : '↓ 破MA20'}</small>
+      </div>
+      <div style="font-size:11px; display:flex; gap:12px; margin-top:6px">
+        <span title="过去 5 天累积涨跌">5天 <b class="${p5cls}">${s.pct_5d !== null ? (s.pct_5d>0?'+':'') + s.pct_5d.toFixed(2) : '-'}%</b></span>
+        <span title="过去 20 天累积涨跌">20天 <b class="${p20cls}">${s.pct_20d !== null ? (s.pct_20d>0?'+':'') + s.pct_20d.toFixed(2) : '-'}%</b></span>
+      </div>
+      <div style="font-size:10px; color:var(--muted); margin-top:4px" title="你的哪些仓位对应这个板块">你的仓位: ${s.linked}</div>
+    </div>`;
+  }).join('');
+}
+
 async function loadAll() {
   await Promise.all([
-    loadHealth(), loadNav(), loadHmm(), loadBanners(),
+    loadHealth(), loadNav(), loadHmm(), loadBanners(), loadSectors(),
     loadSignals(), loadPositions(), loadTrades(), loadLog(), loadAI(),
   ]);
 }
