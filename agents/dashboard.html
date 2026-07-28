@@ -73,6 +73,18 @@
   .analysis h2 { font-size: 14px; }
   .analysis strong { color: var(--fg); }
   .analysis table { margin: 8px 0; }
+
+  /* 术语 tooltip */
+  .term { border-bottom: 1px dotted var(--muted); cursor: help; }
+  .term:hover { color: var(--blue); }
+  details.glossary { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; margin-bottom: 12px; }
+  details.glossary summary { cursor: pointer; color: var(--blue); font-weight: 500; user-select: none; }
+  details.glossary summary::marker { color: var(--muted); }
+  details.glossary[open] summary { margin-bottom: 8px; }
+  .glossary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px 20px; font-size: 12px; }
+  .glossary-grid dt { color: var(--blue); font-weight: 600; margin-top: 6px; }
+  .glossary-grid dd { color: var(--muted); margin: 2px 0 4px 0; line-height: 1.4; }
+  .glossary-grid dd .eg { color: var(--yellow); font-family: monospace; font-size: 11px; }
 </style>
 </head>
 <body>
@@ -82,22 +94,90 @@
   <div><small id="update-ts">加载中...</small> · <a href="#" onclick="loadAll();return false" style="color:var(--blue)">🔄 刷新</a></div>
 </div>
 
+<!-- 术语速查（可折叠） -->
+<details class="glossary">
+<summary>📖 术语说明 / 缩写字典（点开）</summary>
+<div class="glossary-grid">
+<dl>
+<dt>NAV (Net Asset Value)</dt>
+<dd>账户净值。现金 + 持仓市值。<span class="eg">例：$1,130,000</span></dd>
+
+<dt>DD (Drawdown 回撤)</dt>
+<dd>从历史 Peak 跌了多少%。DD -30% = 从最高点掉了 30%。<span class="eg">-30% = 100万 → 70万</span></dd>
+
+<dt>Peak</dt>
+<dd>账户历史最高 NAV。用来算 DD 基准。</dd>
+
+<dt>RSI (Relative Strength Index)</dt>
+<dd>相对强弱指标，0-100。<span class="eg">&lt;30 超卖（可能反弹）| 30-70 正常 | &gt;70 超买（可能回调）</span></dd>
+
+<dt>CCI (Commodity Channel Index)</dt>
+<dd>顺势指标，衡量偏离均值程度。<span class="eg">-100 到 +100 正常 | &lt;-100 超卖 | &gt;+100 超买</span></dd>
+
+<dt>MA20 / MA50</dt>
+<dd>20日 / 50日移动均线。价格站上 MA20 = 短期偏多。</dd>
+
+<dt>共振多空条 (bull vs bear)</dt>
+<dd>9+ 维技术指标投票（RSI/MA/CCI/量/BB/PSAR 等）。<span class="eg">多3 vs 空1 = 3 个指标看多，1 个看空</span></dd>
+
+<dt>Regime (市场状态)</dt>
+<dd>系统对当前市场的定性判断。<span class="eg">neutral 中性 · bull_low_vol 温和牛 · crisis 危机（单日≤-5%）· overheated 过热</span></dd>
+
+<dt>HMM Meta-Regime</dt>
+<dd>Hidden Markov Model 隐马尔可夫模型判定的市场大周期。相比即时 regime 更稳定。<span class="eg">bull_low_vol / volatile / crisis</span></dd>
+
+<dt>Confidence (置信度) X/5</dt>
+<dd>系统对信号的把握程度。5 分制（TECHNICAL_ONLY 模式）。<span class="eg">1/5=弱 · 3/5=中 · 5/5=强</span></dd>
+
+<dt>WATCH_BUY / BUY / REDUCE / SELL / CAUTION / HOLD</dt>
+<dd>建议动作：<span class="eg">WATCH_BUY 关注买入 · BUY 买入 · REDUCE 减仓 · SELL 卖出 · CAUTION 警示不加仓 · HOLD 观望</span></dd>
+
+<dt>Pyramid Layer (加仓层)</dt>
+<dd>金字塔加仓的第几层。L1=初始，L2=第一次加，L3=第二次加。最多 3 层。</dd>
+
+<dt>Entry Price (入场价)</dt>
+<dd>本笔仓位的第一次买入价，用于算浮盈 + 移动止损基准。</dd>
+
+<dt>Options Risk (期权风险等级)</dt>
+<dd>基于三巫日临近程度 + gamma 拥挤度。<span class="eg">low 平稳 · medium 关注 · high 高波动</span></dd>
+
+<dt>三巫日 (Triple Witching)</dt>
+<dd>每季 3/6/9/12 月第三个周五，期指+期权+股指期权同时到期，波动放大。</dd>
+
+<dt>Gold Macro (黄金宏观)</dt>
+<dd>实际利率+美元指数+Fed 资产负债表+原油 4 因子综合，判定黄金方向。<span class="eg">bullish +2 = 温和看涨</span></dd>
+
+<dt>Trump Signal</dt>
+<dd>Trump Truth Social 24h 推文 CLI 解析，仅作参考不进决策（TECHNICAL_ONLY 模式）。</dd>
+
+<dt>DRY / LIVE</dt>
+<dd>DRY = 只写日志不下单（dry-run 测试）· LIVE = 在 moomoo SIMULATE 账户真实下单</dd>
+
+<dt>OpenD</dt>
+<dd>moomoo 官方开放交易接口服务，本地运行在 127.0.0.1:11111。挂了 → 系统拿不到实时报价 + 无法下单。</dd>
+
+<dt>Orchestrator</dt>
+<dd>主调度进程。跑在后台，每天 5 个 ET 窗口（08:30/09:20/10:00/12:00/15:45）自动跑决策 + 下单。</dd>
+</dl>
+</div>
+</details>
+
 <!-- Row 1: 4 顶级 KPI 卡片 -->
 <div class="grid g4">
   <div class="card">
-    <h2>System Health</h2>
+    <h2 title="orchestrator（主调度）+ moomoo OpenD（下单通道）是否活着">System Health <small>系统健康</small></h2>
     <div id="health"></div>
   </div>
   <div class="card">
-    <h2>NAV</h2>
+    <h2 title="账户净值：现金 + 持仓市值。DD = 从最高点回撤%">NAV <small>账户净值 & 回撤</small></h2>
     <div id="nav-summary"></div>
   </div>
   <div class="card">
-    <h2>HMM Meta-Regime</h2>
+    <h2 title="Hidden Markov Model 判定的市场大周期。bull_low_vol=温和牛 / crisis=危机">HMM Meta-Regime <small>市场大周期</small></h2>
     <div id="hmm"></div>
   </div>
   <div class="card">
-    <h2>Options Risk</h2>
+    <h2 title="期权风险等级。三巫日附近 + gamma 拥挤时升高">Options Risk <small>期权风险</small></h2>
     <div id="options-risk"></div>
   </div>
 </div>
@@ -105,15 +185,15 @@
 <!-- Row 2: 2 banner 情绪卡 -->
 <div class="grid g3">
   <div class="card">
-    <h2>Trump Signal <small>[参考]</small></h2>
+    <h2 title="Trump Truth Social 24h 推文 CLI 解析。TECHNICAL_ONLY 模式下仅参考，不进决策">Trump Signal <small>[参考]</small></h2>
     <div id="trump-banner"></div>
   </div>
   <div class="card">
-    <h2>Gold Macro</h2>
+    <h2 title="实际利率+美元+Fed 扩表+原油 4 因子。bullish 看涨黄金 / bearish 看跌">Gold Macro <small>黄金宏观</small></h2>
     <div id="gold-banner"></div>
   </div>
   <div class="card">
-    <h2>快照来源</h2>
+    <h2 title="用于生成 Trump / Gold / Options 卡的最新 snapshot 文件">快照来源</h2>
     <div id="snap-info"></div>
   </div>
 </div>
@@ -121,11 +201,11 @@
 <!-- Row 3: NAV chart 大图 + trades -->
 <div class="grid g2">
   <div class="card">
-    <h2>NAV vs Peak 时序</h2>
+    <h2 title="账户净值随时间变化。蓝线=NAV，绿虚线=Peak（历史最高）">NAV vs Peak 时序 <small>净值曲线</small></h2>
     <canvas id="nav-chart"></canvas>
   </div>
   <div class="card">
-    <h2>最近 20 笔 Trade</h2>
+    <h2 title="paper_trader 最近成交记录。DRY=模拟不下单，LIVE=在 moomoo SIMULATE 账户真下单">最近 20 笔 Trade <small>成交记录</small></h2>
     <div id="trades"></div>
   </div>
 </div>
@@ -133,7 +213,7 @@
 <!-- Row 4: 每标的信号卡 -->
 <div class="grid">
   <div class="card">
-    <h2>标的实时信号（今日 log 解析）</h2>
+    <h2 title="每个标的的技术信号：多空共振条 + action + regime + RSI/量比">标的实时信号 <small>技术面共振</small></h2>
     <div id="signals" class="grid g3"></div>
   </div>
 </div>
@@ -141,11 +221,11 @@
 <!-- Row 5: 持仓 + AI 分析 -->
 <div class="grid g2">
   <div class="card">
-    <h2>持仓 & 状态</h2>
+    <h2 title="从 trader_state.json 读的每标的仓位状态。C=核心仓 S=卫星仓，L1/L2/L3=金字塔加仓层">持仓 & 状态 <small>当前持仓</small></h2>
     <div id="positions"></div>
   </div>
   <div class="card">
-    <h2>Claude 综合分析 <small id="ai-mtime"></small></h2>
+    <h2 title="Claude CLI 综合解读。snap.bat 或 orchestrator 跑 morning/review 时更新">Claude 综合分析 <small id="ai-mtime"></small></h2>
     <div id="ai-analysis" class="analysis"></div>
   </div>
 </div>
@@ -191,10 +271,10 @@ async function loadNav() {
   const dd = n.dd_pct || 0;
   const ddCls = dd < -10 ? 'bad' : (dd < -3 ? 'warn' : 'ok');
   $('nav-summary').innerHTML = `
-    <div class="banner-num ${ddCls}" style="text-align:center">${dd.toFixed(2)}% DD</div>
-    <div class="stat"><span class="k">当前</span><span class="v">$${fmt(n.current)}</span></div>
-    <div class="stat"><span class="k">Peak</span><span class="v">$${fmt(n.peak)}</span></div>
-    <div class="stat"><span class="k">数据点</span><span class="v">${(n.points || []).length}</span></div>
+    <div class="banner-num ${ddCls}" style="text-align:center" title="Drawdown 回撤 = (当前 - Peak) / Peak。红=&lt;-10% 需警惕">${dd.toFixed(2)}% DD</div>
+    <div class="stat"><span class="k term" title="账户净值：现金 + 持仓市值">当前 NAV</span><span class="v">$${fmt(n.current)}</span></div>
+    <div class="stat"><span class="k term" title="账户历史最高净值，DD 计算基准">Peak</span><span class="v">$${fmt(n.peak)}</span></div>
+    <div class="stat"><span class="k" title="过去 N 天记录的 NAV 数据点数">采样点</span><span class="v">${(n.points || []).length}</span></div>
   `;
   // chart
   const pts = n.points || [];
@@ -229,9 +309,9 @@ async function loadHmm() {
   if (!h || !h.exists) { $('hmm').innerHTML = '<small>HMM 状态未生成</small>'; return; }
   const cls = 'regime ' + (h.label || 'neutral');
   $('hmm').innerHTML = `
-    <div class="banner-num" style="text-align:center"><span class="badge ${cls}" style="font-size:14px; padding:4px 12px">${h.label || '?'}</span></div>
-    <div class="stat"><span class="k">置信度</span><span class="v">${((h.prob || 0) * 100).toFixed(0)}%</span></div>
-    <div class="stat"><span class="k">State ID</span><span class="v">#${h.state}</span></div>
+    <div class="banner-num" style="text-align:center"><span class="badge ${cls}" style="font-size:14px; padding:4px 12px" title="bull_low_vol=温和牛市 / volatile=震荡 / crisis=危机">${h.label || '?'}</span></div>
+    <div class="stat"><span class="k term" title="HMM 对当前状态的把握程度，越高越可靠">置信度</span><span class="v">${((h.prob || 0) * 100).toFixed(0)}%</span></div>
+    <div class="stat"><span class="k" title="HMM 内部状态编号（0-3）">State ID</span><span class="v">#${h.state}</span></div>
     <div class="stat"><span class="k">更新</span><span class="v" style="font-size:10px">${(h.ts || '').slice(5,16)}</span></div>
   `;
 }
@@ -245,23 +325,23 @@ async function loadBanners() {
   const t = b.trump || {};
   const dirColor = {bullish:'ok', bearish:'bad', neutral:'muted'}[t.direction] || 'muted';
   $('trump-banner').innerHTML = t.direction ? `
-    <div class="banner-num ${dirColor}" style="text-align:center">${t.direction} ${t.score >= 0 ? '+' : ''}${t.score}</div>
-    <div class="stat"><span class="k">推文数</span><span class="v">${t.posts}</span></div>
-    <div class="stat"><span class="k">幅度</span><span class="v">${t.magnitude}</span></div>
+    <div class="banner-num ${dirColor}" style="text-align:center" title="bullish=利多风险资产 / bearish=利空 / neutral=中性">${t.direction} ${t.score >= 0 ? '+' : ''}${t.score}</div>
+    <div class="stat"><span class="k" title="过去 24 小时 Trump Truth Social 推文条数">推文数</span><span class="v">${t.posts}</span></div>
+    <div class="stat"><span class="k term" title="small/medium/large/extreme 四档，衡量单次事件影响力">幅度</span><span class="v">${t.magnitude}</span></div>
   ` : '<small>无 Trump 信号数据</small>';
 
   const g = b.gold_macro || {};
   const gdirColor = {bullish:'ok', bearish:'bad', neutral:'muted'}[g.direction] || 'muted';
   $('gold-banner').innerHTML = g.direction ? `
-    <div class="banner-num ${gdirColor}" style="text-align:center">${g.direction} ${g.score >= 0 ? '+' : ''}${g.score}</div>
-    <div class="stat"><span class="k">Confidence</span><span class="v">${g.conf}</span></div>
+    <div class="banner-num ${gdirColor}" style="text-align:center" title="bullish=看涨黄金 / bearish=看跌">${g.direction} ${g.score >= 0 ? '+' : ''}${g.score}</div>
+    <div class="stat"><span class="k term" title="4 因子（实际利率+美元+Fed 扩表+原油）综合置信度">Confidence</span><span class="v">${g.conf}</span></div>
   ` : '<small>无 Gold Macro 数据</small>';
 
   const o = b.options_risk || {};
   const oLevel = {low:'ok', medium:'warn', high:'bad'}[o.level] || 'muted';
   $('options-risk').innerHTML = o.level ? `
-    <div class="banner-num ${oLevel}" style="text-align:center">${o.level.toUpperCase()}</div>
-    <div class="stat"><span class="k">距三巫日</span><span class="v">${o.days_to_witching} 天</span></div>
+    <div class="banner-num ${oLevel}" style="text-align:center" title="LOW=平稳 / MEDIUM=关注 / HIGH=波动放大">${o.level.toUpperCase()}</div>
+    <div class="stat"><span class="k term" title="三巫日 = 每季 3/6/9/12 月第三个周五，期指+期权+股指期权同时到期，波动放大">距三巫日</span><span class="v">${o.days_to_witching} 天</span></div>
   ` : '<small>无期权风险数据</small>';
 
   $('snap-info').innerHTML = `
@@ -283,23 +363,25 @@ async function loadSignals() {
     const bearPct = total ? (t.bear_count / total * 100) : 50;
     const actionCls = sideCls(t.action_zh);
     const regimeCls = 'regime ' + (t.regime || 'neutral');
+    const rsiTip = t.rsi < 30 ? '超卖（可能反弹）' : (t.rsi > 70 ? '超买（可能回调）' : '正常');
+    const volTip = t.vol_ratio > 1.5 ? '放量' : (t.vol_ratio < 0.7 ? '缩量' : '正常');
     return `
     <div class="signal-card">
       <div class="top-row">
-        <span class="ticker-name">${t.ticker}</span>
-        <span class="price">$${fmt(t.price)}</span>
+        <span class="ticker-name" title="标的代码">${t.ticker}</span>
+        <span class="price" title="当前价">$${fmt(t.price)}</span>
       </div>
       <div class="top-row">
-        <span class="${actionCls}">${t.action_zh || '?'} <small>${t.conf||''}/${t.scale||''}</small></span>
-        <span class="badge ${regimeCls}">${t.regime || 'neutral'}</span>
+        <span class="${actionCls}" title="建议动作 + 置信度 (X/5)">${t.action_zh || '?'} <small>${t.conf||''}/${t.scale||''}</small></span>
+        <span class="badge ${regimeCls}" title="市场状态：crisis=危机 / overheated=过热 / bull=温和牛 / neutral=中性">${t.regime || 'neutral'}</span>
       </div>
-      <div class="bar-container">
+      <div class="bar-container" title="共振多空条：绿=看多信号数，红=看空信号数">
         <div class="bar-bull" style="width:${bullPct}%"></div>
         <div class="bar-bear" style="width:${bearPct}%"></div>
       </div>
       <div style="font-size:10px; color:var(--muted); display:flex; justify-content:space-between">
-        <span>多${t.bull_count||0} vs 空${t.bear_count||0}</span>
-        <span>RSI ${t.rsi} / 量比 ${t.vol_ratio}</span>
+        <span title="9+ 维技术指标共振投票">多${t.bull_count||0} vs 空${t.bear_count||0}</span>
+        <span title="RSI ${rsiTip} · 量比 ${volTip}">RSI ${t.rsi} / 量比 ${t.vol_ratio}</span>
       </div>
     </div>`;
   }).join('');

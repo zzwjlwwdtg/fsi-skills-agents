@@ -331,8 +331,12 @@ def api_banners() -> dict:
 
 
 def api_ai_analysis() -> dict:
-    """读最新 signals/ai_analysis_snapshot_*.md 供 dashboard 展示 Claude 分析。"""
-    files = sorted(SIGNALS_DIR.glob("ai_analysis_snapshot_*.md"),
+    """读最新 signals/ai_analysis_*.md 供 dashboard 展示 Claude 分析。
+    覆盖：
+      · ai_analysis_snapshot_<ts>.md（snap.bat / orchestrator 时间戳快照）
+      · ai_analysis_morning_<date>.md / ai_analysis_review_<date>.md（每日覆盖版本）
+    """
+    files = sorted(SIGNALS_DIR.glob("ai_analysis_*.md"),
                     key=lambda p: p.stat().st_mtime, reverse=True)
     if not files:
         return {"exists": False}

@@ -1208,6 +1208,15 @@ def auto_analyze(mode: str = "review") -> dict:
         analysis_path.write_text(
             f"# {provider} 分析 — {mode} — {today}\n\n{output}\n",
             encoding="utf-8")
+        # 同时存一份时间戳快照，供 dashboard 展示历史（与 snap.bat 命名一致）
+        try:
+            ts_stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            snapshot_copy = Path(SIGNALS_DIR) / f"ai_analysis_snapshot_{ts_stamp}.md"
+            snapshot_copy.write_text(
+                f"# {provider} 分析（orchestrator {mode}）— {ts_stamp}\n\n{output}\n",
+                encoding="utf-8")
+        except Exception:
+            pass
         # 提取并保存 Claude 输出的结构化目标 JSON（A 方案：paper_trader 消费）
         try:
             targets_path = _save_ai_targets(output, today)
