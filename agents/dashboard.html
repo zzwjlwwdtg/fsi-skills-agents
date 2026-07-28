@@ -4,77 +4,156 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>FSI Trading Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked@11.1.0/marked.min.js"></script>
 <style>
   :root {
     --bg: #0d1117; --fg: #e6edf3; --muted: #7d8590;
     --card: #161b22; --border: #30363d;
-    --green: #3fb950; --red: #f85149; --yellow: #d29922; --blue: #58a6ff;
+    --green: #3fb950; --red: #f85149; --yellow: #d29922; --blue: #58a6ff; --purple: #a371f7;
   }
   * { box-sizing: border-box; }
-  body { margin: 0; padding: 16px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", monospace;
-         background: var(--bg); color: var(--fg); font-size: 14px; }
-  h1 { margin: 0 0 12px 0; font-size: 22px; }
-  h2 { margin: 0 0 8px 0; font-size: 15px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
-  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 12px; margin-bottom: 12px; }
+  body { margin: 0; padding: 14px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", monospace;
+         background: var(--bg); color: var(--fg); font-size: 13px; }
+  h1 { margin: 0 0 12px 0; font-size: 22px; font-weight: 600; }
+  h2 { margin: 0 0 8px 0; font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 500; }
+  h3 { margin: 12px 0 4px 0; font-size: 14px; font-weight: 500; }
+  .grid { display: grid; gap: 12px; margin-bottom: 12px; }
+  .g4 { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+  .g3 { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+  .g2 { grid-template-columns: 1.5fr 1fr; }
+  @media (max-width: 900px) { .g2 { grid-template-columns: 1fr; } }
   .card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; }
-  .stat { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px dashed var(--border); }
-  .stat:last-child { border-bottom: none; }
+  .stat { display: flex; justify-content: space-between; padding: 3px 0; }
   .stat .k { color: var(--muted); }
   .stat .v { font-weight: 600; }
   .ok { color: var(--green); }
   .bad { color: var(--red); }
   .warn { color: var(--yellow); }
+  .info { color: var(--blue); }
   table { width: 100%; border-collapse: collapse; font-size: 12px; }
   th, td { padding: 4px 6px; text-align: left; border-bottom: 1px solid var(--border); }
-  th { color: var(--muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; font-size: 11px; }
+  th { color: var(--muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; font-size: 10px; }
   tr:hover td { background: rgba(88,166,255,0.05); }
   pre.log { background: #010409; color: #c9d1d9; padding: 10px; border-radius: 6px; overflow-x: auto;
-            max-height: 340px; overflow-y: scroll; font-size: 11px; line-height: 1.35; margin: 0; }
+            max-height: 340px; overflow-y: scroll; font-size: 11px; line-height: 1.35; margin: 0;
+            font-family: "Consolas", "Courier New", monospace; }
   .top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; }
   .badge.ok { background: rgba(63,185,80,0.15); color: var(--green); }
   .badge.bad { background: rgba(248,81,73,0.15); color: var(--red); }
-  .side.BUY { color: var(--green); }
-  .side.SELL { color: var(--red); }
+  .badge.warn { background: rgba(210,153,34,0.15); color: var(--yellow); }
+  .badge.info { background: rgba(88,166,255,0.15); color: var(--blue); }
+  .side.BUY { color: var(--green); font-weight: 600; }
+  .side.SELL { color: var(--red); font-weight: 600; }
+  .action-BUY, .action-WATCH_BUY, .action-关注买入, .action-买入 { color: var(--green); font-weight: 600; }
+  .action-SELL, .action-卖出 { color: var(--red); font-weight: 600; }
+  .action-REDUCE, .action-减仓 { color: var(--yellow); font-weight: 600; }
+  .action-CAUTION, .action-警示 { color: var(--yellow); font-weight: 600; }
+  .action-HOLD, .action-持仓观望 { color: var(--muted); }
+  .regime.crisis { background: rgba(248,81,73,0.2); color: var(--red); }
+  .regime.overheated { background: rgba(210,153,34,0.2); color: var(--yellow); }
+  .regime.bull_trending, .regime.bull_low_vol { background: rgba(63,185,80,0.2); color: var(--green); }
+  .regime.neutral { background: rgba(125,133,144,0.2); color: var(--muted); }
+  .regime.recession_risk { background: rgba(210,153,34,0.2); color: var(--yellow); }
   small { color: var(--muted); }
+  canvas { max-height: 260px; }
+  .signal-card { padding: 8px 10px; background: rgba(255,255,255,0.02); border-left: 3px solid var(--border); border-radius: 4px; margin-bottom: 6px; }
+  .signal-card .top-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+  .signal-card .ticker-name { font-size: 14px; font-weight: 700; }
+  .signal-card .price { font-family: "Consolas", monospace; }
+  .bar-container { display: flex; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin: 3px 0; }
+  .bar-bull { background: var(--green); height: 100%; }
+  .bar-bear { background: var(--red); height: 100%; }
+  .banner-num { font-size: 20px; font-weight: 700; }
+  .analysis { max-height: 500px; overflow-y: auto; font-size: 12px; line-height: 1.5; }
+  .analysis pre { background: #010409; padding: 8px; border-radius: 4px; overflow-x: auto; font-size: 11px; }
+  .analysis h1, .analysis h2, .analysis h3 { text-transform: none; letter-spacing: 0; color: var(--fg); margin-top: 12px; }
+  .analysis h1 { font-size: 16px; color: var(--blue); }
+  .analysis h2 { font-size: 14px; }
+  .analysis strong { color: var(--fg); }
+  .analysis table { margin: 8px 0; }
 </style>
 </head>
 <body>
+
 <div class="top">
   <h1>FSI Trading Dashboard</h1>
-  <div><small id="update-ts">加载中...</small> · <a href="#" onclick="loadAll();return false" style="color:var(--blue)">刷新</a></div>
+  <div><small id="update-ts">加载中...</small> · <a href="#" onclick="loadAll();return false" style="color:var(--blue)">🔄 刷新</a></div>
 </div>
 
-<div class="grid">
-  <!-- Health -->
+<!-- Row 1: 4 顶级 KPI 卡片 -->
+<div class="grid g4">
   <div class="card">
     <h2>System Health</h2>
     <div id="health"></div>
   </div>
-
-  <!-- NAV -->
   <div class="card">
-    <h2>NAV / Drawdown</h2>
-    <div id="nav"></div>
+    <h2>NAV</h2>
+    <div id="nav-summary"></div>
   </div>
-
-  <!-- Trader state (peak, positions summary) -->
   <div class="card">
-    <h2>持仓</h2>
-    <div id="positions"></div>
+    <h2>HMM Meta-Regime</h2>
+    <div id="hmm"></div>
+  </div>
+  <div class="card">
+    <h2>Options Risk</h2>
+    <div id="options-risk"></div>
   </div>
 </div>
 
-<div class="grid">
-  <!-- Trades -->
+<!-- Row 2: 2 banner 情绪卡 -->
+<div class="grid g3">
+  <div class="card">
+    <h2>Trump Signal <small>[参考]</small></h2>
+    <div id="trump-banner"></div>
+  </div>
+  <div class="card">
+    <h2>Gold Macro</h2>
+    <div id="gold-banner"></div>
+  </div>
+  <div class="card">
+    <h2>快照来源</h2>
+    <div id="snap-info"></div>
+  </div>
+</div>
+
+<!-- Row 3: NAV chart 大图 + trades -->
+<div class="grid g2">
+  <div class="card">
+    <h2>NAV vs Peak 时序</h2>
+    <canvas id="nav-chart"></canvas>
+  </div>
   <div class="card">
     <h2>最近 20 笔 Trade</h2>
     <div id="trades"></div>
   </div>
+</div>
 
-  <!-- Log tail -->
-  <div class="card" style="grid-column: span 2;">
-    <h2>今日 log (最后 100 行)</h2>
+<!-- Row 4: 每标的信号卡 -->
+<div class="grid">
+  <div class="card">
+    <h2>标的实时信号（今日 log 解析）</h2>
+    <div id="signals" class="grid g3"></div>
+  </div>
+</div>
+
+<!-- Row 5: 持仓 + AI 分析 -->
+<div class="grid g2">
+  <div class="card">
+    <h2>持仓 & 状态</h2>
+    <div id="positions"></div>
+  </div>
+  <div class="card">
+    <h2>Claude 综合分析 <small id="ai-mtime"></small></h2>
+    <div id="ai-analysis" class="analysis"></div>
+  </div>
+</div>
+
+<!-- Row 6: log tail -->
+<div class="grid">
+  <div class="card">
+    <h2>今日 log tail (100 行)</h2>
     <pre class="log" id="log">加载中...</pre>
   </div>
 </div>
@@ -82,59 +161,170 @@
 <script>
 const $ = id => document.getElementById(id);
 const fmt = n => n === null || n === undefined ? '-' : (typeof n === 'number' ? n.toLocaleString('en-US', {maximumFractionDigits: 2}) : n);
-const cls = (v, threshold=0) => v > threshold ? 'ok' : (v < threshold ? 'bad' : '');
+const sideCls = a => {
+  if (['BUY','WATCH_BUY','关注买入','买入'].includes(a)) return 'ok';
+  if (['SELL','卖出'].includes(a)) return 'bad';
+  if (['REDUCE','减仓','CAUTION','警示'].includes(a)) return 'warn';
+  return '';
+};
 
 async function fetchJson(url) {
-  const r = await fetch(url);
-  return r.json();
+  try { const r = await fetch(url); return await r.json(); } catch (e) { return null; }
 }
 
 async function loadHealth() {
   const h = await fetchJson('/api/health');
-  const orchBadge = h.orchestrator_alive ? '<span class="badge ok">alive</span>' : '<span class="badge bad">dead</span>';
-  const openBadge = h.opend_alive ? '<span class="badge ok">alive</span>' : '<span class="badge bad">down</span>';
+  if (!h) return;
+  const orch = h.orchestrator_alive ? '<span class="badge ok">alive</span>' : '<span class="badge bad">dead</span>';
+  const opnd = h.opend_alive ? '<span class="badge ok">alive</span>' : '<span class="badge bad">down</span>';
   $('health').innerHTML = `
-    <div class="stat"><span class="k">orchestrator</span><span class="v">${orchBadge} PID ${h.orchestrator_pid || '-'}</span></div>
-    <div class="stat"><span class="k">moomoo OpenD</span><span class="v">${openBadge}</span></div>
-    <div class="stat"><span class="k">今日 log</span><span class="v">${(h.last_log_mtime || '-').slice(0,19)}</span></div>
-    <div class="stat"><span class="k">当前 UTC</span><span class="v">${h.now.slice(0,19)}</span></div>
+    <div class="stat"><span class="k">orchestrator</span><span class="v">${orch} PID ${h.orchestrator_pid || '-'}</span></div>
+    <div class="stat"><span class="k">moomoo OpenD</span><span class="v">${opnd}</span></div>
+    <div class="stat"><span class="k">log 最后写入</span><span class="v" style="font-size:11px">${(h.last_log_mtime || '-').slice(0,19)}</span></div>
   `;
   $('update-ts').textContent = '更新: ' + new Date().toLocaleTimeString('zh-CN');
 }
 
 async function loadNav() {
-  const n = await fetchJson('/api/nav');
+  const n = await fetchJson('/api/nav?days=60');
+  if (!n) return;
   const dd = n.dd_pct || 0;
-  const ddClass = dd < -5 ? 'bad' : (dd < -2 ? 'warn' : 'ok');
-  $('nav').innerHTML = `
-    <div class="stat"><span class="k">当前 NAV</span><span class="v">$${fmt(n.current)}</span></div>
-    <div class="stat"><span class="k">Peak NAV</span><span class="v">$${fmt(n.peak)}</span></div>
-    <div class="stat"><span class="k">回撤 DD</span><span class="v ${ddClass}">${dd.toFixed(2)}%</span></div>
+  const ddCls = dd < -10 ? 'bad' : (dd < -3 ? 'warn' : 'ok');
+  $('nav-summary').innerHTML = `
+    <div class="banner-num ${ddCls}" style="text-align:center">${dd.toFixed(2)}% DD</div>
+    <div class="stat"><span class="k">当前</span><span class="v">$${fmt(n.current)}</span></div>
+    <div class="stat"><span class="k">Peak</span><span class="v">$${fmt(n.peak)}</span></div>
     <div class="stat"><span class="k">数据点</span><span class="v">${(n.points || []).length}</span></div>
   `;
+  // chart
+  const pts = n.points || [];
+  if (pts.length && window.navChart) window.navChart.destroy();
+  if (pts.length) {
+    const ctx = $('nav-chart').getContext('2d');
+    window.navChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: pts.map(p => p.ts.slice(5,10)),
+        datasets: [
+          {label:'NAV', data: pts.map(p => p.nav), borderColor: '#58a6ff', backgroundColor: 'rgba(88,166,255,0.1)',
+           tension: 0.2, fill: true, pointRadius: 0},
+          {label:'Peak', data: pts.map(p => p.peak), borderColor: '#3fb950', borderDash:[4,4], pointRadius: 0, fill: false},
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        interaction: {mode: 'index', intersect: false},
+        scales: {
+          x: {ticks:{color:'#7d8590', font:{size:10}}, grid:{color:'rgba(48,54,61,0.5)'}},
+          y: {ticks:{color:'#7d8590', font:{size:10}}, grid:{color:'rgba(48,54,61,0.5)'}}
+        },
+        plugins: {legend: {labels: {color: '#e6edf3', font:{size:11}}}}
+      }
+    });
+  }
+}
+
+async function loadHmm() {
+  const h = await fetchJson('/api/hmm');
+  if (!h || !h.exists) { $('hmm').innerHTML = '<small>HMM 状态未生成</small>'; return; }
+  const cls = 'regime ' + (h.label || 'neutral');
+  $('hmm').innerHTML = `
+    <div class="banner-num" style="text-align:center"><span class="badge ${cls}" style="font-size:14px; padding:4px 12px">${h.label || '?'}</span></div>
+    <div class="stat"><span class="k">置信度</span><span class="v">${((h.prob || 0) * 100).toFixed(0)}%</span></div>
+    <div class="stat"><span class="k">State ID</span><span class="v">#${h.state}</span></div>
+    <div class="stat"><span class="k">更新</span><span class="v" style="font-size:10px">${(h.ts || '').slice(5,16)}</span></div>
+  `;
+}
+
+async function loadBanners() {
+  const b = await fetchJson('/api/banners');
+  if (!b || !b.exists) {
+    ['trump-banner','gold-banner','options-risk','snap-info'].forEach(id => $(id).innerHTML = '<small>暂无快照数据</small>');
+    return;
+  }
+  const t = b.trump || {};
+  const dirColor = {bullish:'ok', bearish:'bad', neutral:'muted'}[t.direction] || 'muted';
+  $('trump-banner').innerHTML = t.direction ? `
+    <div class="banner-num ${dirColor}" style="text-align:center">${t.direction} ${t.score >= 0 ? '+' : ''}${t.score}</div>
+    <div class="stat"><span class="k">推文数</span><span class="v">${t.posts}</span></div>
+    <div class="stat"><span class="k">幅度</span><span class="v">${t.magnitude}</span></div>
+  ` : '<small>无 Trump 信号数据</small>';
+
+  const g = b.gold_macro || {};
+  const gdirColor = {bullish:'ok', bearish:'bad', neutral:'muted'}[g.direction] || 'muted';
+  $('gold-banner').innerHTML = g.direction ? `
+    <div class="banner-num ${gdirColor}" style="text-align:center">${g.direction} ${g.score >= 0 ? '+' : ''}${g.score}</div>
+    <div class="stat"><span class="k">Confidence</span><span class="v">${g.conf}</span></div>
+  ` : '<small>无 Gold Macro 数据</small>';
+
+  const o = b.options_risk || {};
+  const oLevel = {low:'ok', medium:'warn', high:'bad'}[o.level] || 'muted';
+  $('options-risk').innerHTML = o.level ? `
+    <div class="banner-num ${oLevel}" style="text-align:center">${o.level.toUpperCase()}</div>
+    <div class="stat"><span class="k">距三巫日</span><span class="v">${o.days_to_witching} 天</span></div>
+  ` : '<small>无期权风险数据</small>';
+
+  $('snap-info').innerHTML = `
+    <div class="stat"><span class="k">快照文件</span><span class="v" style="font-size:11px">${b.snapshot_path || '-'}</span></div>
+    <div class="stat"><span class="k">生成时间</span><span class="v" style="font-size:11px">${(b.snapshot_mtime || '').slice(5,19)}</span></div>
+  `;
+}
+
+async function loadSignals() {
+  const s = await fetchJson('/api/signals');
+  if (!s || !s.tickers || !Object.keys(s.tickers).length) {
+    $('signals').innerHTML = '<div style="grid-column: span 3"><small>今日 log 暂无信号（orchestrator 未跑或未到 ET 窗口）</small></div>';
+    return;
+  }
+  const items = Object.values(s.tickers).sort((a,b) => a.ticker.localeCompare(b.ticker));
+  $('signals').innerHTML = items.map(t => {
+    const total = (t.bull_count || 0) + (t.bear_count || 0);
+    const bullPct = total ? (t.bull_count / total * 100) : 50;
+    const bearPct = total ? (t.bear_count / total * 100) : 50;
+    const actionCls = sideCls(t.action_zh);
+    const regimeCls = 'regime ' + (t.regime || 'neutral');
+    return `
+    <div class="signal-card">
+      <div class="top-row">
+        <span class="ticker-name">${t.ticker}</span>
+        <span class="price">$${fmt(t.price)}</span>
+      </div>
+      <div class="top-row">
+        <span class="${actionCls}">${t.action_zh || '?'} <small>${t.conf||''}/${t.scale||''}</small></span>
+        <span class="badge ${regimeCls}">${t.regime || 'neutral'}</span>
+      </div>
+      <div class="bar-container">
+        <div class="bar-bull" style="width:${bullPct}%"></div>
+        <div class="bar-bear" style="width:${bearPct}%"></div>
+      </div>
+      <div style="font-size:10px; color:var(--muted); display:flex; justify-content:space-between">
+        <span>多${t.bull_count||0} vs 空${t.bear_count||0}</span>
+        <span>RSI ${t.rsi} / 量比 ${t.vol_ratio}</span>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 async function loadPositions() {
   const p = await fetchJson('/api/positions');
-  if (!p.positions || p.positions.length === 0) {
-    $('positions').innerHTML = '<div><small>无持仓状态记录</small></div>';
-    return;
+  if (!p || !p.positions || !p.positions.length) {
+    $('positions').innerHTML = '<small>无持仓状态</small>'; return;
   }
-  const rows = p.positions
-    .filter(pos => ['BUY','PYRAMID','REBUY'].includes(pos.last_action))
-    .map(pos => `
+  const active = p.positions.filter(pos => ['BUY','PYRAMID','REBUY'].includes(pos.last_action));
+  if (!active.length) { $('positions').innerHTML = '<small>目前无 BUY 侧仓位</small>'; return; }
+  const rows = active.map(pos => `
     <tr>
-      <td><b>${pos.ticker.replace('US.','')}</b>${pos.is_core?' <small>core</small>':' <small>sat</small>'}</td>
-      <td><span class="side ${pos.last_side}">${pos.last_action}</span></td>
+      <td><b>${pos.ticker.replace('US.','')}</b> ${pos.is_core?'<small>C</small>':'<small>S</small>'}</td>
+      <td class="ok">${pos.last_action}</td>
       <td>${pos.last_qty || '-'}</td>
       <td>$${fmt(pos.entry_price || pos.last_price)}</td>
       <td>${pos.pyramid_layer ? 'L'+pos.pyramid_layer : '-'}</td>
-      <td><small>${(pos.last_time_utc || '').slice(5,16)}</small></td>
+      <td><small>${(pos.last_time_utc || '').slice(5,16).replace('T',' ')}</small></td>
     </tr>
   `).join('');
   $('positions').innerHTML = `
     <table>
-      <thead><tr><th>Ticker</th><th>Action</th><th>Qty</th><th>Entry</th><th>Layer</th><th>Time</th></tr></thead>
+      <thead><tr><th>Ticker</th><th>Action</th><th>Qty</th><th>Entry</th><th>Layer</th><th>Time UTC</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
   `;
@@ -142,23 +332,20 @@ async function loadPositions() {
 
 async function loadTrades() {
   const t = await fetchJson('/api/trades?n=20');
-  if (!t.trades || t.trades.length === 0) {
-    $('trades').innerHTML = '<div><small>暂无 trade log</small></div>';
-    return;
-  }
+  if (!t || !t.trades || !t.trades.length) { $('trades').innerHTML = '<small>无 trade log</small>'; return; }
   const rows = t.trades.map(tr => `
     <tr>
       <td><small>${tr.ts.slice(5,16).replace('T',' ')}</small></td>
       <td><b>${(tr.ticker || '').replace('US.','')}</b></td>
-      <td><span class="side ${tr.side}">${tr.side}</span></td>
+      <td class="side ${tr.side}">${tr.side}</td>
       <td>${tr.qty}</td>
       <td>$${fmt(tr.price)}</td>
-      <td><small>${tr.dry_run?'DRY':'LIVE'} conf=${(tr.decision||{}).confidence||'-'}</small></td>
+      <td><small>${tr.dry_run?'DRY':'LIVE'}</small></td>
     </tr>
   `).join('');
   $('trades').innerHTML = `
     <table>
-      <thead><tr><th>Time</th><th>Ticker</th><th>Side</th><th>Qty</th><th>Price</th><th>Meta</th></tr></thead>
+      <thead><tr><th>Time</th><th>Ticker</th><th>Side</th><th>Qty</th><th>Price</th><th></th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
   `;
@@ -166,18 +353,30 @@ async function loadTrades() {
 
 async function loadLog() {
   const l = await fetchJson('/api/log?n=100');
-  const lines = (l.lines || []).join('\n');
+  if (!l) return;
   const el = $('log');
-  el.textContent = lines || '(no log yet)';
-  el.scrollTop = el.scrollHeight;  // 自动滚到底
+  el.textContent = (l.lines || []).join('\n') || '(no log yet)';
+  el.scrollTop = el.scrollHeight;
+}
+
+async function loadAI() {
+  const a = await fetchJson('/api/ai_analysis');
+  if (!a || !a.exists) { $('ai-analysis').innerHTML = '<small>暂无 AI 分析。跑 snap.bat 生成</small>'; return; }
+  $('ai-mtime').textContent = '· ' + (a.mtime || '').slice(5,16);
+  // Strip ANSI codes (from console output)
+  const clean = (a.content || '').replace(/\x1b\[[0-9;]*m/g, '');
+  $('ai-analysis').innerHTML = marked.parse(clean);
 }
 
 async function loadAll() {
-  await Promise.all([loadHealth(), loadNav(), loadPositions(), loadTrades(), loadLog()]);
+  await Promise.all([
+    loadHealth(), loadNav(), loadHmm(), loadBanners(),
+    loadSignals(), loadPositions(), loadTrades(), loadLog(), loadAI(),
+  ]);
 }
 
 loadAll();
-setInterval(loadAll, 30000);   // 30s 自动刷新
+setInterval(loadAll, 30000);
 </script>
 </body>
 </html>

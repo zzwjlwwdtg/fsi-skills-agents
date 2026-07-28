@@ -167,6 +167,63 @@ weekly.bat     :: 周末跑一次模块准确率回测，刷 signals/module_accu
 
 每个 tag 对应的主要变更。详细 diff 见 [GitHub Releases](https://github.com/zzwjlwwdtg/fsi-skills-agents/releases)。
 
+### [v0.3.0](https://github.com/zzwjlwwdtg/fsi-skills-agents/releases/tag/v0.3.0) — 2026-07-28
+
+**大版本**：15 项系统能力升级 + 主动推送 + WebUI + 开源就绪
+
+**新功能（15 项 checklist 落地）**：
+
+- **P1 观察层**
+  - [`docs/EDGE.md`](docs/EDGE.md) 明确系统 edge 来源、伪 edge、非 edge
+  - [`_benchmark_report.py`](agents/_benchmark_report.py) NAV vs SPY/QQQ 周报（Sharpe/Max DD/α）
+  - [`_trade_postmortem.py`](agents/_trade_postmortem.py) BUY/SELL 配对 + P&L 归因
+- **P2/P3 风控 + 仓位**
+  - 相关性组仓位上限（`tech_3x` 50% / `tech_2x` 30% / `single_high_beta` 30% 等 6 组）
+  - Probe 试探仓位（低 conf = 30% 仓位）+ 金字塔加仓（≤3 层）
+  - Half-Kelly 仓位微调（min 10 trades，cap [0.5, 1.5]）
+- **P4 决策/时序**
+  - Sitting 强制确认期（持仓 < 3 天信号 SELL 不放行）
+  - 连续亏损暂停（3 笔连亏 → 24h 停开新仓）
+  - HMM meta-regime 单向收紧（volatile/crisis/bear → bull_thresh +1，绝不放宽）
+  - **反向 ETF OOS 拒绝**：SQQQ/SOXS 触发后 5d 上涨率仅 26.5%（-33pp 反指标）→ 不上线
+- **P5 基础设施**
+  - `TRADER_LIVE_FRACTION` env var 灰度切换（0.0-1.0）
+  - [`_data_source_health.py`](agents/_data_source_health.py) 数据源体检
+- **主动推送** [`notifications.py`](agents/notifications.py)
+  - Discord webhook + Telegram bot 双通道（有哪个用哪个）
+  - 5 分钟 dedup 防刷屏
+  - Hook 点：trade 成交 / crisis regime / watchdog 死机重启 / 连续亏损暂停
+- **WebUI Dashboard**（零依赖 Python 自带 `http.server`）
+  - [`webui.py`](agents/webui.py) 8 个 API 端点（health/nav/positions/trades/log/hmm/signals/banners/ai_analysis）
+  - [`dashboard.html`](agents/dashboard.html) 单页 SPA + Chart.js + marked.js
+  - NAV 时序图 + 每标的信号卡（bull/bear 共振条 + regime 徽章）+ HMM 状态 + Trump/Gold Macro 卡片 + Claude 分析 markdown 渲染
+  - 30s 自动刷新，仅绑 127.0.0.1
+  - [`webui.bat`](agents/webui.bat) 启动
+- **Watchdog + 自动重启** [`_watchdog.py`](agents/_watchdog.py)
+  - Windows Task Scheduler 每 30 分钟检查 orchestrator PID
+  - 死了自动清 stale lock + 用 pythonw 静默重启（无窗口）
+- **开源就绪**
+  - MIT [`LICENSE`](LICENSE)
+  - [`SECURITY.md`](SECURITY.md) 敏感信息管理
+  - [`.githooks/pre-commit`](.githooks/pre-commit) 拦截 sk-/ghp_/AKIA 等 secret 模式
+  - `.gitignore` 加固 `.env.*` / credentials / pem / id_rsa
+- **回测科学化**
+  - OOS 验证成为硬门槛（14 OOS 标的样本 ≥ 30，5d edge ≥ 8pp 才上线）
+  - `_backtest_overheated_oos.py` / `_backtest_divergence.py` / `_backtest_trend_capture.py` / `_backtest_inverse_etf.py` 全套 OOS 验证脚本
+
+**关键 bug 修复**：
+
+- **conf_min 未按 /5 量程缩放** — TECHNICAL_ONLY 下所有信号被静默跳过（fix `conf_min * scale/10`）
+- **A+B / C 方案回滚** — OOS 证实 CAUTION 层 + overheated 多日累积 + 顶背离 均为反指标（-14~17pp）
+- **.bat 中文 REM 在日语 CP932 下解析错乱** — 全部 ASCII-only
+- **LOG_PATH 跨午夜不切** — 加 `_DailyLogHandler` 自动切文件
+
+**新记忆**：
+
+- [feedback_technical_only_mode.md](memory) 消息面仅 banner，不进决策评分
+- [feedback_oos_required.md](memory) 训练集 N≤5 立 hard rule 是过拟合
+- [feedback_bat_ascii_only.md](memory) .bat 中文 REM 会让日语 cmd 误解析
+
 ### [v0.2.1](https://github.com/zzwjlwwdtg/fsi-skills-agents/releases/tag/v0.2.1) — 2026-06-23
 
 财报期权隐含 move 屏蔽 + 跨午夜日志切换

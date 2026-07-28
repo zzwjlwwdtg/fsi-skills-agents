@@ -209,6 +209,146 @@ def api_benchmark() -> dict:
         return {"exists": False, "error": str(e)}
 
 
+def api_hmm() -> dict:
+    """HMM meta-regime 当前状态。"""
+    path = SIGNALS_DIR / "hmm_state.json"
+    if not path.exists():
+        return {"exists": False}
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        return {
+            "exists":     True,
+            "label":      data.get("current_label"),
+            "prob":       data.get("current_prob"),
+            "state":      data.get("current_state"),
+            "ts":         data.get("ts"),
+            "state_probs":data.get("all_state_probs", {}),
+        }
+    except Exception as e:
+        return {"exists": False, "error": str(e)}
+
+
+def api_signals() -> dict:
+    """从今日 log 解析最新每标的信号（action / conf / regime / 共振多空数 / 价格）。"""
+    import re
+    path = _today_log_path()
+    if not path.exists():
+        return {"tickers": {}}
+    try:
+        with open(path, encoding="utf-8", errors="replace") as f:
+            lines = f.readlines()
+    except Exception:
+        return {"tickers": {}}
+
+    # 倒序扫，抓每个 ticker 最新一次的完整信号块
+    #   【TICKER】价格:X.XX  RSI:X.X  量比:X.X  趋势:up/down
+    #     信号: XXX 置信度:N/M 依据:XXX 行情:XXX
+    #     共振: 多头(X) vs 空头(Y) → XXX
+    tickers = {}
+    tk_re    = re.compile(r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\s+【(\w+)】"
+                          r"价格:([\d.]+)\s+RSI:([\d.]+)\s+量比:([\d.]+)\s+趋势:(\w+)")
+    sig_re   = re.compile(r"信号:\s+(\S+)\s+(关注买入|买入|卖出|减仓|警示|持仓观望)\s+"
+                          r"置信度:(\d+)/(\d+).*?行情:(\S+)")
+    reson_re = re.compile(r"共振:\s+多头\((\d+)\)\s+vs\s+空头\((\d+)\)")
+
+    # 反向扫更快 — 每 ticker 只留最新
+    seen = set()
+    for i in range(len(lines) - 1, -1, -1):
+        m = tk_re.match(lines[i])
+        if not m:
+            continue
+        tk = m.group(1)
+        if tk in seen:
+            continue
+        seen.add(tk)
+        info = {
+            "ticker":    tk,
+            "price":     float(m.group(2)),
+            "rsi":       float(m.group(3)),
+            "vol_ratio": float(m.group(4)),
+            "trend":     m.group(5),
+            "ts":        lines[i][:19],
+        }
+        # 找该 ticker 之后 6 行内的 信号 + 共振
+        for j in range(i, min(i + 10, len(lines))):
+            sm = sig_re.search(lines[j])
+            if sm and "action" not in info:
+                info["action_zh"] = sm.group(2)
+                info["conf"]      = int(sm.group(3))
+                info["scale"]     = int(sm.group(4))
+                info["regime"]    = sm.group(5)
+            rm = reson_re.search(lines[j])
+            if rm and "bull_count" not in info:
+                info["bull_count"] = int(rm.group(1))
+                info["bear_count"] = int(rm.group(2))
+        tickers[tk] = info
+    return {"tickers": tickers}
+
+
+def api_banners() -> dict:
+    """从最新 signals/snapshot_YYYYMMDD_HHMMSS.txt 解析 Trump / Gold Macro / 期权墙 3 大 banner 概要。"""
+    import re
+    snapshots = sorted(SIGNALS_DIR.glob("snapshot_*.txt"), key=lambda p: p.stat().st_mtime, reverse=True)
+    if not snapshots:
+        return {"exists": False}
+    latest = snapshots[0]
+    try:
+        content = latest.read_text(encoding="utf-8", errors="replace")
+    except Exception:
+        return {"exists": False}
+
+    banners = {"snapshot_path": str(latest.name),
+                "snapshot_mtime": datetime.fromtimestamp(latest.stat().st_mtime).isoformat()}
+
+    # Trump: "推文数 X  聚合方向 XXX  幅度 XXX  score +N"
+    m = re.search(r"推文数\s+(\d+)\s+聚合方向\s+(\w+)\s+幅度\s+(\w+)\s+score\s+([+-]?\d+)", content)
+    if m:
+        banners["trump"] = {
+            "posts":     int(m.group(1)),
+            "direction": m.group(2),
+            "magnitude": m.group(3),
+            "score":     int(m.group(4)),
+        }
+
+    # Gold Macro: "综合方向: bullish   score=+2  conf=8/10"
+    m = re.search(r"综合方向:\s*(\w+)\s+score=([+-]?\d+)\s+conf=(\d+)/(\d+)", content)
+    if m:
+        banners["gold_macro"] = {
+            "direction": m.group(1),
+            "score":     int(m.group(2)),
+            "conf":      f"{m.group(3)}/{m.group(4)}",
+        }
+
+    # 期权风险等级: low/medium/high  距下次三巫日 X天
+    m = re.search(r"期权风险等级:\s*(\w+)\s*\|\s*距下次三巫日\s*(\d+)天", content)
+    if m:
+        banners["options_risk"] = {
+            "level":              m.group(1),
+            "days_to_witching":   int(m.group(2)),
+        }
+
+    return {"exists": True, **banners}
+
+
+def api_ai_analysis() -> dict:
+    """读最新 signals/ai_analysis_snapshot_*.md 供 dashboard 展示 Claude 分析。"""
+    files = sorted(SIGNALS_DIR.glob("ai_analysis_snapshot_*.md"),
+                    key=lambda p: p.stat().st_mtime, reverse=True)
+    if not files:
+        return {"exists": False}
+    latest = files[0]
+    try:
+        content = latest.read_text(encoding="utf-8")
+        return {
+            "exists":  True,
+            "path":    latest.name,
+            "mtime":   datetime.fromtimestamp(latest.stat().st_mtime).isoformat(),
+            "content": content,
+        }
+    except Exception as e:
+        return {"exists": False, "error": str(e)}
+
+
 class Handler(BaseHTTPRequestHandler):
     def log_message(self, fmt, *args):
         pass  # 静默 http 访问日志
@@ -255,6 +395,14 @@ class Handler(BaseHTTPRequestHandler):
                 self._json(api_log(n=n))
             elif path == "/api/benchmark":
                 self._json(api_benchmark())
+            elif path == "/api/hmm":
+                self._json(api_hmm())
+            elif path == "/api/signals":
+                self._json(api_signals())
+            elif path == "/api/banners":
+                self._json(api_banners())
+            elif path == "/api/ai_analysis":
+                self._json(api_ai_analysis())
             else:
                 self.send_error(404, f"route not found: {path}")
         except Exception as e:
