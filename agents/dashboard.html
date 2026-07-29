@@ -6,6 +6,7 @@
 <title>FSI Trading Dashboard</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked@11.1.0/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3@7.8.5/dist/d3.min.js"></script>
 <style>
   :root {
     --bg: #0d1117; --fg: #e6edf3; --muted: #7d8590;
@@ -700,7 +701,7 @@ async function loadPositions() {
 }
 
 // 供应链懒加载 —— 展开卡时才 fetch，之后缓存 7 天
-function renderSupplyChain(sc) {
+function renderSupplyChain(sc, ticker) {
   const confCls = c => ({high:'ok', medium:'warn', low:'muted'}[c] || '');
   const confIcon = c => ({high:'●', medium:'●', low:'○'}[c] || '·');
   const item = x => `<div style="padding:3px 0; line-height:1.35" title="${(x.note || '').replace(/"/g,'&quot;')}">
@@ -720,8 +721,9 @@ function renderSupplyChain(sc) {
   const srcBadge = sc.source === 'claude+fmp'
     ? '<span class="badge ok" style="font-size:8px">Claude+FMP ✓</span>'
     : '<span class="badge muted" style="font-size:8px">Claude only</span>';
+  const graphBtn = ticker ? `<button onclick="showSupplyChainGraph('${ticker}')" style="background:transparent; border:1px solid var(--blue); color:var(--blue); font-size:10px; padding:2px 8px; border-radius:4px; cursor:pointer; margin-left:auto">🕸 蜘蛛网全图</button>` : '';
   return `<div style="font-size:10px; padding:5px 0">
-    <div style="margin-bottom:5px"><small style="color:var(--muted)"><b>${sc.sector||''}</b> — ${sc.business||''}</small> ${srcBadge}</div>
+    <div style="margin-bottom:5px; display:flex; align-items:center; gap:6px; flex-wrap:wrap"><small style="color:var(--muted)"><b>${sc.sector||''}</b> — ${sc.business||''}</small> ${srcBadge} ${graphBtn}</div>
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px">
       <div><div style="color:#f85149; font-size:10px; margin-bottom:3px; border-bottom:1px solid var(--border); padding-bottom:2px">↑ 上游 (供应商)</div>${up || '<small style="color:var(--muted)">无数据</small>'}</div>
       <div><div style="color:#3fb950; font-size:10px; margin-bottom:3px; border-bottom:1px solid var(--border); padding-bottom:2px">↓ 下游 (客户)</div>${dn || '<small style="color:var(--muted)">无数据</small>'}</div>
@@ -743,7 +745,11 @@ async function loadSupplyChainOnDemand(ticker, containerId) {
     el.innerHTML = `<small class="bad">加载失败: ${(r && r.error) || 'no data'}</small>`;
     return;
   }
-  el.innerHTML = renderSupplyChain(r);
+  // 缓存到全局供 D3 蜘蛛网使用
+  window.__scCache = window.__scCache || {};
+  window.__scCache[ticker] = r;
+  window.__scCache[ticker].ticker = ticker;  // 确保有 ticker 字段
+  el.innerHTML = renderSupplyChain(r, ticker);
   el.dataset.loaded = 'true';
 }
 
@@ -922,6 +928,153 @@ if (new URLSearchParams(location.search).get('expand') === 'all') {
     });
   }, 3000);
 }
+// Preview mode: URL ?graph=NVDA → 加载后自动弹出该 ticker 的蜘蛛网图（for README 截图）
+const _graphTk = new URLSearchParams(location.search).get('graph');
+if (_graphTk) {
+  fetchJson(`/api/supply_chain?ticker=${encodeURIComponent(_graphTk)}`).then(r => {
+    if (r && !r.error) {
+      window.__scCache = window.__scCache || {};
+      window.__scCache[_graphTk] = { ...r, ticker: _graphTk };
+      setTimeout(() => showSupplyChainGraph(_graphTk), 500);
+    }
+  });
+}
+
+// ── 供应链 D3 蜘蛛网 modal ──
+window.__scCache = window.__scCache || {};
+
+function showSupplyChainGraph(ticker) {
+  const sc = window.__scCache[ticker];
+  if (!sc) { alert('供应链数据未加载。请先展开卡片让数据加载完成。'); return; }
+  const modal = document.getElementById('sc-modal');
+  modal.style.display = 'flex';
+  document.getElementById('sc-modal-title').innerHTML =
+    `<b>${ticker}</b> 上下游关联网络 <small style="color:var(--muted); font-weight:normal">· ${sc.sector||''} · ${sc.business||''}</small>`;
+
+  // 构造 nodes + links
+  const nodes = [{id: ticker, group: 'center', size: 26, label: ticker, note: sc.business || '', confidence: 'high'}];
+  const links = [];
+  (sc.upstream || []).forEach((x, i) => {
+    const id = x.ticker || `up_${i}_${x.name}`;
+    nodes.push({id, group: 'up', size: 8 + (x.weight || 30) / 6, label: x.name,
+                ticker: x.ticker, note: x.note || '', weight: x.weight, confidence: x.confidence});
+    links.push({source: id, target: ticker, weight: x.weight || 30, confidence: x.confidence, kind: 'supply'});
+  });
+  (sc.downstream || []).forEach((x, i) => {
+    const id = x.ticker || `dn_${i}_${x.name}`;
+    nodes.push({id, group: 'down', size: 8 + (x.weight || 30) / 6, label: x.name,
+                ticker: x.ticker, note: x.note || '', weight: x.weight, confidence: x.confidence});
+    links.push({source: ticker, target: id, weight: x.weight || 30, confidence: x.confidence, kind: 'customer'});
+  });
+  (sc.peers || []).forEach((x, i) => {
+    const id = x.ticker || `pr_${i}_${x.name}`;
+    nodes.push({id, group: 'peer', size: 10, label: x.name, ticker: x.ticker,
+                note: x.note || '', confidence: x.confidence, fmp: x.fmp_verified});
+    links.push({source: ticker, target: id, weight: 20, confidence: x.confidence, kind: 'peer'});
+  });
+
+  const container = document.getElementById('sc-modal-graph');
+  container.innerHTML = '';
+  const width  = container.clientWidth || 1000;
+  const height = container.clientHeight || 620;
+
+  const svg = d3.select(container).append('svg')
+    .attr('width', '100%').attr('height', '100%')
+    .attr('viewBox', `0 0 ${width} ${height}`);
+
+  const COLOR = {center: '#58a6ff', up: '#f85149', down: '#3fb950', peer: '#d29922'};
+
+  // 力学模拟
+  const sim = d3.forceSimulation(nodes)
+    .force('link',   d3.forceLink(links).id(d => d.id)
+                       .distance(d => 100 + (100 - (d.weight || 30))))
+    .force('charge', d3.forceManyBody().strength(-500))
+    .force('center', d3.forceCenter(width / 2, height / 2))
+    .force('collision', d3.forceCollide().radius(d => d.size + 12));
+
+  // 边
+  const link = svg.append('g')
+    .selectAll('line').data(links).join('line')
+      .attr('stroke', d => d.kind === 'peer' ? '#d29922' : (d.confidence === 'high' ? '#8b949e' : '#484f58'))
+      .attr('stroke-width', d => 0.8 + (d.weight || 20) / 30)
+      .attr('stroke-dasharray', d => d.confidence === 'high' ? null : '4,3')
+      .attr('opacity', 0.7);
+
+  // 节点组
+  const node = svg.append('g')
+    .selectAll('g').data(nodes).join('g')
+      .style('cursor', 'grab')
+      .call(d3.drag()
+        .on('start', (e, d) => { if (!e.active) sim.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
+        .on('drag',  (e, d) => { d.fx = e.x; d.fy = e.y; })
+        .on('end',   (e, d) => { if (!e.active) sim.alphaTarget(0); d.fx = null; d.fy = null; }));
+
+  node.append('circle')
+    .attr('r', d => d.size)
+    .attr('fill', d => COLOR[d.group])
+    .attr('stroke', d => d.fmp ? '#3fb950' : (d.group === 'center' ? '#e6edf3' : '#161b22'))
+    .attr('stroke-width', d => d.fmp ? 3 : (d.group === 'center' ? 3 : 1.5))
+    .attr('opacity', d => d.confidence === 'low' ? 0.55 : (d.confidence === 'medium' ? 0.8 : 1));
+
+  node.append('text')
+    .text(d => d.label)
+    .attr('font-size', d => d.group === 'center' ? '14px' : '11px')
+    .attr('font-weight', d => d.group === 'center' ? 'bold' : 'normal')
+    .attr('fill', '#e6edf3')
+    .attr('text-anchor', 'middle')
+    .attr('dy', d => d.size + 12)
+    .style('pointer-events', 'none')
+    .style('text-shadow', '0 0 4px rgba(13,17,23,0.9)');
+
+  // ticker 小标签
+  node.filter(d => d.ticker && d.group !== 'center').append('text')
+    .text(d => d.ticker)
+    .attr('font-size', '9px')
+    .attr('fill', '#58a6ff')
+    .attr('text-anchor', 'middle')
+    .attr('dy', d => d.size + 24)
+    .style('pointer-events', 'none');
+
+  node.append('title').text(d =>
+    `${d.label}${d.ticker ? ' ['+d.ticker+']' : ''}\n${d.note || ''}` +
+    (d.weight != null ? `\nweight: ${d.weight}` : '') +
+    `\nconfidence: ${d.confidence || 'n/a'}` +
+    (d.fmp ? '\n✓ FMP peer verified' : '')
+  );
+
+  sim.on('tick', () => {
+    link.attr('x1', d => d.source.x).attr('y1', d => d.source.y)
+        .attr('x2', d => d.target.x).attr('y2', d => d.target.y);
+    node.attr('transform', d => `translate(${d.x},${d.y})`);
+  });
+}
+
+function closeSupplyChainGraph() {
+  document.getElementById('sc-modal').style.display = 'none';
+  document.getElementById('sc-modal-graph').innerHTML = '';
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeSupplyChainGraph();
+});
 </script>
+
+<!-- 供应链蜘蛛网 modal -->
+<div id="sc-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.88); z-index:1000; justify-content:center; align-items:center; padding:2vh" onclick="if(event.target===this) closeSupplyChainGraph()">
+  <div style="background:var(--bg); border:1px solid var(--border); border-radius:8px; width:min(96vw, 1200px); height:min(94vh, 820px); display:flex; flex-direction:column; box-shadow:0 20px 60px rgba(0,0,0,0.6)">
+    <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 16px; border-bottom:1px solid var(--border)">
+      <div id="sc-modal-title" style="font-size:13px"></div>
+      <button onclick="closeSupplyChainGraph()" style="background:transparent; border:1px solid var(--border); color:var(--fg); cursor:pointer; padding:3px 12px; border-radius:4px; font-size:12px">✕ 关闭 (Esc)</button>
+    </div>
+    <div id="sc-modal-graph" style="flex:1; overflow:hidden; background:#0d1117"></div>
+    <div style="padding:6px 12px; border-top:1px solid var(--border); font-size:10px; color:var(--muted); display:flex; gap:14px; flex-wrap:wrap">
+      <span><span style="color:#58a6ff">●</span> 中心（标的）</span>
+      <span><span style="color:#f85149">●</span> 上游 供应商</span>
+      <span><span style="color:#3fb950">●</span> 下游 客户</span>
+      <span><span style="color:#d29922">●</span> 同行 竞争</span>
+      <span>· 节点大小 ∝ weight · 边实线=high confidence，虚线=medium/low · <span style="border:2px solid #3fb950; border-radius:50%; padding:0 2px">○</span> = FMP 已验证</span>
+      <span style="margin-left:auto">拖动节点调整布局</span>
+    </div>
+  </div>
+</div>
 </body>
 </html>

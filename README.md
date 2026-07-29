@@ -22,6 +22,12 @@ WebUI（`webui.bat` → http://127.0.0.1:8080）— 零依赖 http.server + 单�
 （3 行结构化：综合 / 攻防 / 警示，10 只标的全覆盖，缓存 by 数据 hash）→ **🔗 上下游供应链**
 （Claude 生成 upstream/downstream/peers + confidence 标记 + 可选 FMP peers 交叉验证，懒加载缓存 7 天）。
 
+**🕸 D3 蜘蛛网全图**：每张卡供应链区右上角「🕸 蜘蛛网全图」按钮弹出 modal，Bloomberg SPLC 风格 —
+红=上游 / 绿=下游 / 黄=同行 / 蓝=标的中心；节点大小 ∝ weight，边实线=high confidence 虚线=medium/low，可拖动布局。
+`?graph=<TICKER>` URL 直达（例：[NVDA 蜘蛛网示例](docs/supply-chain-nvda-graph.png)）。
+
+![NVDA 上下游蜘蛛网](docs/supply-chain-nvda-graph.png)
+
 **顶部**：📅 最近 45 天事件日历（FOMC / CPI / NFP / NVDA 财报），带小白 hint 说明每种事件对市场的影响。
 
 **展开全部详情视图**：`?expand=all`（用于 README 截图 / 一览分析）— [见 dashboard-full-expanded.png](docs/dashboard-full-expanded.png)
