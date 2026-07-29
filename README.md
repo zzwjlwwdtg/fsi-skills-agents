@@ -9,6 +9,20 @@
 进化规则共振、Trump Truth Social 实时解析、黄金宏观因子、期权 gamma 盯盘，给出可操作
 决策并通过 paper_trader 在 moomoo SIMULATE 账户落地。
 
+## Dashboard 预览
+
+WebUI（`webui.bat` → http://127.0.0.1:8080）— 零依赖 http.server + 单页 dashboard，
+覆盖 NAV / 板块 regime / Trump 情绪 / 黄金+石油宏观 / 事件日历 / 每标的信号 + 期权墙 + Claude 分析。
+
+![Dashboard 全景](docs/dashboard-full.png)
+
+**每张标的卡包含**：多空共振条 + 建议动作/置信度 → 迷你 **期权墙 SVG**（call/put 成交分布 + spot 虚线 + Max Pain）→
+**攻防位表格**（strike / 保费 / OI 仓位 / 名义敞口）→ **挤压风险**（gamma_up / put_break / max_pain_gravity）→
+**C/P 比 + 小白解读**（Put 远大于 Call 时区分 ATM 恐慌 vs OTM 保险）→ **🤖 Claude 即时分析**
+（3 行结构化：综合 / 攻防 / 警示，10 只标的全覆盖，缓存 by 数据 hash）。
+
+**顶部**：📅 最近 45 天事件日历（FOMC / CPI / NFP / NVDA 财报），带小白 hint 说明每种事件对市场的影响。
+
 ## 主要特性
 
 - **Regime 单一源** — pre-open 算定 → 全系统读单一源，禁止多处独立检测

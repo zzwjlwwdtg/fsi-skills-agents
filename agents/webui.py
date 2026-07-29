@@ -807,6 +807,484 @@ def api_ai_analysis() -> dict:
         return {"exists": False, "error": str(e)}
 
 
+def api_events(days_ahead: int = 45) -> dict:
+    """未来 N 天内的宏观 + 财报事件（CPI/PPI/NFP/FOMC/NVDA earnings 等）。
+
+    数据源：events_watch.EQUITY_CALENDAR。今日的事件保留，1 天前也保留（当日盘后可能有影响）。
+    """
+    try:
+        from events_watch import EQUITY_CALENDAR
+    except Exception as e:
+        return {"events": [], "error": str(e)}
+    from datetime import date
+    today = date.today()
+    out = []
+    for ev in EQUITY_CALENDAR:
+        try:
+            ev_date = date.fromisoformat(ev["date"])
+        except Exception:
+            continue
+        delta = (ev_date - today).days
+        if delta < -1 or delta > days_ahead:
+            continue
+        out.append({
+            "date":   ev["date"],
+            "days":   delta,
+            "event":  ev["event"],
+            "impact": ev.get("impact", "med"),
+        })
+    out.sort(key=lambda x: x["days"])
+    return {"events": out, "today": today.isoformat(), "days_ahead": days_ahead}
+
+
+def _ticker_ai_snapshot_parse() -> dict:
+    """从最新 ai_analysis_*.md 提取 '### TICKER' 段落。旧机制，作为 live 未覆盖时的 fallback。"""
+    import re
+    files = sorted(SIGNALS_DIR.glob("ai_analysis_*.md"),
+                    key=lambda p: p.stat().st_mtime, reverse=True)
+    if not files:
+        return {"exists": False, "tickers": {}}
+    latest = files[0]
+    try:
+        content = latest.read_text(encoding="utf-8")
+    except Exception as e:
+        return {"exists": False, "error": str(e), "tickers": {}}
+    body = content
+    m_start = re.search(r"^##\s*分标的执行", body, re.MULTILINE)
+    if m_start:
+        body = body[m_start.end():]
+    m_end = re.search(r"^##\s+", body, re.MULTILINE)
+    if m_end:
+        body = body[:m_end.start()]
+    tickers: dict[str, str] = {}
+    parts = re.split(r"^###\s+([A-Z]{2,6})\b", body, flags=re.MULTILINE)
+    for i in range(1, len(parts), 2):
+        tk = parts[i].strip().upper()
+        seg = parts[i + 1] if i + 1 < len(parts) else ""
+        seg = seg.strip()
+        if tk and seg:
+            tickers[tk] = seg[:2000]
+    return {
+        "exists": True,
+        "path":   latest.name,
+        "mtime":  datetime.fromtimestamp(latest.stat().st_mtime).isoformat(),
+        "tickers": tickers,
+    }
+
+
+def _ticker_ai_live_all(signals: dict, options: dict) -> dict:
+    """一次 Claude 调用生成所有 tracked ticker 的即时分析。
+
+    缓存 key = sha1(标的 + action + conf + spot + wall OI)。数据变才重跑 Claude。
+    非阻塞：无缓存时后台线程跑，本次请求返 state=generating。
+    """
+    import hashlib
+    if not signals and not options:
+        return {"tickers": {}, "state": "empty"}
+
+    tk_list = []
+    for tk in sorted(TICKER_TO_OPTION_SOURCE.keys()):
+        sig = signals.get(tk, {})
+        opt = options.get(tk, {})
+        if not sig and (not opt or 'error' in opt):
+            continue
+        tk_list.append((tk, sig, opt))
+
+    if not tk_list:
+        return {"tickers": {}, "state": "empty"}
+
+    hash_input = json.dumps([
+        (tk, sig.get("action_zh"), sig.get("conf"), sig.get("bull_count"), sig.get("bear_count"),
+         opt.get("spot"), opt.get("call_wall_oi"), opt.get("put_wall_oi"),
+         opt.get("squeeze_risk", {}).get("type") if isinstance(opt.get("squeeze_risk"), dict) else None)
+        for tk, sig, opt in tk_list
+    ], sort_keys=True)
+    key = hashlib.sha1(hash_input.encode()).hexdigest()[:12]
+    cache_path = _WEBUI_CACHE_DIR / f"ticker_ai_live_{key}.json"
+
+    if cache_path.exists():
+        try:
+            data = json.loads(cache_path.read_text(encoding="utf-8"))
+            data["state"] = "cached"
+            return data
+        except Exception:
+            pass
+
+    flag_key = f"ticker_ai_live_{key}"
+    if not _refresh_flag.get(flag_key):
+        def _bg():
+            _refresh_flag[flag_key] = True
+            try:
+                from ai_prompt import query_claude_cli
+                lines = []
+                for tk, s, o in tk_list:
+                    lines.append(f"--- {tk} ---")
+                    lines.append(
+                        f"信号: {s.get('action_zh','?')} conf={s.get('conf','?')}/{s.get('scale','?')} "
+                        f"| 多{s.get('bull_count',0)}/空{s.get('bear_count',0)} | "
+                        f"RSI={s.get('rsi','?')} 量比={s.get('vol_ratio','?')} regime={s.get('regime','?')}"
+                    )
+                    if 'error' not in o:
+                        of = o.get('offense', {}) or {}
+                        ds = o.get('defense', {}) or {}
+                        sr = o.get('squeeze_risk', {}) or {}
+                        sm = o.get('sentiment', {}) or {}
+                        lines.append(f"期权链={o.get('underlying','?')} spot=${o.get('spot')} exp={o.get('expiry')}")
+                        lines.append(
+                            f"  Call wall ${of.get('strike')} OI={of.get('oi',0)} 保费=${of.get('prem')} "
+                            f"(距spot {of.get('dist_pct')}%) 强度{of.get('strength','?')}"
+                        )
+                        lines.append(
+                            f"  Put  wall ${ds.get('strike')} OI={ds.get('oi',0)} 保费=${ds.get('prem')} "
+                            f"(距spot {ds.get('dist_pct')}%) 强度{ds.get('strength','?')}"
+                        )
+                        lines.append(f"  C/P成交={sm.get('cp_ratio','?')} ({sm.get('label','')}) 挤压=[{sr.get('urgency')}]{sr.get('type')}")
+                        # OI 失衡数据
+                        p_oi = ds.get('oi', 0) or 0
+                        c_oi = of.get('oi', 0) or 0
+                        if p_oi and c_oi:
+                            ratio = p_oi / c_oi
+                            if ratio >= 3 or ratio <= 0.33:
+                                lines.append(f"  ⚠ Put OI/Call OI = {ratio:.1f}倍 严重失衡")
+                    lines.append("")
+
+                prompt = (
+                    "你是量化交易分析师。对下面每个标的用 3 行中文输出（无 preamble、无 markdown ```围栏），"
+                    "格式严格如下：\n\n"
+                    "### <TICKER>\n"
+                    "- 综合: <多空信号+期权是否共振，1 行>\n"
+                    "- 攻防: <关键防守/进攻位可操作性 + 到 spot 距离，1 行>\n"
+                    "- 警示: <异常/机会/风险，无则写 暂无>\n\n"
+                    "解读规则（严格遵循）：\n"
+                    "1. Put OI 远大于 Call OI 时区分：ATM 附近=真恐慌 / OTM 远端=廉价保险；机构对冲(用户持仓可放心) vs 空头押跌\n"
+                    "2. Call OI 远大于 Put OI 时：上方是 pin 磁吸位 / 下方无护盘\n"
+                    "3. gamma_up 挤压[high] = 突破 call wall 加速上涨；put_break 挤压[high] = 跌破 put wall 加速下跌\n"
+                    "4. 信号 conf ≥ 4 且期权攻防共振 → 明确机会；信号看多但 put OI 大幅堆积 → 警示 divergence\n"
+                    "5. 严格只输出 ### 段落，不要总结不要展望不要重复问题\n\n"
+                    "标的数据：\n"
+                    + "\n".join(lines)
+                )
+                out, status = query_claude_cli(prompt, timeout=120)
+                if out and out.strip():
+                    import re
+                    parts = re.split(r"^###\s+([A-Z]{2,6})\b", out, flags=re.MULTILINE)
+                    tickers = {}
+                    for i in range(1, len(parts), 2):
+                        tk = parts[i].strip().upper()
+                        body = parts[i + 1] if i + 1 < len(parts) else ""
+                        body = body.strip()
+                        if tk and body:
+                            tickers[tk] = body[:1500]
+                    if tickers:
+                        result = {
+                            "tickers": tickers,
+                            "generated_at": datetime.now(timezone.utc).isoformat(),
+                        }
+                        cache_path.write_text(
+                            json.dumps(result, ensure_ascii=False), encoding="utf-8"
+                        )
+                # else: silent fail, state stays generating; next refresh will retry
+            except Exception:
+                pass
+            finally:
+                _refresh_flag[flag_key] = False
+        threading.Thread(target=_bg, daemon=True).start()
+
+    return {"tickers": {}, "state": "generating"}
+
+
+def api_ticker_ai() -> dict:
+    """每标的 Claude 分析。优先 live（覆盖所有 tracked ticker），fallback 到 snapshot。"""
+    signals   = api_signals().get("tickers", {}) or {}
+    opt_data  = api_ticker_options().get("tickers", {}) or {}
+    live      = _ticker_ai_live_all(signals, opt_data)
+    snapshot  = _ticker_ai_snapshot_parse()
+
+    tickers: dict[str, str] = {}
+    sources: dict[str, str] = {}
+    # 优先 live
+    for tk, body in (live.get("tickers") or {}).items():
+        tickers[tk] = body
+        sources[tk] = "live"
+    # 补 snapshot（未被 live 覆盖的）
+    for tk, body in (snapshot.get("tickers") or {}).items():
+        if tk not in tickers:
+            tickers[tk] = body
+            sources[tk] = "snapshot"
+
+    return {
+        "exists":         bool(tickers) or live.get("state") == "generating",
+        "tickers":        tickers,
+        "sources":        sources,
+        "live_state":     live.get("state", "empty"),  # cached / generating / empty
+        "live_generated": live.get("generated_at"),
+        "snapshot_path":  snapshot.get("path"),
+        "snapshot_mtime": snapshot.get("mtime"),
+    }
+
+
+TICKER_TO_OPTION_SOURCE = {
+    "TQQQ": "QQQ",   # 3x QQQ → 用 QQQ chain（同指数、更深）
+    "SOXL": "SOXX",  # 3x SOX (ICE 半导体指数) → 1x 版本 SOXX，同指数最精准
+    "DRAM": "DRAM",  # Roundhill Memory ETF 自身有 chain（贴近实际持仓）
+    "MULL": "MU",    # 2x MU（Direxion）单股杠杆，用 MU 本体
+    "GLD":  "GLD",
+    "TSLA": "TSLA",
+    "KLAC": "KLAC",
+    "AMAT": "AMAT",
+    "GOOGL": "GOOGL",
+    "NVDA": "NVDA",
+}
+
+
+def _analyze_walls(spot, call_wall, put_wall, max_pain,
+                   cw_vol, pw_vol, total_c, total_p,
+                   cw_oi=0, pw_oi=0, cw_prem=None, pw_prem=None) -> dict:
+    """从 walls + spot 推导 攻/防位、C/P 情绪、挤压风险。
+
+    OI-based walls 优先（有实际持仓才有对冲压力）；vol-based 作 fallback。
+    """
+    r: dict = {}
+    # 用 OI 做强度（若无则退回 vol）
+    _c_denom = sum([cw_oi, pw_oi]) or (total_c + total_p) or 1
+    def _fmt_notional(n):
+        if not n: return ""
+        if n >= 1e9:  return f"~${n/1e9:.1f}B"
+        if n >= 1e6:  return f"~${n/1e6:.0f}M"
+        if n >= 1e3:  return f"~${n/1e3:.0f}K"
+        return f"~${n:.0f}"
+
+    if put_wall is not None:
+        dist_pct = round((spot - put_wall) / spot * 100, 2)  # >0 = 支撑在下方
+        share    = (pw_oi / max(pw_oi + cw_oi, 1)) if (pw_oi + cw_oi) else pw_vol / max(total_p, 1)
+        strength = "强" if share >= 0.35 else ("中" if share >= 0.18 else "弱")
+        r["defense"] = {
+            "strike":   put_wall,
+            "dist_pct": dist_pct,
+            "strength": strength,
+            "share":    round(share * 100, 1),
+            "oi":       pw_oi,
+            "prem":     pw_prem,
+            "notional": int(pw_oi * 100 * put_wall) if pw_oi else 0,
+        }
+    if call_wall is not None:
+        dist_pct = round((call_wall - spot) / spot * 100, 2)
+        share    = (cw_oi / max(pw_oi + cw_oi, 1)) if (pw_oi + cw_oi) else cw_vol / max(total_c, 1)
+        strength = "强" if share >= 0.35 else ("中" if share >= 0.18 else "弱")
+        r["offense"] = {
+            "strike":   call_wall,
+            "dist_pct": dist_pct,
+            "strength": strength,
+            "share":    round(share * 100, 1),
+            "oi":       cw_oi,
+            "prem":     cw_prem,
+            "notional": int(cw_oi * 100 * call_wall) if cw_oi else 0,
+        }
+
+    # 挤压风险 —— OI 达标才算真信号（>500 手，避免小盘噪音）
+    risk = {"type": "none", "urgency": "low",
+            "detail": "当前价格远离主要期权墙，无明显挤压压力"}
+    if (call_wall is not None and 0 <= (call_wall - spot) / spot * 100 <= 1.5
+            and (cw_oi >= 500 or not cw_oi)):  # OI 未知时也放行
+        pct = (call_wall - spot) / spot * 100
+        prem_s = f" · 单手保费 ${cw_prem}" if cw_prem else ""
+        oi_s = f" · OI {cw_oi:,} ({_fmt_notional(cw_oi*100*call_wall)} 名义)" if cw_oi else ""
+        risk = {"type": "gamma_up", "urgency": "high",
+                "detail": f"Call wall ${call_wall} 距现价仅 {pct:.1f}%{oi_s}{prem_s}。突破且放量 → 做市商需买入对冲 → 短期加速上涨（gamma squeeze）"}
+    elif (put_wall is not None and 0 <= (spot - put_wall) / spot * 100 <= 1.5
+            and (pw_oi >= 500 or not pw_oi)):
+        pct = (spot - put_wall) / spot * 100
+        prem_s = f" · 单手保费 ${pw_prem}" if pw_prem else ""
+        oi_s = f" · OI {pw_oi:,} ({_fmt_notional(pw_oi*100*put_wall)} 名义)" if pw_oi else ""
+        risk = {"type": "put_break", "urgency": "high",
+                "detail": f"Put wall ${put_wall} 距现价仅 {pct:.1f}%{oi_s}{prem_s}。跌破 = 关键支撑丢失，止损盘 + 做市商反手对冲 → 加速下跌"}
+    elif max_pain is not None and abs(spot - max_pain) / spot * 100 >= 3:
+        pull = "下拉" if spot > max_pain else "上拉"
+        pct = abs(spot - max_pain) / spot * 100
+        risk = {"type": "max_pain_gravity", "urgency": "medium",
+                "detail": f"Max Pain ${max_pain}（距现价 {pct:.1f}%）。到期日临近，期权卖方倾向将价格{pull}至此"}
+    r["squeeze_risk"] = risk
+    # C/P 情绪 —— 带小白详细解读
+    if total_p > 0:
+        cp = total_c / total_p
+        if cp >= 1.8:
+            label = "看多情绪偏热"
+            explain = (
+                f"Call 成交是 Put 的 {cp:.1f} 倍。**多头拥挤**：\n"
+                "  · 大家在追多 / 抢反弹 / 押突破\n"
+                "  · 历史规律：C/P > 1.8 时短期回调概率偏高（反向指标）\n"
+                "  · 尤其若配合价格已涨很多 → 警惕获利了结压力"
+            )
+        elif cp <= 0.5:
+            label = "看空情绪极端"
+            explain = (
+                f"Put 成交是 Call 的 {1/cp:.1f} 倍。**空头拥挤 / 大量对冲**：\n"
+                "  · 场景 a) 恐慌下跌中 → 多为空头押跌\n"
+                "  · 场景 b) 机构大量买 put 做保险（他们仍持股）→ 中性偏温和多\n"
+                "  · 场景 c) 有明确利空事件预期（财报/宏观/政策）\n"
+                "  · 历史规律：C/P < 0.5 时短期反弹概率 ~60%（『恐慌见底』反向指标）\n"
+                "  · 区分 a vs b：看这些 put 是 ATM（真怕跌）还是远 OTM（廉价 tail hedge）"
+            )
+        else:
+            label = "多空均衡"
+            explain = "Call/Put 成交比例接近 1:1，市场无明显方向性偏见。"
+        r["sentiment"] = {"cp_ratio": round(cp, 2), "label": label, "explain": explain}
+    # 墙 OI 失衡解读（Put OI 远大于 Call OI 或反之）
+    if pw_oi > 0 and cw_oi > 0:
+        ratio = pw_oi / cw_oi
+        wall_note = None
+        if ratio >= 3:
+            wall_note = (
+                f"**Put 墙 OI 是 Call 墙的 {ratio:.1f} 倍**：下方『真金白银』押注远超上方。\n"
+                "  · 若你手上有仓位：这是**对冲/保险堆积**的层，跌到这里通常有反弹\n"
+                "  · 若空头思路：说明大家已经知道下方风险了 → 你不占信息优势\n"
+                "  · 例外：如果 Put 墙很接近 spot（<2%），跌破会引发做市商反手对冲 → **加速下跌**"
+            )
+        elif ratio <= 0.33:
+            wall_note = (
+                f"**Call 墙 OI 是 Put 墙的 {1/ratio:.1f} 倍**：上方阻力/追多力量集中，下方对冲少。\n"
+                "  · 通常出现在强势股 / 短期热门标的 → 上方是 pin / 磁吸位\n"
+                "  · 下方无护盘 → 一旦下跌可能无缓冲、直接找下一档 support"
+            )
+        r["wall_imbalance"] = wall_note  # 可能是 None
+    return r
+
+
+def api_ticker_options() -> dict:
+    """每个 tracked ticker 的期权墙 + 攻防位 + 挤压风险。10min 后台缓存。"""
+    return _cached("ticker_options", ttl_sec=600, compute_fn=_compute_ticker_options)
+
+
+def _compute_ticker_options() -> dict:
+    """对每个 tracked ticker 拉最近到期日期权链 + 分析。串行 ~15-30s 首次。"""
+    import yfinance as yf
+    out = {"ts": datetime.now(timezone.utc).isoformat(), "tickers": {}}
+    for tk, underlying in TICKER_TO_OPTION_SOURCE.items():
+        try:
+            t = yf.Ticker(underlying)
+            expiries = list(t.options or [])
+            if not expiries:
+                out["tickers"][tk] = {"underlying": underlying, "error": "no_option_chain"}
+                continue
+            exp = expiries[0]
+            ch = t.option_chain(exp)
+            calls, puts = ch.calls.copy(), ch.puts.copy()
+            try:
+                spot = float(t.history(period="1d")["Close"].iloc[-1])
+            except Exception:
+                spot = float(calls["strike"].median())
+            lo, hi = spot * 0.90, spot * 1.10
+            calls = calls[(calls["strike"] >= lo) & (calls["strike"] <= hi)]
+            puts  = puts [(puts ["strike"] >= lo) & (puts ["strike"] <= hi)]
+            calls["volume"]       = calls["volume"].fillna(0)
+            puts["volume"]        = puts["volume"].fillna(0)
+            if "openInterest" in calls.columns:
+                calls["openInterest"] = calls["openInterest"].fillna(0)
+                puts["openInterest"]  = puts["openInterest"].fillna(0)
+
+            def _mid(row):
+                """bid/ask mid 优先，fallback lastPrice；无值返回 None。"""
+                if row.empty:
+                    return None
+                try:
+                    b = float(row["bid"].iloc[0] or 0) if "bid" in row.columns else 0
+                    a = float(row["ask"].iloc[0] or 0) if "ask" in row.columns else 0
+                    if b > 0 and a > 0:
+                        return round((b + a) / 2, 2)
+                    lp = row["lastPrice"].iloc[0] if "lastPrice" in row.columns else None
+                    return round(float(lp), 2) if lp else None
+                except Exception:
+                    return None
+
+            all_s = sorted(set(calls["strike"].tolist()) | set(puts["strike"].tolist()))
+            dist = []
+            for s in all_s:
+                cr = calls[calls["strike"] == s]
+                pr = puts [puts ["strike"] == s]
+                cv = int(cr["volume"].sum())
+                pv = int(pr["volume"].sum())
+                if cv + pv < 20:
+                    continue
+                c_oi = int(cr["openInterest"].sum()) if "openInterest" in cr.columns else 0
+                p_oi = int(pr["openInterest"].sum()) if "openInterest" in pr.columns else 0
+                dist.append({
+                    "strike":    float(s),
+                    "call_vol":  cv, "put_vol":  pv,
+                    "call_oi":   c_oi, "put_oi":  p_oi,
+                    "call_prem": _mid(cr),
+                    "put_prem":  _mid(pr),
+                })
+            dist.sort(key=lambda x: -(x["call_vol"] + x["put_vol"]))
+            dist = sorted(dist[:15], key=lambda x: x["strike"])
+            if not dist:
+                out["tickers"][tk] = {"underlying": underlying, "error": "no_liquid_strikes"}
+                continue
+
+            # Vol-based walls（图表用的还是 vol，反映日内活跃度）
+            call_wall = max(dist, key=lambda x: x["call_vol"])
+            put_wall  = max(dist, key=lambda x: x["put_vol"])
+            # OI-based walls（分析用的是 OI，反映实际押注/持仓）
+            call_wall_oi = max(dist, key=lambda x: x["call_oi"]) if any(d["call_oi"] > 0 for d in dist) else None
+            put_wall_oi  = max(dist, key=lambda x: x["put_oi"])  if any(d["put_oi"] > 0 for d in dist) else None
+            total_c = sum(d["call_vol"] for d in dist)
+            total_p = sum(d["put_vol"] for d in dist)
+            # Max pain
+            best_s, best_pain = None, float("inf")
+            for s in [d["strike"] for d in dist]:
+                loss = 0.0
+                for d in dist:
+                    if d["strike"] < s: loss += d["call_vol"] * (s - d["strike"])
+                    elif d["strike"] > s: loss += d["put_vol"] * (d["strike"] - s)
+                if loss < best_pain:
+                    best_pain, best_s = loss, s
+
+            # 分析优先用 OI 墙（fallback vol）
+            an_call = call_wall_oi or call_wall
+            an_put  = put_wall_oi  or put_wall
+            analysis = _analyze_walls(
+                spot=spot,
+                call_wall=an_call["strike"], put_wall=an_put["strike"],
+                max_pain=best_s,
+                cw_vol=an_call["call_vol"], pw_vol=an_put["put_vol"],
+                cw_oi=an_call["call_oi"],    pw_oi=an_put["put_oi"],
+                cw_prem=an_call["call_prem"], pw_prem=an_put["put_prem"],
+                total_c=total_c, total_p=total_p,
+            )
+
+            def _wall_meta(w, side):
+                """把 wall dict 展平成 strike / prem / oi / notional"""
+                if not w: return {}
+                oi = w[f"{side}_oi"]
+                prem = w[f"{side}_prem"]
+                strike = w["strike"]
+                notional = oi * 100 * strike  # 名义 = OI × 100 × 现价（用 strike 近似）
+                return {
+                    f"{side}_wall_strike":   strike,
+                    f"{side}_wall_vol":      w[f"{side}_vol"],
+                    f"{side}_wall_oi":       oi,
+                    f"{side}_wall_prem":     prem,
+                    f"{side}_wall_notional": int(notional),
+                }
+
+            out["tickers"][tk] = {
+                "underlying":       underlying,
+                "spot":             round(spot, 2),
+                "expiry":           exp,
+                "distribution":     dist,
+                # 保留 vol-based walls（SVG 图用）
+                **_wall_meta(call_wall, "call"),
+                **_wall_meta(put_wall, "put"),
+                # OI-based walls（分析用；若与 vol wall 同一 strike 则相同）
+                "call_wall_oi_strike": call_wall_oi["strike"] if call_wall_oi else None,
+                "put_wall_oi_strike":  put_wall_oi["strike"]  if put_wall_oi  else None,
+                "max_pain":         best_s,
+                **analysis,
+            }
+        except Exception as e:
+            out["tickers"][tk] = {"underlying": underlying, "error": str(e)[:100]}
+    return out
+
+
 def api_option_walls_chart() -> dict:
     """三个主要指数（QQQ/SMH/GLD）最近到期日期权成交量分布 + 关键墙。
     重仓 ETF 对应的板块指数：
@@ -950,6 +1428,12 @@ class Handler(BaseHTTPRequestHandler):
                 self._json(api_oil())
             elif path == "/api/option_walls_chart":
                 self._json(api_option_walls_chart())
+            elif path == "/api/ticker_options":
+                self._json(api_ticker_options())
+            elif path == "/api/ticker_ai":
+                self._json(api_ticker_ai())
+            elif path == "/api/events":
+                self._json(api_events())
             else:
                 self.send_error(404, f"route not found: {path}")
         except Exception as e:

@@ -22,7 +22,7 @@ from datetime import datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-from config import TICKERS, DAILY_WINDOWS_ET
+from config import TICKERS, DAILY_WINDOWS_ET, WATCH_ONLY_TICKERS
 from market_watch import get_market_signal
 from futures_watch import get_futures_signal
 from events_watch import get_events_signal, get_gold_events_signal
@@ -575,7 +575,9 @@ def _etf_cycle(events_signal: dict, macro: dict, window: str | None = None,
                     pass
 
             try:
-                trade_execute(ticker, decision, mkt, window)
+                # WATCH_ONLY 标的只出信号，不下单
+                if ticker not in WATCH_ONLY_TICKERS:
+                    trade_execute(ticker, decision, mkt, window)
             except Exception as exc:
                 logger.error(f"[trader ETF:{ticker}] error: {exc}")
         except Exception as exc:
@@ -791,11 +793,13 @@ def run_cycle(window: str | None = None) -> None:
     _etf_cycle(equity_events, macro, window=window)
     _gold_cycle(macro, window=window)
 
-    # 卫星仓 cycle：今日 picks + 任何还在持仓的卫星老仓
+    # 卫星仓 cycle：今日 picks + 任何还在持仓的卫星老仓 + WATCH_ONLY 观察标的
     try:
         from paper_trader import get_active_tickers, CORE_TICKERS
         actives = get_active_tickers()
         sats = [tk for tk in actives if tk not in CORE_TICKERS]
+        # WATCH_ONLY 标的（只出信号不下单，_etf_cycle 内 skip trade_execute）
+        sats = list(dict.fromkeys(sats + list(WATCH_ONLY_TICKERS)))
         if sats:
             _etf_cycle(equity_events, macro, window=window, tickers=sats)
     except Exception as exc:

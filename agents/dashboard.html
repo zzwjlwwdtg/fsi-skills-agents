@@ -162,12 +162,8 @@
 </div>
 </details>
 
-<!-- Row 1: 4 顶级 KPI 卡片 -->
+<!-- Row 1: NAV / HMM / 事件日历（原 System Health + Options Risk 已换成事件日历，orchestrator 状态在页脚 log 里看） -->
 <div class="grid g4">
-  <div class="card">
-    <h2 title="orchestrator（主调度）+ moomoo OpenD（下单通道）是否活着">System Health <small>系统健康</small></h2>
-    <div id="health"></div>
-  </div>
   <div class="card">
     <h2 title="账户净值：现金 + 持仓市值。DD = 从最高点回撤%">NAV <small>账户净值 & 回撤</small></h2>
     <div id="nav-summary"></div>
@@ -176,9 +172,11 @@
     <h2 title="Hidden Markov Model 判定的市场大周期。bull_low_vol=温和牛 / crisis=危机">HMM Meta-Regime <small>市场大周期</small></h2>
     <div id="hmm"></div>
   </div>
-  <div class="card">
-    <h2 title="期权风险等级。三巫日附近 + gamma 拥挤时升高">Options Risk <small>期权风险</small></h2>
-    <div id="options-risk"></div>
+  <div class="card" style="grid-column: span 2">
+    <h2 title="未来 45 天内的宏观 + 财报事件。FOMC/CPI/NFP/NVDA 等对全市场或半导体链条有明显冲击">
+      📅 最近大事件日历 <small id="events-count">Upcoming Events</small>
+    </h2>
+    <div id="events-list" style="max-height:220px; overflow-y:auto"></div>
   </div>
 </div>
 
@@ -206,14 +204,8 @@
   </div>
 </div>
 
-<!-- Row 3: 重仓板块期权墙 (代替 NAV 曲线) + trades -->
-<div class="grid g2">
-  <div class="card">
-    <h2 title="重仓 ETF 追踪的板块指数期权成交量分布。绿=Call 成交，红=Put 成交，垂直虚线=现价，★=call/put wall">
-      重仓板块期权墙 <small id="ow-freshness"></small>
-    </h2>
-    <div id="option-walls-chart"></div>
-  </div>
+<!-- Row 3: 最近成交 -->
+<div class="grid">
   <div class="card">
     <h2 title="paper_trader 最近成交记录。DRY=模拟不下单，LIVE=在 moomoo SIMULATE 账户真下单">最近 20 笔 Trade <small>成交记录</small></h2>
     <div id="trades"></div>
@@ -265,14 +257,58 @@ async function fetchJson(url) {
 async function loadHealth() {
   const h = await fetchJson('/api/health');
   if (!h) return;
-  const orch = h.orchestrator_alive ? '<span class="badge ok">alive</span>' : '<span class="badge bad">dead</span>';
-  const opnd = h.opend_alive ? '<span class="badge ok">alive</span>' : '<span class="badge bad">down</span>';
-  $('health').innerHTML = `
-    <div class="stat"><span class="k">orchestrator</span><span class="v">${orch} PID ${h.orchestrator_pid || '-'}</span></div>
-    <div class="stat"><span class="k">moomoo OpenD</span><span class="v">${opnd}</span></div>
-    <div class="stat"><span class="k">log 最后写入</span><span class="v" style="font-size:11px">${(h.last_log_mtime || '-').slice(0,19)}</span></div>
-  `;
+  // Health 卡已被移除，仅保留 update-ts 页脚更新；若将来重新添加卡可再启用 health div
+  const healthEl = $('health');
+  if (healthEl) {
+    const orch = h.orchestrator_alive ? '<span class="badge ok">alive</span>' : '<span class="badge bad">dead</span>';
+    const opnd = h.opend_alive ? '<span class="badge ok">alive</span>' : '<span class="badge bad">down</span>';
+    healthEl.innerHTML = `
+      <div class="stat"><span class="k">orchestrator</span><span class="v">${orch} PID ${h.orchestrator_pid || '-'}</span></div>
+      <div class="stat"><span class="k">moomoo OpenD</span><span class="v">${opnd}</span></div>
+      <div class="stat"><span class="k">log 最后写入</span><span class="v" style="font-size:11px">${(h.last_log_mtime || '-').slice(0,19)}</span></div>
+    `;
+  }
   $('update-ts').textContent = '更新: ' + new Date().toLocaleTimeString('zh-CN');
+}
+
+const EVENT_HINT = {
+  'FOMC Decision':  '联储利率决议 · 影响全市场（尤其成长股/杠杆 ETF）',
+  'CPI Release':    '消费者物价指数 · 通胀数据，Fed 政策核心依据',
+  'PPI Release':    '生产者物价指数 · 上游通胀先行指标',
+  'NFP Release':    '非农就业 · Fed 就业目标 + 经济强弱',
+  'Retail Sales':   '零售销售 · 消费者信心 + 经济动能',
+  'PCE':            '个人消费支出物价 · Fed 首选通胀指标',
+  'NVDA Earnings':  'NVDA 财报 · 半导体链条领头（SOXL/DRAM/MULL 都会跟）',
+};
+function eventHint(evName) {
+  for (const key in EVENT_HINT) {
+    if (evName.includes(key)) return EVENT_HINT[key];
+  }
+  return '';
+}
+
+async function loadEvents() {
+  const r = await fetchJson('/api/events');
+  const listEl = $('events-list');
+  if (!listEl) return;
+  if (!r || !r.events || !r.events.length) {
+    listEl.innerHTML = '<small style="color:var(--muted); padding:8px; display:block">无近期事件</small>';
+    $('events-count').textContent = '暂无';
+    return;
+  }
+  $('events-count').textContent = `未来 ${r.days_ahead} 天 · ${r.events.length} 项`;
+  listEl.innerHTML = r.events.map(e => {
+    const isPast = e.days < 0;
+    const urgencyCls = e.days <= 0 ? 'bad' : (e.days <= 3 ? 'warn' : '');
+    const urgencyIcon = e.days <= 0 ? '🚨' : (e.days <= 3 ? '⚠' : (e.days <= 7 ? '·' : ''));
+    const dayLabel = e.days === 0 ? '今日' : (e.days < 0 ? `${-e.days}天前` : `${e.days}天后`);
+    const hint = eventHint(e.event);
+    return `<div style="display:grid; grid-template-columns:20px 1.5fr 1fr; gap:6px; padding:5px 4px; border-bottom:1px solid var(--border); font-size:11px; ${isPast ? 'opacity:0.55' : ''}">
+      <span>${urgencyIcon}</span>
+      <span title="${hint}"><b class="${urgencyCls}">${e.event}</b>${hint ? `<br><small style="color:var(--muted); font-size:9px; line-height:1.2">${hint}</small>` : ''}</span>
+      <span style="text-align:right; color:var(--muted)"><b>${e.date}</b><br><small class="${urgencyCls}">${dayLabel}</small></span>
+    </div>`;
+  }).join('');
 }
 
 async function loadNav() {
@@ -356,7 +392,7 @@ const LEVEL_LABELS = {low: '低', medium: '中', high: '高'};
 async function loadBanners() {
   const b = await fetchJson('/api/banners');
   if (!b || !b.exists) {
-    ['trump-banner','gold-banner','options-risk','snap-info'].forEach(id => $(id).innerHTML = '<small>暂无快照数据</small>');
+    ['trump-banner','gold-banner'].forEach(id => { const el = $(id); if (el) el.innerHTML = '<small>暂无快照数据</small>'; });
     return;
   }
   const t = b.trump || {};
@@ -431,14 +467,7 @@ async function loadBanners() {
     </div>
   ` : '<small>无 Gold Macro 数据</small>';
 
-  const o = b.options_risk || {};
-  const oLevel = {low:'ok', medium:'warn', high:'bad'}[o.level] || 'muted';
-  const olZh = LEVEL_LABELS[o.level] || '';
-  $('options-risk').innerHTML = o.level ? `
-    <div class="banner-num ${oLevel}" style="text-align:center" title="LOW=平稳 / MEDIUM=关注 / HIGH=波动放大">${o.level.toUpperCase()}</div>
-    <div style="text-align:center; font-size:12px; color:var(--fg); margin: 4px 0">${olZh}风险</div>
-    <div class="stat"><span class="k term" title="三巫日 = 每季 3/6/9/12 月第三个周五，期指+期权+股指期权同时到期，波动放大">距三巫日</span><span class="v">${o.days_to_witching} 天</span></div>
-  ` : '<small>无期权风险数据</small>';
+  // options-risk 卡已被移除（改成事件日历），跳过渲染
 
   // 石油宏观（独立端点，实时 yfinance）
   loadOil();
@@ -472,12 +501,122 @@ async function loadOil() {
   `;
 }
 
+function renderMiniWall(opt) {
+  // 紧凑 SVG 期权墙：strike 横向排列，上绿(call)、下红(put)
+  if (!opt || opt.error || !opt.distribution || !opt.distribution.length) return '';
+  const dist = opt.distribution;
+  const spot = opt.spot;
+  const H = 60;  // px
+  const maxV = Math.max(...dist.map(d => Math.max(d.call_vol, d.put_vol)), 1);
+  const barW = 100 / dist.length;
+  const strikes = dist.map(d => d.strike);
+  const minS = Math.min(...strikes), maxS = Math.max(...strikes);
+  const spotFrac = maxS > minS ? (spot - minS) / (maxS - minS) : 0.5;
+  const spotX = Math.max(0, Math.min(100, spotFrac * 100));
+  const mpFrac = (opt.max_pain != null && maxS > minS) ? (opt.max_pain - minS) / (maxS - minS) : null;
+  const mpX = mpFrac != null ? Math.max(0, Math.min(100, mpFrac * 100)) : null;
+  const bars = dist.map((d, i) => {
+    const cH = Math.round((d.call_vol / maxV) * (H * 0.45));
+    const pH = Math.round((d.put_vol  / maxV) * (H * 0.45));
+    const x = i * barW + barW * 0.15;
+    const w = barW * 0.7;
+    const isCW = d.strike === opt.call_wall_strike;
+    const isPW = d.strike === opt.put_wall_strike;
+    const cc = isCW ? '#3fb950' : 'rgba(63,185,80,0.55)';
+    const pc = isPW ? '#f85149' : 'rgba(248,81,73,0.55)';
+    return `<rect x="${x}%" y="${H/2 - cH}" width="${w}%" height="${cH}" fill="${cc}"><title>$${d.strike} C=${d.call_vol}${isCW?' ★':''}</title></rect><rect x="${x}%" y="${H/2}" width="${w}%" height="${pH}" fill="${pc}"><title>$${d.strike} P=${d.put_vol}${isPW?' ★':''}</title></rect>`;
+  }).join('');
+  return `<svg width="100%" height="${H}" style="display:block; margin-top:4px">
+    <line x1="0" y1="${H/2}" x2="100%" y2="${H/2}" stroke="rgba(125,133,144,0.3)" stroke-width="1"/>
+    ${bars}
+    <line x1="${spotX}%" y1="0" x2="${spotX}%" y2="${H}" stroke="#58a6ff" stroke-width="1.5" stroke-dasharray="3,3"><title>spot $${spot}</title></line>
+    ${mpX != null ? `<line x1="${mpX}%" y1="0" x2="${mpX}%" y2="${H}" stroke="#d29922" stroke-width="1" stroke-dasharray="2,4" opacity="0.7"><title>Max Pain $${opt.max_pain}</title></line>` : ''}
+  </svg>`;
+}
+
+function fmtNotional(n) {
+  if (!n) return '-';
+  if (n >= 1e9) return '$' + (n/1e9).toFixed(1) + 'B';
+  if (n >= 1e6) return '$' + Math.round(n/1e6) + 'M';
+  if (n >= 1e3) return '$' + Math.round(n/1e3) + 'K';
+  return '$' + Math.round(n);
+}
+function fmtOI(n) { return n ? n.toLocaleString('en-US') : '-'; }
+function fmtPrem(p) { return p != null ? '$' + p.toFixed(2) : '-'; }
+
+function renderOptAnalysis(opt) {
+  if (!opt) return '<div class="opt-analysis" style="font-size:10px; color:var(--muted); padding:4px 0">🔄 期权数据加载中...</div>';
+  if (opt.error) return `<div class="opt-analysis" style="font-size:10px; color:var(--muted); padding:4px 0" title="${opt.error}">期权数据不可用</div>`;
+  const d = opt.defense || {}, o = opt.offense || {}, r = opt.squeeze_risk || {}, sm = opt.sentiment || {};
+  const strCls = { '强':'bad', '中':'warn', '弱':'muted' };
+  const dCls = strCls[d.strength] || '';
+  const oCls = strCls[o.strength] || '';
+  const urgCls = { high:'bad', medium:'warn', low:'muted' }[r.urgency] || '';
+  const urgIcon = r.urgency === 'high' ? '🚨' : (r.urgency === 'medium' ? '⚠' : '·');
+  const RISK_ZH = { gamma_up:'Gamma 挤压↑', put_break:'跌破风险', max_pain_gravity:'Max Pain 引力', none:'无明显挤压' };
+  const cpCls = (sm.cp_ratio >= 1.8 || sm.cp_ratio <= 0.5) ? 'warn' : 'muted';
+  // 4 列表格：行权价 / 保费 / 仓位OI / 名义
+  const tableRow = (label, cls, wall) => `
+    <div style="display:grid; grid-template-columns:1.4fr 1fr 1.2fr 1.2fr; gap:2px; padding:2px 0" title="${wall.notional ? '名义 = OI × 100 × 行权价（做市商总敞口估算）' : ''}">
+      <span class="${cls}"><b>${label}</b> $${wall.strike || '-'}</span>
+      <span style="color:var(--muted)" title="bid/ask mid（无则 lastPrice）：单手合约成本 = 保费×100">${fmtPrem(wall.prem)}</span>
+      <span style="color:var(--muted)" title="Open Interest — 未平仓合约数（真实持仓，比 volume 更有指向）">${fmtOI(wall.oi)}</span>
+      <span style="color:var(--muted)" title="名义敞口 = OI×100×行权价">${fmtNotional(wall.notional)}</span>
+    </div>`;
+  return `<div class="opt-analysis" style="border-top:1px dashed var(--border); margin-top:6px; padding-top:5px; font-size:10.5px; line-height:1.4">
+    <div style="display:flex; justify-content:space-between">
+      <span>🛡 <b>防守</b> $${d.strike || '-'} <small>(${d.dist_pct > 0 ? '-' : '+'}${Math.abs(d.dist_pct||0).toFixed(1)}%)</small></span>
+      <span class="${dCls}"><small>${d.strength || '-'} · 占 ${d.share || 0}%</small></span>
+    </div>
+    <div style="display:flex; justify-content:space-between">
+      <span>⚔ <b>进攻</b> $${o.strike || '-'} <small>(${o.dist_pct > 0 ? '+' : ''}${(o.dist_pct||0).toFixed(1)}%)</small></span>
+      <span class="${oCls}"><small>${o.strength || '-'} · 占 ${o.share || 0}%</small></span>
+    </div>
+    <div style="display:grid; grid-template-columns:1.4fr 1fr 1.2fr 1.2fr; gap:2px; margin-top:4px; padding:2px 0; font-size:9px; color:var(--muted); border-bottom:1px solid var(--border)">
+      <span title="Call Wall 或 Put Wall 的行权价">Strike</span>
+      <span title="单手合约保费（bid/ask 中点）">保费</span>
+      <span title="Open Interest：未平仓合约数（持仓量，非当日成交）">OI 仓位</span>
+      <span title="名义敞口 = OI × 100 × 行权价">名义</span>
+    </div>
+    ${tableRow('⚔ Call', 'ok', o)}
+    ${tableRow('🛡 Put',  'bad', d)}
+    <div style="margin-top:5px" title="${(r.detail || '').replace(/"/g,'&quot;')}">
+      <span class="${urgCls}"><b>${urgIcon} ${RISK_ZH[r.type] || r.type}</b></span>
+      <small style="color:var(--muted); display:block; margin-top:1px">${(r.detail || '').slice(0,100)}${r.detail && r.detail.length > 100 ? '…' : ''}</small>
+    </div>
+    ${sm.cp_ratio != null ? `<details style="margin-top:3px" title="Call 总成交 / Put 总成交比值；点开看详细解读">
+      <summary style="cursor:pointer; display:flex; justify-content:space-between; list-style:none">
+        <small>💭 C/P 比 <b>${sm.cp_ratio}</b></small>
+        <small class="${cpCls}">${sm.label} <span style="font-size:9px; color:var(--muted)">▼展开</span></small>
+      </summary>
+      <div style="background:rgba(88,166,255,0.05); border-left:2px solid var(--border); margin-top:3px; padding:5px 8px; font-size:10px; line-height:1.55; color:var(--fg); white-space:pre-wrap">${(sm.explain || '').replace(/</g,'&lt;').replace(/\*\*(.*?)\*\*/g,'<b>$1</b>')}</div>
+    </details>` : ''}
+    ${opt.wall_imbalance ? `<details style="margin-top:3px" title="Put 墙 OI vs Call 墙 OI 明显失衡时的解读">
+      <summary style="cursor:pointer; list-style:none">
+        <small class="warn">⚖ 墙 OI 失衡（点开小白解读）</small>
+      </summary>
+      <div style="background:rgba(210,153,34,0.06); border-left:2px solid var(--warn); margin-top:3px; padding:5px 8px; font-size:10px; line-height:1.55; color:var(--fg); white-space:pre-wrap">${opt.wall_imbalance.replace(/</g,'&lt;').replace(/\*\*(.*?)\*\*/g,'<b>$1</b>')}</div>
+    </details>` : ''}
+  </div>`;
+}
+
 async function loadSignals() {
-  const s = await fetchJson('/api/signals');
+  // 并行拉信号 + 每标的期权 + 每标的 Claude 分析
+  const [s, tOpts, tAI] = await Promise.all([
+    fetchJson('/api/signals'),
+    fetchJson('/api/ticker_options'),
+    fetchJson('/api/ticker_ai'),
+  ]);
   if (!s || !s.tickers || !Object.keys(s.tickers).length) {
     $('signals').innerHTML = '<div style="grid-column: span 3"><small>今日 log 暂无信号（orchestrator 未跑或未到 ET 窗口）</small></div>';
     return;
   }
+  const optMap = (tOpts && tOpts.tickers) || {};
+  const aiMap  = (tAI  && tAI.tickers)  || {};
+  const aiSrc  = (tAI  && tAI.sources)  || {};
+  const aiLiveState = tAI && tAI.live_state;
+  const aiLiveMtime = tAI && tAI.live_generated ? new Date(tAI.live_generated).toLocaleString('zh-CN', {hour:'2-digit',minute:'2-digit'}) : '';
+  const aiSnapMtime = tAI && tAI.snapshot_mtime ? new Date(tAI.snapshot_mtime).toLocaleString('zh-CN', {month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
   const items = Object.values(s.tickers).sort((a,b) => a.ticker.localeCompare(b.ticker));
   $('signals').innerHTML = items.map(t => {
     const total = (t.bull_count || 0) + (t.bear_count || 0);
@@ -487,10 +626,13 @@ async function loadSignals() {
     const regimeCls = 'regime ' + (t.regime || 'neutral');
     const rsiTip = t.rsi < 30 ? '超卖（可能反弹）' : (t.rsi > 70 ? '超买（可能回调）' : '正常');
     const volTip = t.vol_ratio > 1.5 ? '放量' : (t.vol_ratio < 0.7 ? '缩量' : '正常');
+    const opt = optMap[t.ticker];
+    const optSrc = opt && !opt.error && opt.underlying !== t.ticker
+                   ? `<small style="color:var(--muted); font-size:9px" title="用 ${opt.underlying} 期权链 (标的自身期权流动性不足)">← ${opt.underlying} chain</small>` : '';
     return `
     <div class="signal-card">
       <div class="top-row">
-        <span class="ticker-name" title="标的代码">${t.ticker}</span>
+        <span class="ticker-name" title="标的代码">${t.ticker} ${optSrc}</span>
         <span class="price" title="当前价">$${fmt(t.price)}</span>
       </div>
       <div class="top-row">
@@ -505,6 +647,25 @@ async function loadSignals() {
         <span title="9+ 维技术指标共振投票">多${t.bull_count||0} vs 空${t.bear_count||0}</span>
         <span title="RSI ${rsiTip} · 量比 ${volTip}">RSI ${t.rsi} / 量比 ${t.vol_ratio}</span>
       </div>
+      ${renderMiniWall(opt)}
+      ${renderOptAnalysis(opt)}
+      ${(() => {
+        const body = aiMap[t.ticker];
+        const src  = aiSrc[t.ticker];
+        if (!body) {
+          if (aiLiveState === 'generating') {
+            return `<div style="border-top:1px dashed var(--border); margin-top:6px; padding-top:5px; font-size:10px; color:var(--muted)">🤖 Claude 即时分析生成中… （首次 30-60s，之后刷新秒开）</div>`;
+          }
+          return `<div style="border-top:1px dashed var(--border); margin-top:6px; padding-top:5px; font-size:10px; color:var(--muted)">🤖 Claude 分析：数据不足或 Claude CLI 不可用</div>`;
+        }
+        const srcBadge = src === 'live'
+          ? `<span style="color:#3fb950; font-size:9px" title="基于当前 signals+期权数据即时生成，${aiLiveMtime}">🟢 LIVE ${aiLiveMtime}</span>`
+          : `<span style="color:var(--muted); font-size:9px" title="来自 orchestrator 定时快照 ${aiSnapMtime}">📸 SNAPSHOT ${aiSnapMtime}</span>`;
+        return `<details style="border-top:1px dashed var(--border); margin-top:6px; padding-top:5px" open>
+          <summary style="cursor:pointer; list-style:none; font-size:10px; color:var(--muted); margin-bottom:4px">🤖 <b style="color:#58a6ff">Claude 分析</b> ${srcBadge} <span style="font-size:9px">▲折叠</span></summary>
+          <div class="analysis" style="font-size:11px; line-height:1.55">${(typeof marked !== 'undefined' ? marked.parse(body) : body.replace(/\n/g,'<br>'))}</div>
+        </details>`;
+      })()}
     </div>`;
   }).join('');
 }
@@ -693,7 +854,7 @@ async function loadAll() {
   await Promise.all([
     loadHealth(), loadNav(), loadHmm(), loadBanners(), loadSectors(),
     loadSignals(), loadPositions(), loadTrades(), loadLog(), loadAI(),
-    loadOptionWalls(),
+    loadEvents(),
   ]);
 }
 

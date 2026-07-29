@@ -33,6 +33,10 @@ def _cfg(key: str, default=""):
 # LEVERAGED_PAIRS 配置防止 MU↔MULL 同时持仓叠杠杆（见 paper_trader.py）
 TICKERS = ["US.TQQQ", "US.SOXL", "US.DRAM", "US.MULL"]
 
+# WATCH-only：只 scan 信号 + 供 dashboard 展示，不触发 trade_execute
+# 用于关注但不打算持仓的板块风向标（比如 NVDA 是半导体链条领头，看它就知道 SOXL/DRAM 方向）
+WATCH_ONLY_TICKERS = ["US.NVDA"]
+
 # --- Leverage Factors ---
 # 杠杆 ETF 单日波动是标的的 N 倍 → 各种"暴跌/暴涨"绝对阈值要按倍数缩放
 # 否则 SOXL 一天 -5% (正常 1σ 波动) 就误触发 crisis
