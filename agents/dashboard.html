@@ -185,7 +185,7 @@
 <!-- Row 1.5: 板块状态（比 SPY 更贴合你的仓位） -->
 <div class="grid">
   <div class="card">
-    <h2 title="按板块看走势 — 你的仓位对应哪个就重点看哪个">板块状态 <small>Sector Regimes</small></h2>
+    <h2 title="按板块看走势 — 你的仓位对应哪个就重点看哪个">板块状态 <small id="sectors-freshness">Sector Regimes</small></h2>
     <div id="sectors" class="grid g4"></div>
   </div>
 </div>
@@ -201,16 +201,18 @@
     <div id="gold-banner"></div>
   </div>
   <div class="card">
-    <h2 title="WTI 原油 + USO ETF 综合。油价上涨=通胀压力+利多油气 / 下跌=通胀降温+利多科技">石油宏观 <small>Oil Macro</small></h2>
+    <h2 title="WTI 原油 + USO ETF 综合。油价上涨=通胀压力+利多油气 / 下跌=通胀降温+利多科技">石油宏观 <small id="oil-freshness">Oil Macro</small></h2>
     <div id="oil-banner"></div>
   </div>
 </div>
 
-<!-- Row 3: NAV chart 大图 + trades -->
+<!-- Row 3: 重仓板块期权墙 (代替 NAV 曲线) + trades -->
 <div class="grid g2">
   <div class="card">
-    <h2 title="账户净值随时间变化。蓝线=NAV，绿虚线=Peak（历史最高）">NAV vs Peak 时序 <small>净值曲线</small></h2>
-    <canvas id="nav-chart"></canvas>
+    <h2 title="重仓 ETF 追踪的板块指数期权成交量分布。绿=Call 成交，红=Put 成交，垂直虚线=现价，★=call/put wall">
+      重仓板块期权墙 <small id="ow-freshness"></small>
+    </h2>
+    <div id="option-walls-chart"></div>
   </div>
   <div class="card">
     <h2 title="paper_trader 最近成交记录。DRY=模拟不下单，LIVE=在 moomoo SIMULATE 账户真下单">最近 20 笔 Trade <small>成交记录</small></h2>
@@ -284,11 +286,12 @@ async function loadNav() {
     <div class="stat"><span class="k term" title="账户历史最高净值，DD 计算基准">Peak</span><span class="v">$${fmt(n.peak)}</span></div>
     <div class="stat"><span class="k" title="过去 N 天记录的 NAV 数据点数">采样点</span><span class="v">${(n.points || []).length}</span></div>
   `;
-  // chart
+  // chart (deprecated — canvas 已移除以让位期权墙图)
   const pts = n.points || [];
-  if (pts.length && window.navChart) window.navChart.destroy();
-  if (pts.length) {
-    const ctx = $('nav-chart').getContext('2d');
+  const navCanvas = $('nav-chart');
+  if (navCanvas && pts.length && window.navChart) window.navChart.destroy();
+  if (navCanvas && pts.length) {
+    const ctx = navCanvas.getContext('2d');
     window.navChart = new Chart(ctx, {
       type: 'line',
       data: {
@@ -359,11 +362,49 @@ async function loadBanners() {
   const t = b.trump || {};
   const dirColor = {bullish:'ok', bearish:'bad', neutral:'muted'}[t.direction] || 'muted';
   const trumpZh = DIR_LABELS[t.direction] || '';
+  const EVENT_ZH = {
+    TARIFF:'关税', DEAL:'贸易协议', SANCTION:'制裁', DOMESTIC_POLICY:'内政',
+    MEDIA_ATTACK:'攻击媒体', FED_ATTACK:'施压Fed', GEOPOLITICS:'地缘',
+    IMMIGRATION:'移民', LEGAL:'司法', NOISE:'噪声', UNKNOWN:'未分类',
+  };
+  const evCounts = t.event_counts || {};
+  const evOrder = ['TARIFF','DEAL','SANCTION','FED_ATTACK','GEOPOLITICS','IMMIGRATION','DOMESTIC_POLICY','LEGAL','MEDIA_ATTACK','NOISE','UNKNOWN'];
+  const evBadges = evOrder.filter(k => evCounts[k]).map(k => {
+    const isImpact = ['TARIFF','DEAL','SANCTION','FED_ATTACK','GEOPOLITICS'].includes(k);
+    const cls = isImpact ? 'badge bad' : 'badge muted';
+    return `<span class="${cls}" style="font-size:10px; margin:1px 2px" title="${k}">${EVENT_ZH[k]||k} ${evCounts[k]}</span>`;
+  }).join('');
+  const MAG_COLOR = {extreme:'bad', large:'bad', medium:'warn', small:'muted'};
+  const brkRows = (t.breaking || []).map(it => {
+    const dc = {bullish:'ok', bearish:'bad', neutral:'muted'}[it.direction] || 'muted';
+    const mc = MAG_COLOR[it.magnitude] || 'muted';
+    const arrow = it.direction === 'bullish' ? '▲' : (it.direction === 'bearish' ? '▼' : '·');
+    const tkStr = (it.tickers && it.tickers.length) ? ` [${it.tickers.map(x=>x.replace('US.','')).join(',')}]` : '';
+    const timeStr = it.post_time ? new Date(it.post_time).toLocaleString('zh-CN', {month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
+    return `<div style="border-top:1px solid var(--border); padding:5px 0; font-size:11px" title="${(it.verbatim||'').replace(/"/g,'&quot;')}">
+      <div><span class="${dc}">${arrow}</span> <span class="badge ${mc}" style="font-size:9px; padding:1px 5px">${EVENT_ZH[it.event_type]||it.event_type}</span>
+        <small style="color:var(--muted)">${it.magnitude}·conf ${it.confidence}${tkStr}</small>
+        <small style="color:var(--muted); float:right">${timeStr}</small></div>
+      <div style="color:var(--fg); margin-top:3px; line-height:1.4">${(it.preview||'').replace(/</g,'&lt;')}</div>
+    </div>`;
+  }).join('');
+  // Claude 一句话总结（最近 3 条推文）
+  const sum = t.summary || {};
+  let summaryRow = '';
+  if (sum.text) {
+    summaryRow = `<div style="margin: 6px 0; padding: 6px 8px; background: rgba(88,166,255,0.08); border-left: 2px solid #58a6ff; font-size: 11px; line-height: 1.4" title="Claude 对最近 3 条推文的一句话概括">
+      <b style="color:#58a6ff">🤖 一句话摘要</b>：${sum.text.replace(/</g,'&lt;')}
+    </div>`;
+  } else if (sum.state === 'generating') {
+    summaryRow = `<div style="margin: 6px 0; text-align:center; color:var(--muted); font-size: 11px">🤖 Claude 生成中... (下次刷新可见)</div>`;
+  }
   $('trump-banner').innerHTML = t.direction ? `
     <div class="banner-num ${dirColor}" style="text-align:center" title="bullish=利多风险资产 / bearish=利空 / neutral=中性">${t.direction} ${t.score >= 0 ? '+' : ''}${t.score}</div>
-    <div style="text-align:center; font-size:12px; color:var(--fg); margin: 4px 0">${trumpZh}</div>
-    <div class="stat"><span class="k" title="过去 24 小时推文条数">推文数</span><span class="v">${t.posts}</span></div>
-    <div class="stat"><span class="k term" title="small/medium/large/extreme 四档，衡量单次事件影响力">幅度</span><span class="v">${t.magnitude} <small>（${MAG_LABELS[t.magnitude]||''}）</small></span></div>
+    <div style="text-align:center; font-size:12px; color:var(--fg); margin: 4px 0">${trumpZh}（幅度：${MAG_LABELS[t.magnitude]||t.magnitude}）</div>
+    ${summaryRow}
+    <div class="stat"><span class="k" title="过去 24 小时推文条数">24h 推文</span><span class="v">${t.posts}</span></div>
+    ${evBadges ? `<div style="margin: 6px 0; text-align:center" title="推文事件类型分布（关税/交易/内政/攻击媒体等）">${evBadges}</div>` : ''}
+    ${brkRows ? `<div style="margin-top:8px"><div style="font-size:11px; color:var(--muted); border-bottom:1px solid var(--border); padding-bottom:3px">🔥 爆炸新闻（Top ${(t.breaking||[]).length}）</div>${brkRows}</div>` : '<div style="text-align:center; color:var(--muted); font-size:11px; margin-top:8px">近 24h 无重大冲击事件</div>'}
   ` : '<small>无 Trump 信号数据</small>';
 
   const g = b.gold_macro || {};
@@ -405,18 +446,28 @@ async function loadBanners() {
 
 async function loadOil() {
   const o = await fetchJson('/api/oil');
+  const oilFresh = $('oil-freshness');
+  if (oilFresh) oilFresh.innerHTML = 'Oil Macro ' + metaHint(o && o._meta);
   if (!o || o.error) { $('oil-banner').innerHTML = '<small>石油数据不可用</small>'; return; }
   const dirColor = {bullish:'ok', bearish:'bad', neutral:'muted'}[o.direction] || 'muted';
   const dirZh = DIR_LABELS[o.direction] || '';
-  const p5cls  = o.pct_5d === undefined ? '' : (o.pct_5d > 0 ? 'ok' : 'bad');
-  const p20cls = o.pct_20d === undefined ? '' : (o.pct_20d > 0 ? 'ok' : 'bad');
+  const factors = o.factors || [];
+  const factorRows = factors.map(f => {
+    const dCls = {bullish:'ok', bearish:'bad', neutral:'muted', info:'info'}[f.direction] || '';
+    return `<div style="display:flex; justify-content:space-between; padding:2px 0; font-size:11px" title="${f.hint || ''}">
+      <span><span class="${dCls}" style="width:12px; display:inline-block">${f.arrow}</span> ${f.name}</span>
+      <span class="${dCls}" style="font-size:10px; text-align:right">${f.direction}${f.weight ? ` <small>w=${f.weight}</small>` : ''}<br><span style="color:var(--muted); font-size:9px">${f.value || ''}</span></span>
+    </div>`;
+  }).join('');
   const notesHtml = (o.notes || []).map(n => `<div style="font-size:10px; color:var(--muted); margin-top:2px" title="影响解读">💡 ${n}</div>`).join('');
+  const scoreStr = o.score !== undefined ? `${o.score >= 0 ? '+' : ''}${o.score}` : '';
   $('oil-banner').innerHTML = `
-    <div class="banner-num ${dirColor}" style="text-align:center" title="综合方向：油价 20d/5d 涨跌 + 幅度">${o.direction || '?'} $${fmt(o.price)}</div>
-    <div style="text-align:center; font-size:12px; color:var(--fg); margin: 4px 0">${dirZh}</div>
-    <div class="stat" title="过去 5 天累积涨跌"><span class="k">5天</span><span class="v ${p5cls}">${o.pct_5d !== undefined ? (o.pct_5d>0?'+':'')+o.pct_5d.toFixed(2) : '-'}%</span></div>
-    <div class="stat" title="过去 20 天累积涨跌"><span class="k">20天</span><span class="v ${p20cls}">${o.pct_20d !== undefined ? (o.pct_20d>0?'+':'')+o.pct_20d.toFixed(2) : '-'}%</span></div>
-    <div class="stat"><span class="k">数据源</span><span class="v" style="font-size:11px">${o.source || '-'}</span></div>
+    <div class="banner-num ${dirColor}" style="text-align:center" title="综合方向（多因子加权 score）">${o.direction || '?'} ${scoreStr}</div>
+    <div style="text-align:center; font-size:12px; color:var(--fg); margin: 4px 0">${dirZh} · WTI $${fmt(o.price)}</div>
+    ${factorRows ? '<hr style="border:0; border-top:1px solid var(--border); margin: 6px 0"><div style="font-size:11px; color:var(--muted); margin-bottom:4px">多因子分解 <small>(hover 看说明)</small></div>' + factorRows : ''}
+    <div style="margin-top:6px; font-size:10px; color:var(--muted); line-height:1.4">
+      ▼ 空头 · ▲ 多头 · · 中性 · <b>w</b>=权重
+    </div>
     ${notesHtml}
   `;
 }
@@ -528,6 +579,8 @@ const SECTOR_REGIME_CLS = {
 
 async function loadSectors() {
   const r = await fetchJson('/api/sectors');
+  const sf = $('sectors-freshness');
+  if (sf) sf.innerHTML = 'Sector Regimes ' + metaHint(r && r._meta);
   if (!r || !r.sectors) { $('sectors').innerHTML = '<small>暂无板块数据</small>'; return; }
   $('sectors').innerHTML = r.sectors.map(s => {
     if (s.error) return `<div class="signal-card"><b>${s.zh}</b><br><small class="bad">${s.error}</small></div>`;
@@ -554,10 +607,93 @@ async function loadSectors() {
   }).join('');
 }
 
+// 缓存元数据 → 显示"更新中..."小图标
+function metaHint(meta) {
+  if (!meta) return '';
+  if (meta.refreshing) {
+    return `<span style="color:var(--warn); font-size:10px" title="后台正在拉取最新数据 (旧值仍为准)">🔄 更新中</span>`;
+  }
+  const age = meta.age_sec || 0;
+  if (age < 60) return `<span style="color:var(--ok); font-size:10px" title="缓存 ${age}s 前">✓ 最新</span>`;
+  if (age < 300) return `<span style="color:var(--muted); font-size:10px" title="缓存 ${Math.round(age/60)}min 前">缓存 ${Math.round(age/60)}m</span>`;
+  return `<span style="color:var(--warn); font-size:10px" title="缓存较旧 ${Math.round(age/60)}min">⏱ ${Math.round(age/60)}m 旧</span>`;
+}
+
+async function loadOptionWalls() {
+  const r = await fetchJson('/api/option_walls_chart');
+  if (!r || !r.boards) {
+    $('option-walls-chart').innerHTML = '<small>无期权数据</small>';
+    return;
+  }
+  $('ow-freshness').innerHTML = metaHint(r._meta);
+  const html = r.boards.map((b, idx) => {
+    if (b.error) return `<div style="padding:8px; border-top:1px solid var(--border)">
+      <b>${b.zh}</b> <small style="color:var(--muted)">${b.note}</small> ·
+      <span class="bad">数据源错误: ${b.error.slice(0,80)}</span></div>`;
+    const dist = b.distribution || [];
+    if (!dist.length) return `<div style="padding:6px"><b>${b.zh}</b> · <small>无活跃 strike</small></div>`;
+    // Determine y-range for both call and put bars
+    const maxVol = Math.max(...dist.map(d => Math.max(d.call_vol, d.put_vol)), 1);
+    const barW = 100 / dist.length;  // % width per strike
+    // Vertical bars in a compact SVG
+    const height = 100;  // px
+    const svgW = 100;    // %
+    // Spot position on X (interpolate between strike[0] and strike[-1])
+    const strikes = dist.map(d => d.strike);
+    const minS = Math.min(...strikes), maxS = Math.max(...strikes);
+    const spotFrac = maxS > minS ? (b.spot - minS) / (maxS - minS) : 0.5;
+    const spotX = Math.max(0, Math.min(100, spotFrac * 100));
+    const mpFrac = (b.max_pain != null && maxS > minS) ? (b.max_pain - minS) / (maxS - minS) : null;
+    const mpX = mpFrac != null ? Math.max(0, Math.min(100, mpFrac * 100)) : null;
+
+    const bars = dist.map((d, i) => {
+      const cH = Math.round((d.call_vol / maxVol) * (height * 0.45));
+      const pH = Math.round((d.put_vol  / maxVol) * (height * 0.45));
+      const x = i * barW + barW * 0.15;
+      const w = barW * 0.7;
+      const isCallWall = d.strike === b.call_wall_strike;
+      const isPutWall  = d.strike === b.put_wall_strike;
+      const callColor = isCallWall ? '#3fb950' : 'rgba(63,185,80,0.5)';
+      const putColor  = isPutWall  ? '#f85149' : 'rgba(248,81,73,0.5)';
+      return `
+        <rect x="${x}%" y="${height/2 - cH}" width="${w}%" height="${cH}" fill="${callColor}"><title>${b.key} $${d.strike} Call vol=${d.call_vol}${isCallWall?' ★call wall':''}</title></rect>
+        <rect x="${x}%" y="${height/2}" width="${w}%" height="${pH}" fill="${putColor}"><title>${b.key} $${d.strike} Put vol=${d.put_vol}${isPutWall?' ★put wall':''}</title></rect>
+      `;
+    }).join('');
+    // Strike labels — every N-th only
+    const labelStep = Math.max(1, Math.ceil(dist.length / 8));
+    const labels = dist.map((d, i) =>
+      i % labelStep === 0 ? `<text x="${i*barW + barW/2}%" y="${height + 12}" text-anchor="middle" fill="#7d8590" font-size="9">${d.strike}</text>` : ''
+    ).join('');
+    return `
+    <div style="padding:8px 4px; border-top:${idx>0?'1':'0'}px solid var(--border)">
+      <div style="display:flex; justify-content:space-between; align-items:baseline; font-size:12px">
+        <b>${b.zh}</b>
+        <span style="color:var(--muted); font-size:10px">${b.note} · 到期 ${b.expiry} · 现价 $${b.spot}</span>
+      </div>
+      <div style="display:flex; gap:12px; font-size:10px; color:var(--muted); margin:4px 0">
+        <span title="最大 Call 成交量所在 strike，价格上方阻力">Call Wall <b style="color:#3fb950">$${b.call_wall_strike}</b></span>
+        <span title="最大 Put 成交量所在 strike，价格下方支撑">Put Wall <b style="color:#f85149">$${b.put_wall_strike}</b></span>
+        <span title="到期日若价格落于此，期权卖方利润最大（价格倾向被"吸"过来）">Max Pain <b>$${b.max_pain}</b></span>
+      </div>
+      <svg width="100%" height="${height + 20}" style="overflow:visible; display:block">
+        <line x1="0" y1="${height/2}" x2="100%" y2="${height/2}" stroke="rgba(125,133,144,0.3)" stroke-width="1"/>
+        ${bars}
+        <line x1="${spotX}%" y1="0" x2="${spotX}%" y2="${height}" stroke="#58a6ff" stroke-width="1.5" stroke-dasharray="3,3"/>
+        <text x="${spotX}%" y="10" text-anchor="middle" fill="#58a6ff" font-size="9" font-weight="bold">spot $${b.spot}</text>
+        ${mpX != null ? `<line x1="${mpX}%" y1="0" x2="${mpX}%" y2="${height}" stroke="#d29922" stroke-width="1" stroke-dasharray="2,4" opacity="0.7"/><text x="${mpX}%" y="${height - 2}" text-anchor="middle" fill="#d29922" font-size="8">MP</text>` : ''}
+        ${labels}
+      </svg>
+    </div>`;
+  }).join('');
+  $('option-walls-chart').innerHTML = html;
+}
+
 async function loadAll() {
   await Promise.all([
     loadHealth(), loadNav(), loadHmm(), loadBanners(), loadSectors(),
     loadSignals(), loadPositions(), loadTrades(), loadLog(), loadAI(),
+    loadOptionWalls(),
   ]);
 }
 
