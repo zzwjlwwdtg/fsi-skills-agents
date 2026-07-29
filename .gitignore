@@ -22,6 +22,12 @@ Thumbs.db
 .orchestrator.lock
 .snapshot_today.lock
 
+# WebUI 后台缓存 (yfinance / Claude 结果，可重生)
+agents/.webui_cache/
+
+# 手动脚本调试输出（stdout 转储到 .out 文件）
+agents/*.out
+
 # Logs（每日大文件）
 agents/logs/
 agents/_archive/

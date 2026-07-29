@@ -824,8 +824,19 @@ def _tick() -> None:
         f"[{window_disp.get(window, window)}] 実行開始...",
     ))
     run_cycle(window=window)
+    # 开盘报告：pre-open 触发；如果 pre-open 被 skip（机器休眠/进程重启），
+    # post-open 也会 catch-up 生成一次，避免整天没有 AI 分析
+    today = datetime.now(ET).date().isoformat()
     if window == "pre-open":
         _run_report("open")
+        _last_report_session["open"] = today
+    elif window == "post-open" and _last_report_session.get("open") != today:
+        logger.info(t(
+            "[补漏] pre-open 未触发 open 报告，post-open 补跑一次",
+            "[補完] pre-open が open レポートを未生成、post-open で補完実行",
+        ))
+        _run_report("open")
+        _last_report_session["open"] = today
 
 
 def main() -> None:
@@ -869,8 +880,8 @@ def main() -> None:
                       "起動スキャン：取引ウィンドウ外のため、シグナル更新のみ。"))
         run_cycle()
 
-    # 之后按ET窗口定时触发
-    schedule.every(30).minutes.do(_tick)
+    # 之后按ET窗口定时触发（5min 精度，防止 30min 间隔与 15min 窗口错开）
+    schedule.every(5).minutes.do(_tick)
 
     try:
         while True:
