@@ -19,9 +19,12 @@ WebUI（`webui.bat` → http://127.0.0.1:8080）— 零依赖 http.server + 单�
 **每张标的卡包含**：多空共振条 + 建议动作/置信度 → 迷你 **期权墙 SVG**（call/put 成交分布 + spot 虚线 + Max Pain）→
 **攻防位表格**（strike / 保费 / OI 仓位 / 名义敞口）→ **挤压风险**（gamma_up / put_break / max_pain_gravity）→
 **C/P 比 + 小白解读**（Put 远大于 Call 时区分 ATM 恐慌 vs OTM 保险）→ **🤖 Claude 即时分析**
-（3 行结构化：综合 / 攻防 / 警示，10 只标的全覆盖，缓存 by 数据 hash）。
+（3 行结构化：综合 / 攻防 / 警示，10 只标的全覆盖，缓存 by 数据 hash）→ **🔗 上下游供应链**
+（Claude 生成 upstream/downstream/peers + confidence 标记 + 可选 FMP peers 交叉验证，懒加载缓存 7 天）。
 
 **顶部**：📅 最近 45 天事件日历（FOMC / CPI / NFP / NVDA 财报），带小白 hint 说明每种事件对市场的影响。
+
+**展开全部详情视图**：`?expand=all`（用于 README 截图 / 一览分析）— [见 dashboard-full-expanded.png](docs/dashboard-full-expanded.png)
 
 ## 主要特性
 

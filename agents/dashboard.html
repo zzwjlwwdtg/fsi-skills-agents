@@ -666,6 +666,10 @@ async function loadSignals() {
           <div class="analysis" style="font-size:11px; line-height:1.55">${(typeof marked !== 'undefined' ? marked.parse(body) : body.replace(/\n/g,'<br>'))}</div>
         </details>`;
       })()}
+      <details style="border-top:1px dashed var(--border); margin-top:6px; padding-top:5px" ontoggle="if(this.open) loadSupplyChainOnDemand('${t.ticker}', 'sc-${t.ticker}')">
+        <summary style="cursor:pointer; list-style:none; font-size:10px; color:var(--muted); margin-bottom:4px">🔗 <b style="color:#58a6ff">上下游供应链</b> <small style="font-size:9px">▼展开加载 (Claude 生成，缓存 7 天)</small></summary>
+        <div id="sc-${t.ticker}"></div>
+      </details>
     </div>`;
   }).join('');
 }
@@ -693,6 +697,54 @@ async function loadPositions() {
       <tbody>${rows}</tbody>
     </table>
   `;
+}
+
+// 供应链懒加载 —— 展开卡时才 fetch，之后缓存 7 天
+function renderSupplyChain(sc) {
+  const confCls = c => ({high:'ok', medium:'warn', low:'muted'}[c] || '');
+  const confIcon = c => ({high:'●', medium:'●', low:'○'}[c] || '·');
+  const item = x => `<div style="padding:3px 0; line-height:1.35" title="${(x.note || '').replace(/"/g,'&quot;')}">
+    <span class="${confCls(x.confidence)}" style="font-size:8px">${confIcon(x.confidence)}</span>
+    <b style="font-size:10.5px">${x.name}</b>
+    ${x.ticker ? `<small style="color:#58a6ff">[${x.ticker}]</small>` : ''}
+    <small style="color:var(--muted); float:right">w${x.weight||''}</small>
+    <div style="font-size:9px; color:var(--muted); margin-left:14px">${(x.note||'').slice(0,50)}${x.note && x.note.length > 50 ? '…' : ''}</div>
+  </div>`;
+  const up = (sc.upstream||[]).slice(0,5).map(item).join('');
+  const dn = (sc.downstream||[]).slice(0,5).map(item).join('');
+  const peers = (sc.peers||[]).map(p => {
+    const cls = p.fmp_verified ? 'ok' : confCls(p.confidence);
+    const badge = p.fmp_verified ? ' ✓' : '';
+    return `<span class="badge ${cls}" title="${(p.note||'').replace(/"/g,'&quot;')}${p.fmp_verified?' · FMP 已验证':''}" style="font-size:9px; margin:1px 2px">${p.name}${p.ticker?' ['+p.ticker+']':''}${badge}</span>`;
+  }).join('');
+  const srcBadge = sc.source === 'claude+fmp'
+    ? '<span class="badge ok" style="font-size:8px">Claude+FMP ✓</span>'
+    : '<span class="badge muted" style="font-size:8px">Claude only</span>';
+  return `<div style="font-size:10px; padding:5px 0">
+    <div style="margin-bottom:5px"><small style="color:var(--muted)"><b>${sc.sector||''}</b> — ${sc.business||''}</small> ${srcBadge}</div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px">
+      <div><div style="color:#f85149; font-size:10px; margin-bottom:3px; border-bottom:1px solid var(--border); padding-bottom:2px">↑ 上游 (供应商)</div>${up || '<small style="color:var(--muted)">无数据</small>'}</div>
+      <div><div style="color:#3fb950; font-size:10px; margin-bottom:3px; border-bottom:1px solid var(--border); padding-bottom:2px">↓ 下游 (客户)</div>${dn || '<small style="color:var(--muted)">无数据</small>'}</div>
+    </div>
+    ${peers ? `<div style="margin-top:6px; border-top:1px dashed var(--border); padding-top:4px"><small style="color:var(--muted)">⚔ 同行竞争:</small><br>${peers}</div>` : ''}
+    ${sc.fmp_error ? `<div style="font-size:8px; color:var(--muted); margin-top:3px">FMP: ${sc.fmp_error}</div>` : ''}
+  </div>`;
+}
+
+async function loadSupplyChainOnDemand(ticker, containerId) {
+  const el = document.getElementById(containerId);
+  if (!el || el.dataset.loaded === 'true') return;
+  if (el.dataset.loading === 'true') return;
+  el.dataset.loading = 'true';
+  el.innerHTML = '<small style="color:var(--muted); padding:8px; display:block">🔄 Claude 生成中… (首次 30-60s，之后缓存 7 天)</small>';
+  const r = await fetchJson(`/api/supply_chain?ticker=${encodeURIComponent(ticker)}`);
+  el.dataset.loading = 'false';
+  if (!r || r.error) {
+    el.innerHTML = `<small class="bad">加载失败: ${(r && r.error) || 'no data'}</small>`;
+    return;
+  }
+  el.innerHTML = renderSupplyChain(r);
+  el.dataset.loaded = 'true';
 }
 
 async function loadTrades() {
@@ -860,6 +912,16 @@ async function loadAll() {
 
 loadAll();
 setInterval(loadAll, 30000);
+
+// Preview mode: URL ?expand=all → 展开所有 details 并触发 supply chain 加载（for README 截图）
+if (new URLSearchParams(location.search).get('expand') === 'all') {
+  setTimeout(() => {
+    document.querySelectorAll('details').forEach(d => {
+      d.open = true;
+      d.dispatchEvent(new Event('toggle'));
+    });
+  }, 3000);
+}
 </script>
 </body>
 </html>

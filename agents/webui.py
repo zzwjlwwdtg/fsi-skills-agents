@@ -807,6 +807,98 @@ def api_ai_analysis() -> dict:
         return {"exists": False, "error": str(e)}
 
 
+def api_supply_chain(ticker: str) -> dict:
+    """标的上下游供应链关联。Claude 生成（缓存 7 天），可选 FMP 交叉验证 peers。"""
+    ticker = (ticker or "").upper().strip()
+    if not ticker or len(ticker) > 8 or not ticker.replace(".", "").replace("-", "").isalnum():
+        return {"error": "invalid ticker"}
+    return _cached(f"supply_chain_{ticker}", ttl_sec=7 * 24 * 3600,
+                    compute_fn=lambda: _compute_supply_chain(ticker))
+
+
+def _compute_supply_chain(ticker: str) -> dict:
+    """调 Claude 生成结构化供应链 JSON，可选 FMP 交叉验证 peers。"""
+    try:
+        from ai_prompt import query_claude_cli
+    except Exception as e:
+        return {"error": f"ai_prompt import: {e}", "ticker": ticker}
+
+    prompt = (
+        "你是股票供应链分析师。为下面 ticker 输出严格 JSON（无 markdown 围栏、无 preamble、无 comment）：\n\n"
+        f"Ticker: {ticker}\n\n"
+        "输出格式（严格 UTF-8 JSON, keys 用英文, values 中文说明）：\n"
+        "{\n"
+        '  "sector":     "行业中文名（如 半导体设计/云计算/新能源车）",\n'
+        '  "business":   "1 句核心业务说明",\n'
+        '  "upstream":   [{"name":"供应商公司", "ticker":"股票代码或 null", "note":"提供什么", "weight":0-100 相对重要度, "confidence":"high|medium|low"}],\n'
+        '  "downstream": [{"name":"客户公司",   "ticker":"股票代码或 null", "note":"买什么用途", "weight":0-100, "confidence":"high|medium|low"}],\n'
+        '  "peers":      [{"name":"同行竞争公司","ticker":"股票代码或 null", "note":"竞争方向", "confidence":"high|medium|low"}]\n'
+        "}\n\n"
+        "要求:\n"
+        "1. upstream/downstream 各 3-6 项，按 weight 从高到低\n"
+        "2. peers 3-5 项\n"
+        "3. ticker 字段：仅当在美股/港股/日股/A股主板上市时给出（如 TSM/2330.TW/6752.T），否则填 null\n"
+        "4. weight 是你对该关系相对重要度的估计（营收占比或战略重要度），不是精确数字\n"
+        "5. confidence: high=10-K 明确披露 / medium=行业公开信息 / low=推测\n"
+        "6. 若是 ETF 或杠杆产品，视为其追踪的标的（TQQQ→QQQ 前十大 / SOXL→半导体链）\n"
+        "7. 严格只输出 JSON 对象，不要 ``` 围栏\n"
+    )
+    out, status = query_claude_cli(prompt, timeout=90)
+    if not out:
+        return {"error": f"claude {status}", "ticker": ticker}
+    # 去除潜在的 markdown 围栏
+    import re
+    txt = out.strip()
+    txt = re.sub(r"^```(?:json)?\s*", "", txt)
+    txt = re.sub(r"\s*```\s*$", "", txt)
+    try:
+        data = json.loads(txt)
+    except Exception as e:
+        return {"error": f"json parse: {e}", "raw": out[:500], "ticker": ticker}
+
+    result = {
+        "ticker":     ticker,
+        "sector":     data.get("sector", ""),
+        "business":   data.get("business", ""),
+        "upstream":   data.get("upstream", []) or [],
+        "downstream": data.get("downstream", []) or [],
+        "peers":      data.get("peers", []) or [],
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "source":     "claude",
+    }
+
+    # 可选：FMP 交叉验证 peers（免费 250 calls/day）
+    try:
+        fmp_key = _cfg_helper("FMP_API_KEY", "")
+        if fmp_key:
+            import urllib.request
+            url = f"https://financialmodelingprep.com/api/v3/stock/peers?symbol={ticker}&apikey={fmp_key}"
+            with urllib.request.urlopen(url, timeout=6) as r:
+                fmp_data = json.loads(r.read().decode())
+            fmp_peers = set()
+            if isinstance(fmp_data, list) and fmp_data:
+                fmp_peers = set(p.upper() for p in (fmp_data[0].get("peersList") or []))
+            result["fmp_peers"] = sorted(fmp_peers)
+            # 标记 Claude 输出的 peers 是否被 FMP 覆盖
+            for p in result["peers"]:
+                p_tk = (p.get("ticker") or "").upper()
+                p["fmp_verified"] = bool(p_tk and p_tk in fmp_peers)
+            result["source"] = "claude+fmp"
+    except Exception as e:
+        result["fmp_error"] = str(e)[:100]
+
+    return result
+
+
+def _cfg_helper(key: str, default: str = "") -> str:
+    """Wrapper for config._cfg to avoid import-order issues."""
+    try:
+        from config import _cfg
+        return _cfg(key, default)
+    except Exception:
+        return default
+
+
 def api_events(days_ahead: int = 45) -> dict:
     """未来 N 天内的宏观 + 财报事件（CPI/PPI/NFP/FOMC/NVDA earnings 等）。
 
@@ -1434,6 +1526,9 @@ class Handler(BaseHTTPRequestHandler):
                 self._json(api_ticker_ai())
             elif path == "/api/events":
                 self._json(api_events())
+            elif path == "/api/supply_chain":
+                tk = qs.get("ticker", [""])[0]
+                self._json(api_supply_chain(tk))
             else:
                 self.send_error(404, f"route not found: {path}")
         except Exception as e:
