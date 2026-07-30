@@ -890,6 +890,95 @@ def _compute_supply_chain(ticker: str) -> dict:
     return result
 
 
+def api_supply_chain_graph(ticker: str, depth: int = 2) -> dict:
+    """多层供应链图（BFS）。返回 nodes/edges 供 D3 蜘蛛网渲染。
+
+    每条边带 `reason`（来自 Claude 输出的 note），供 hover 显示。
+    layer 记录节点到 root 的最短跳数。未 cache 的 ticker 触发后台 Claude 拉取，
+    本次请求返 `pending: [...]`，前端可稍后再请求补图。
+    """
+    import threading
+    root = (ticker or "").upper().strip()
+    if not root:
+        return {"error": "invalid ticker"}
+    max_depth = max(1, min(int(depth or 2), 3))  # 限 1-3 层
+
+    nodes: dict = {}
+    edges: list = []
+    seen_edges: set = set()
+    visited: set = {root}
+
+    def _add_node(nid, **kw):
+        if nid in nodes:
+            # 记住最小 layer
+            if kw.get("layer", 99) < nodes[nid].get("layer", 99):
+                nodes[nid]["layer"] = kw["layer"]
+            return
+        nodes[nid] = {"id": nid, **kw}
+
+    _add_node(root, name=root, ticker=root, layer=0, group="center", confidence="high")
+
+    queue = [(root, 0)]
+    pending: list = []
+    while queue:
+        cur, layer = queue.pop(0)
+        if layer >= max_depth:
+            continue
+        cache_path = _WEBUI_CACHE_DIR / f"supply_chain_{cur}.json"
+        if not cache_path.exists():
+            if cur != root and cur not in pending:
+                pending.append(cur)
+                # 后台触发 Claude 拉取（非阻塞）
+                threading.Thread(
+                    target=lambda t=cur: _compute_supply_chain(t), daemon=True
+                ).start()
+            continue
+        try:
+            sc = json.loads(cache_path.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        if "error" in sc:
+            continue
+
+        for kind, items in (
+            ("supply",   sc.get("upstream",   []) or []),
+            ("customer", sc.get("downstream", []) or []),
+            ("peer",     sc.get("peers",      []) or []),
+        ):
+            for x in items:
+                tk = (x.get("ticker") or "").upper().strip()
+                if not tk:
+                    continue  # 跳过没有 ticker 的（无法多跳）
+                grp = {"supply": "up", "customer": "down", "peer": "peer"}[kind]
+                _add_node(tk, name=x.get("name"), ticker=tk, layer=layer + 1,
+                          group=grp, confidence=x.get("confidence"),
+                          weight=x.get("weight"))
+                # 边方向: supply = supplier → consumer, customer = seller → customer, peer 双向（用 target 做展示）
+                src, tgt = (tk, cur) if kind == "supply" else (cur, tk)
+                key = (src, tgt, kind)
+                if key not in seen_edges:
+                    seen_edges.add(key)
+                    edges.append({
+                        "source":     src,
+                        "target":     tgt,
+                        "reason":     x.get("note", ""),
+                        "kind":       kind,
+                        "confidence": x.get("confidence"),
+                    })
+                if tk not in visited:
+                    visited.add(tk)
+                    queue.append((tk, layer + 1))
+
+    return {
+        "root":    root,
+        "depth":   max_depth,
+        "nodes":   list(nodes.values()),
+        "edges":   edges,
+        "pending": pending,   # 前端可延迟重试补图
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+    }
+
+
 def _cfg_helper(key: str, default: str = "") -> str:
     """Wrapper for config._cfg to avoid import-order issues."""
     try:
@@ -1330,6 +1419,19 @@ def _compute_ticker_options() -> dict:
                 if loss < best_pain:
                     best_pain, best_s = loss, s
 
+            # 大单标记（在 wall 计算之前，方便前端拿到 flag）
+            # 阈值: OI ≥ 5000 手 OR notional ≥ $30M （wall 级重要）
+            for d in dist:
+                cn = d["call_oi"] * 100 * d["strike"]
+                pn = d["put_oi"]  * 100 * d["strike"]
+                d["call_big"] = bool(d["call_oi"] >= 5000 or cn >= 30_000_000)
+                d["put_big"]  = bool(d["put_oi"]  >= 5000 or pn >= 30_000_000)
+                # 异常成交（vol 相对 OI 明显偏高 = 今日新建仓/大单扫单）
+                d["call_unusual_vol"] = bool(d["call_vol"] > 2000 and d["call_oi"] > 0
+                                             and d["call_vol"] > 0.5 * d["call_oi"])
+                d["put_unusual_vol"]  = bool(d["put_vol"]  > 2000 and d["put_oi"] > 0
+                                             and d["put_vol"] > 0.5 * d["put_oi"])
+
             # 分析优先用 OI 墙（fallback vol）
             an_call = call_wall_oi or call_wall
             an_put  = put_wall_oi  or put_wall
@@ -1358,6 +1460,44 @@ def _compute_ticker_options() -> dict:
                     f"{side}_wall_notional": int(notional),
                 }
 
+            # 财报上下文：从 option_walls._next_earnings_for 拿到 (股票, 财报日, 天数)
+            earnings_meta = {}
+            try:
+                from option_walls import _TICKER_EARNINGS, _ETF_EARNINGS_LINKS, get_earnings_implied_move
+                from datetime import date as _date, datetime as _dt
+                today = _date.today()
+                # 关联财报：先看是不是单股（直接查），再看是不是 ETF（走 links）
+                candidate_stocks = [tk] if tk in _TICKER_EARNINGS else list(_ETF_EARNINGS_LINKS.get(tk, []))
+                best = None
+                for e_stock in candidate_stocks:
+                    for d_str in _TICKER_EARNINGS.get(e_stock, []):
+                        try:
+                            d_obj = _dt.strptime(d_str, "%Y-%m-%d").date()
+                        except Exception:
+                            continue
+                        days = (d_obj - today).days
+                        if 0 <= days <= 60:  # 60 天窗口（比 option_walls 的 30 天宽）
+                            if best is None or days < best[2]:
+                                best = (e_stock, d_str, days)
+                if best:
+                    e_stock, e_date, e_days = best
+                    earnings_meta = {
+                        "earnings_stock":     e_stock,
+                        "earnings_date":      e_date,
+                        "days_to_earnings":   e_days,
+                        "expiry_covers_earnings": exp >= e_date,
+                    }
+                    # 隐含波动幅度（ATM straddle 反推），只在 ≤ 14 天且是单股时算
+                    if e_days <= 14 and tk in ("MU", "NVDA"):
+                        try:
+                            im = get_earnings_implied_move(tk, earnings_date=e_date)
+                            if im and im.get("implied_move_pct"):
+                                earnings_meta["implied_move_pct"] = round(im["implied_move_pct"], 2)
+                        except Exception:
+                            pass
+            except Exception:
+                pass
+
             out["tickers"][tk] = {
                 "underlying":       underlying,
                 "spot":             round(spot, 2),
@@ -1371,6 +1511,7 @@ def _compute_ticker_options() -> dict:
                 "put_wall_oi_strike":  put_wall_oi["strike"]  if put_wall_oi  else None,
                 "max_pain":         best_s,
                 **analysis,
+                **earnings_meta,
             }
         except Exception as e:
             out["tickers"][tk] = {"underlying": underlying, "error": str(e)[:100]}
@@ -1529,6 +1670,10 @@ class Handler(BaseHTTPRequestHandler):
             elif path == "/api/supply_chain":
                 tk = qs.get("ticker", [""])[0]
                 self._json(api_supply_chain(tk))
+            elif path == "/api/supply_chain_graph":
+                tk = qs.get("ticker", [""])[0]
+                dp = int(qs.get("depth", ["2"])[0])
+                self._json(api_supply_chain_graph(tk, depth=dp))
             else:
                 self.send_error(404, f"route not found: {path}")
         except Exception as e:

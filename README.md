@@ -22,11 +22,26 @@ WebUI（`webui.bat` → http://127.0.0.1:8080）— 零依赖 http.server + 单�
 （3 行结构化：综合 / 攻防 / 警示，10 只标的全覆盖，缓存 by 数据 hash）→ **🔗 上下游供应链**
 （Claude 生成 upstream/downstream/peers + confidence 标记 + 可选 FMP peers 交叉验证，懒加载缓存 7 天）。
 
-**🕸 D3 蜘蛛网全图**：每张卡供应链区右上角「🕸 蜘蛛网全图」按钮弹出 modal，Bloomberg SPLC 风格 —
-红=上游 / 绿=下游 / 黄=同行 / 蓝=标的中心；节点大小 ∝ weight，边实线=high confidence 虚线=medium/low，可拖动布局。
-`?graph=<TICKER>` URL 直达（例：[NVDA 蜘蛛网示例](docs/supply-chain-nvda-graph.png)）。
+**🕸 D3 蜘蛛网全图**（Bloomberg SPLC 风格）：每张卡供应链区右上角「🕸 1 层 / 2 层」按钮 —
+- **1 层**：直接邻居（快，用本地 cache）
+- **2 层**：BFS 展开 2 跳（NVDA depth=2 = 90 节点 / 233 边）—— 下游公司的下游、上游的上游都出来
+- 边颜色：🔴 supply / 🟢 customer / 🟡 peer；宽度 ∝ weight；实线=high confidence，虚线=medium/low
+- **边 hover 显示理由**（例：`TSM → NVDA · 供应关系 · 独家代工 H100/H200/B100/B200 先进制程 GPU`）
+- FMP 验证过的 peer 有绿色圆环
+- 可拖动节点重排布局，Esc / 点击遮罩关闭
+- URL 直达：`?graph=NVDA&depth=2`
 
-![NVDA 上下游蜘蛛网](docs/supply-chain-nvda-graph.png)
+**1 层示例（NVDA）**：![NVDA 直接邻居](docs/supply-chain-nvda-graph.png)
+
+**2 层示例（NVDA 深度扩展）**：![NVDA 2 跳供应链](docs/supply-chain-nvda-depth2.png)
+
+**🔥 大单高亮 + 财报结合**：
+- 期权 wall 的 OI ≥ 5K 手 或 名义敞口 ≥ $30M → 攻防位表格显示 🔥，迷你 SVG 图的柱子加深填充 + 顶部 🟠 圆点
+- 「异常成交」（当日 vol > 0.5 × OI）→ hover 显示 ⚡
+- 每张卡 attack/defense 面板顶部新增 **📅 财报徽章**（关联财报股 + T-N 天 + 隐含波动 ± IM%）
+  - MULL/DRAM ← MU 财报；SOXL/TQQQ ← NVDA 财报
+  - T ≤ 3 天 🚨 红色 / T ≤ 14 天 ⚠ 黄色 / T ≤ 60 天 📅 灰色
+  - 期权到期日跨财报时标注「含财报风险」
 
 **顶部**：📅 最近 45 天事件日历（FOMC / CPI / NFP / NVDA 财报），带小白 hint 说明每种事件对市场的影响。
 

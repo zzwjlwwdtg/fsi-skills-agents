@@ -523,9 +523,17 @@ function renderMiniWall(opt) {
     const w = barW * 0.7;
     const isCW = d.strike === opt.call_wall_strike;
     const isPW = d.strike === opt.put_wall_strike;
-    const cc = isCW ? '#3fb950' : 'rgba(63,185,80,0.55)';
-    const pc = isPW ? '#f85149' : 'rgba(248,81,73,0.55)';
-    return `<rect x="${x}%" y="${H/2 - cH}" width="${w}%" height="${cH}" fill="${cc}"><title>$${d.strike} C=${d.call_vol}${isCW?' ★':''}</title></rect><rect x="${x}%" y="${H/2}" width="${w}%" height="${pH}" fill="${pc}"><title>$${d.strike} P=${d.put_vol}${isPW?' ★':''}</title></rect>`;
+    // 大单柱：更亮的填充 + 顶部/底部 🔥 标注
+    const cBig = d.call_big, pBig = d.put_big;
+    const cc = isCW ? '#3fb950' : (cBig ? 'rgba(63,185,80,0.85)' : 'rgba(63,185,80,0.55)');
+    const pc = isPW ? '#f85149' : (pBig ? 'rgba(248,81,73,0.85)' : 'rgba(248,81,73,0.55)');
+    const cUnusual = d.call_unusual_vol, pUnusual = d.put_unusual_vol;
+    const cTip = `$${d.strike} C 成交=${d.call_vol} OI=${d.call_oi}${isCW?' ★wall':''}${cBig?' 🔥大单OI':''}${cUnusual?' ⚡异常成交':''}`;
+    const pTip = `$${d.strike} P 成交=${d.put_vol} OI=${d.put_oi}${isPW?' ★wall':''}${pBig?' 🔥大单OI':''}${pUnusual?' ⚡异常成交':''}`;
+    // Big-OI 顶部小三角
+    const cMark = cBig ? `<circle cx="${x + w/2}%" cy="${H/2 - cH - 3}" r="2" fill="#ffa500"><title>🔥 大单 OI ≥5K 或名义 ≥$30M</title></circle>` : '';
+    const pMark = pBig ? `<circle cx="${x + w/2}%" cy="${H/2 + pH + 3}" r="2" fill="#ffa500"><title>🔥 大单 OI ≥5K 或名义 ≥$30M</title></circle>` : '';
+    return `<rect x="${x}%" y="${H/2 - cH}" width="${w}%" height="${cH}" fill="${cc}"><title>${cTip}</title></rect><rect x="${x}%" y="${H/2}" width="${w}%" height="${pH}" fill="${pc}"><title>${pTip}</title></rect>${cMark}${pMark}`;
   }).join('');
   return `<svg width="100%" height="${H}" style="display:block; margin-top:4px">
     <line x1="0" y1="${H/2}" x2="100%" y2="${H/2}" stroke="rgba(125,133,144,0.3)" stroke-width="1"/>
@@ -556,15 +564,35 @@ function renderOptAnalysis(opt) {
   const urgIcon = r.urgency === 'high' ? '🚨' : (r.urgency === 'medium' ? '⚠' : '·');
   const RISK_ZH = { gamma_up:'Gamma 挤压↑', put_break:'跌破风险', max_pain_gravity:'Max Pain 引力', none:'无明显挤压' };
   const cpCls = (sm.cp_ratio >= 1.8 || sm.cp_ratio <= 0.5) ? 'warn' : 'muted';
+  // 大单标记：wall 本身 OI ≥ 5K 或 notional ≥ $30M → 🔥
+  const bigThresh = w => (w.oi >= 5000) || (w.notional >= 30_000_000);
+  const bigMark = w => bigThresh(w) ? '<span title="OI ≥ 5K 或名义 ≥ $30M：机构大单" style="color:#ffa500">🔥</span>' : '';
   // 4 列表格：行权价 / 保费 / 仓位OI / 名义
   const tableRow = (label, cls, wall) => `
     <div style="display:grid; grid-template-columns:1.4fr 1fr 1.2fr 1.2fr; gap:2px; padding:2px 0" title="${wall.notional ? '名义 = OI × 100 × 行权价（做市商总敞口估算）' : ''}">
-      <span class="${cls}"><b>${label}</b> $${wall.strike || '-'}</span>
+      <span class="${cls}"><b>${label}</b> $${wall.strike || '-'} ${bigMark(wall)}</span>
       <span style="color:var(--muted)" title="bid/ask mid（无则 lastPrice）：单手合约成本 = 保费×100">${fmtPrem(wall.prem)}</span>
       <span style="color:var(--muted)" title="Open Interest — 未平仓合约数（真实持仓，比 volume 更有指向）">${fmtOI(wall.oi)}</span>
       <span style="color:var(--muted)" title="名义敞口 = OI×100×行权价">${fmtNotional(wall.notional)}</span>
     </div>`;
+  // 财报徽章
+  const eDays = opt.days_to_earnings;
+  const eDate = opt.earnings_date;
+  const eStock = opt.earnings_stock;
+  const im = opt.implied_move_pct;
+  const covExp = opt.expiry_covers_earnings;
+  let earningsBadge = '';
+  if (eDate) {
+    const urgCls2 = eDays <= 3 ? 'bad' : (eDays <= 14 ? 'warn' : 'muted');
+    const urgIcon2 = eDays <= 3 ? '🚨' : (eDays <= 14 ? '⚠' : '📅');
+    const imText = im ? ` · IM ±${im}%` : '';
+    const covText = covExp ? ' · 期权跨财报（含财报风险）' : '';
+    earningsBadge = `<div style="margin:3px 0; padding:3px 6px; background:rgba(210,153,34,0.1); border-left:2px solid var(--warn); font-size:10px" title="财报日会引发 ±IM% 隐含波动。期权跨财报=保费贵但对冲有效；不跨=纯 pre-earnings 投机">
+      ${urgIcon2} <b class="${urgCls2}">${eStock} 财报 T-${eDays}天</b> <small style="color:var(--muted)">(${eDate})${imText}${covText}</small>
+    </div>`;
+  }
   return `<div class="opt-analysis" style="border-top:1px dashed var(--border); margin-top:6px; padding-top:5px; font-size:10.5px; line-height:1.4">
+    ${earningsBadge}
     <div style="display:flex; justify-content:space-between">
       <span>🛡 <b>防守</b> $${d.strike || '-'} <small>(${d.dist_pct > 0 ? '-' : '+'}${Math.abs(d.dist_pct||0).toFixed(1)}%)</small></span>
       <span class="${dCls}"><small>${d.strength || '-'} · 占 ${d.share || 0}%</small></span>
@@ -721,7 +749,11 @@ function renderSupplyChain(sc, ticker) {
   const srcBadge = sc.source === 'claude+fmp'
     ? '<span class="badge ok" style="font-size:8px">Claude+FMP ✓</span>'
     : '<span class="badge muted" style="font-size:8px">Claude only</span>';
-  const graphBtn = ticker ? `<button onclick="showSupplyChainGraph('${ticker}')" style="background:transparent; border:1px solid var(--blue); color:var(--blue); font-size:10px; padding:2px 8px; border-radius:4px; cursor:pointer; margin-left:auto">🕸 蜘蛛网全图</button>` : '';
+  const graphBtn = ticker ? `
+    <span style="margin-left:auto; display:flex; gap:4px">
+      <button onclick="showSupplyChainGraph('${ticker}',1)" style="background:transparent; border:1px solid var(--blue); color:var(--blue); font-size:10px; padding:2px 8px; border-radius:4px; cursor:pointer" title="直接邻居（快）">🕸 1 层</button>
+      <button onclick="showSupplyChainGraph('${ticker}',2)" style="background:transparent; border:1px solid var(--blue); color:var(--blue); font-size:10px; padding:2px 8px; border-radius:4px; cursor:pointer" title="向外 2 跳（需先 warm cache，边 hover 看理由）">🕸 2 层</button>
+    </span>` : '';
   return `<div style="font-size:10px; padding:5px 0">
     <div style="margin-bottom:5px; display:flex; align-items:center; gap:6px; flex-wrap:wrap"><small style="color:var(--muted)"><b>${sc.sector||''}</b> — ${sc.business||''}</small> ${srcBadge} ${graphBtn}</div>
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px">
@@ -928,14 +960,16 @@ if (new URLSearchParams(location.search).get('expand') === 'all') {
     });
   }, 3000);
 }
-// Preview mode: URL ?graph=NVDA → 加载后自动弹出该 ticker 的蜘蛛网图（for README 截图）
-const _graphTk = new URLSearchParams(location.search).get('graph');
+// Preview mode: URL ?graph=NVDA&depth=2 → 自动弹出蜘蛛网图（for README 截图）
+const _params = new URLSearchParams(location.search);
+const _graphTk = _params.get('graph');
+const _graphDepth = parseInt(_params.get('depth') || '1', 10);
 if (_graphTk) {
   fetchJson(`/api/supply_chain?ticker=${encodeURIComponent(_graphTk)}`).then(r => {
     if (r && !r.error) {
       window.__scCache = window.__scCache || {};
       window.__scCache[_graphTk] = { ...r, ticker: _graphTk };
-      setTimeout(() => showSupplyChainGraph(_graphTk), 500);
+      setTimeout(() => showSupplyChainGraph(_graphTk, _graphDepth), 500);
     }
   });
 }
@@ -943,35 +977,72 @@ if (_graphTk) {
 // ── 供应链 D3 蜘蛛网 modal ──
 window.__scCache = window.__scCache || {};
 
-function showSupplyChainGraph(ticker) {
-  const sc = window.__scCache[ticker];
-  if (!sc) { alert('供应链数据未加载。请先展开卡片让数据加载完成。'); return; }
+// depth=1: 使用本地 window.__scCache[ticker]（快）
+// depth>=2: 从 /api/supply_chain_graph 拉多层图
+async function showSupplyChainGraph(ticker, depth = 1) {
+  let nodes, links, meta = {};
+
+  if (depth <= 1) {
+    const sc = window.__scCache[ticker];
+    if (!sc) { alert('供应链数据未加载。请先展开卡片让数据加载完成。'); return; }
+    meta = { sector: sc.sector, business: sc.business };
+    ({ nodes, links } = _buildSingleHop(ticker, sc));
+  } else {
+    // fetch multi-hop
+    document.getElementById('sc-modal').style.display = 'flex';
+    document.getElementById('sc-modal-title').innerHTML = `<b>${ticker}</b> 加载 depth=${depth} 图… <small style="color:var(--muted)">首次可能 30-60s（若 layer-1 ticker 未 cache）</small>`;
+    document.getElementById('sc-modal-graph').innerHTML = '<div style="padding:40px; text-align:center; color:var(--muted)">🔄 BFS 展开中…</div>';
+    const r = await fetchJson(`/api/supply_chain_graph?ticker=${encodeURIComponent(ticker)}&depth=${depth}`);
+    if (!r || r.error) { alert('多层图加载失败: ' + (r && r.error || '')); return; }
+    nodes = r.nodes;
+    links = r.edges.map(e => ({source: e.source, target: e.target, weight: 30,
+                                 confidence: e.confidence, kind: e.kind, reason: e.reason}));
+    // 转换 node 结构（BFS API 返 group 已含 up/down/peer/center，size 需根据 layer 计算）
+    nodes.forEach(n => {
+      n.label = n.name || n.id;
+      n.size = n.group === 'center' ? 26 : (n.layer === 1 ? 12 : 8);
+    });
+    meta = { pending: r.pending, layers: {}};
+    nodes.forEach(n => meta.layers[n.layer] = (meta.layers[n.layer] || 0) + 1);
+  }
+
   const modal = document.getElementById('sc-modal');
   modal.style.display = 'flex';
+  const layerStat = meta.layers ? ` · 层分布 ${Object.entries(meta.layers).map(([l,c]) => `L${l}:${c}`).join(' / ')}` : '';
+  const pendingStat = meta.pending && meta.pending.length ? ` · <span class="warn">⏳ ${meta.pending.length} 个待加载</span>` : '';
   document.getElementById('sc-modal-title').innerHTML =
-    `<b>${ticker}</b> 上下游关联网络 <small style="color:var(--muted); font-weight:normal">· ${sc.sector||''} · ${sc.business||''}</small>`;
+    `<b>${ticker}</b> 上下游关联网络 (depth=${depth})` +
+    (meta.sector ? ` <small style="color:var(--muted); font-weight:normal">· ${meta.sector} · ${meta.business||''}</small>` : '') +
+    `<small style="color:var(--muted); font-weight:normal">${layerStat}${pendingStat}</small>`;
 
-  // 构造 nodes + links
-  const nodes = [{id: ticker, group: 'center', size: 26, label: ticker, note: sc.business || '', confidence: 'high'}];
+  _renderGraphSVG(nodes, links);
+}
+
+function _buildSingleHop(ticker, sc) {
+  const nodes = [{id: ticker, group: 'center', size: 26, label: ticker, note: sc.business || '', confidence: 'high', layer: 0}];
   const links = [];
   (sc.upstream || []).forEach((x, i) => {
     const id = x.ticker || `up_${i}_${x.name}`;
-    nodes.push({id, group: 'up', size: 8 + (x.weight || 30) / 6, label: x.name,
+    nodes.push({id, group: 'up', size: 8 + (x.weight || 30) / 6, label: x.name, layer: 1,
                 ticker: x.ticker, note: x.note || '', weight: x.weight, confidence: x.confidence});
-    links.push({source: id, target: ticker, weight: x.weight || 30, confidence: x.confidence, kind: 'supply'});
+    links.push({source: id, target: ticker, weight: x.weight || 30, confidence: x.confidence, kind: 'supply', reason: x.note});
   });
   (sc.downstream || []).forEach((x, i) => {
     const id = x.ticker || `dn_${i}_${x.name}`;
-    nodes.push({id, group: 'down', size: 8 + (x.weight || 30) / 6, label: x.name,
+    nodes.push({id, group: 'down', size: 8 + (x.weight || 30) / 6, label: x.name, layer: 1,
                 ticker: x.ticker, note: x.note || '', weight: x.weight, confidence: x.confidence});
-    links.push({source: ticker, target: id, weight: x.weight || 30, confidence: x.confidence, kind: 'customer'});
+    links.push({source: ticker, target: id, weight: x.weight || 30, confidence: x.confidence, kind: 'customer', reason: x.note});
   });
   (sc.peers || []).forEach((x, i) => {
     const id = x.ticker || `pr_${i}_${x.name}`;
-    nodes.push({id, group: 'peer', size: 10, label: x.name, ticker: x.ticker,
+    nodes.push({id, group: 'peer', size: 10, label: x.name, ticker: x.ticker, layer: 1,
                 note: x.note || '', confidence: x.confidence, fmp: x.fmp_verified});
-    links.push({source: ticker, target: id, weight: 20, confidence: x.confidence, kind: 'peer'});
+    links.push({source: ticker, target: id, weight: 20, confidence: x.confidence, kind: 'peer', reason: x.note});
   });
+  return { nodes, links };
+}
+
+function _renderGraphSVG(nodes, links) {
 
   const container = document.getElementById('sc-modal-graph');
   container.innerHTML = '';
@@ -995,10 +1066,17 @@ function showSupplyChainGraph(ticker) {
   // 边
   const link = svg.append('g')
     .selectAll('line').data(links).join('line')
-      .attr('stroke', d => d.kind === 'peer' ? '#d29922' : (d.confidence === 'high' ? '#8b949e' : '#484f58'))
+      .attr('stroke', d => d.kind === 'peer' ? '#d29922' : (d.kind === 'supply' ? '#f85149' : '#3fb950'))
       .attr('stroke-width', d => 0.8 + (d.weight || 20) / 30)
       .attr('stroke-dasharray', d => d.confidence === 'high' ? null : '4,3')
-      .attr('opacity', 0.7);
+      .attr('opacity', 0.65)
+      .style('cursor', 'help');
+  link.append('title').text(d => {
+    const src = typeof d.source === 'object' ? d.source.id : d.source;
+    const tgt = typeof d.target === 'object' ? d.target.id : d.target;
+    const kindZh = {supply: '供应关系', customer: '客户关系', peer: '同行竞争'}[d.kind] || d.kind;
+    return `${src} → ${tgt}\n关系: ${kindZh}\n理由: ${d.reason || '(未说明)'}\nconfidence: ${d.confidence || 'n/a'}`;
+  });
 
   // 节点组
   const node = svg.append('g')
