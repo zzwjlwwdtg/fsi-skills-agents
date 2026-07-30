@@ -1005,30 +1005,45 @@ TICKER_TO_FUNDAMENTAL_STOCK = {
 }
 
 
-def api_fundamentals(ticker: str) -> dict:
-    """4 个基本面指标 × 4 年年度：CROIC / Piotroski F / 金融借款 / 现金周转循环。
+def api_fundamentals(ticker: str, period: str = 'year') -> dict:
+    """4 个基本面指标：CROIC / Piotroski F / 金融借款 / 现金周转循环。
 
+    period='year'    → 4 年年度（长线视角，稳）， TTL 30 天
+    period='quarter' → 8 季季度（波段视角，抓拐点），TTL 15 天
     ETF 映射到代表单股（TQQQ/SOXL→NVDA, DRAM/MULL→MU）。
-    30 天缓存（财报季度更新，无必要频刷）。
     """
     tk = (ticker or "").upper().strip()
+    period = 'quarter' if period == 'quarter' else 'year'
     stock = TICKER_TO_FUNDAMENTAL_STOCK.get(tk, tk)
     if stock is None:
         return {"ticker": tk, "error": "no_fundamentals_for_this_type"}
-    return _cached(f"fundamentals_{tk}", ttl_sec=30 * 24 * 3600,
-                    compute_fn=lambda: _compute_fundamentals(tk, stock))
+    ttl = 15 * 24 * 3600 if period == 'quarter' else 30 * 24 * 3600
+    return _cached(f"fundamentals_{tk}_{period}", ttl_sec=ttl,
+                    compute_fn=lambda: _compute_fundamentals(tk, stock, period))
 
 
-def _compute_fundamentals(tk: str, stock: str) -> dict:
-    """从 yfinance 拉 4 年年度财报，算 4 个指标。"""
+def _compute_fundamentals(tk: str, stock: str, period: str = 'year') -> dict:
+    """从 yfinance 拉财报算 4 指标。period=year|quarter"""
     import yfinance as yf
     try:
         t = yf.Ticker(stock)
-        inc = t.income_stmt        # yearly income statement
-        bal = t.balance_sheet
-        cf  = t.cashflow
+        if period == 'quarter':
+            inc = t.quarterly_income_stmt
+            bal = t.quarterly_balance_sheet
+            cf  = t.quarterly_cashflow
+            piotroski_lag = 4   # YoY 同季对比（避免季节性），如 Q3'25 vs Q3'24
+            annualize     = 4   # 季度 CROIC × 4 = 年化，可比
+            days_factor   = 91.25   # 一季度 ≈ 91 天
+        else:
+            inc = t.income_stmt
+            bal = t.balance_sheet
+            cf  = t.cashflow
+            piotroski_lag = 1
+            annualize     = 1
+            days_factor   = 365
         if inc.empty or bal.empty or cf.empty:
-            return {"ticker": tk, "source": stock, "error": "no financial statements from yfinance"}
+            return {"ticker": tk, "source": stock, "period": period,
+                    "error": f"no {period} financial statements from yfinance"}
 
         # yfinance 返 columns=日期（最近在左），rows=科目。倒序让最老在左
         def _get(df, keys, default=0):
@@ -1036,10 +1051,16 @@ def _compute_fundamentals(tk: str, stock: str) -> dict:
             for k in keys:
                 if k in df.index:
                     vals = list(reversed(df.loc[k].tolist()))
-                    return [float(v) if v == v else 0 for v in vals]  # NaN → 0
+                    return [float(v) if v == v else 0 for v in vals]
             return [default] * len(df.columns)
 
-        years = [str(c.year) for c in reversed(inc.columns)]
+        # Period 标签: year → "2025" / quarter → "Q3'25"
+        def _fmt(col):
+            if period == 'quarter':
+                q = (col.month - 1) // 3 + 1
+                return f"Q{q}'{str(col.year)[2:]}"
+            return str(col.year)
+        years = [_fmt(c) for c in reversed(inc.columns)]
 
         revenue      = _get(inc, ["Total Revenue", "TotalRevenue"])
         cogs         = _get(inc, ["Cost Of Revenue", "CostOfRevenue"])
@@ -1068,70 +1089,73 @@ def _compute_fundamentals(tk: str, stock: str) -> dict:
         def _safe_div(a, b, default=None):
             return (a / b) if b else default
 
-        # 1. CROIC = FCF / Invested Capital （%）
+        # 1. CROIC = FCF / IC（%）—— 季度用 × 4 年化，可与年度比较
         croic = []
         for i in range(n):
             fcf = ocf[i] - abs(capex[i])
             ic  = (st_debt[i] + lt_debt[i]) + total_equity[i] - cash[i]
             v = _safe_div(fcf, ic)
-            croic.append(round(v * 100, 2) if v is not None else None)
+            croic.append(round(v * annualize * 100, 2) if v is not None else None)
 
-        # 2. 金融借款 = ST + LT debt （$M）
+        # 2. 金融借款 = ST + LT debt（$M）—— point-in-time, 无 period 调整
         fin_debt = [round((st_debt[i] + lt_debt[i]) / 1e6, 1) for i in range(n)]
 
-        # 3. 现金周转循环 = DIO + DSO - DPO （天）
+        # 3. 现金周转循环 = DIO + DSO - DPO（天）—— 用对应期间天数
         ccc = []
         for i in range(n):
             dio = _safe_div(inventory[i], cogs[i], 0)
             dso = _safe_div(ar[i], revenue[i], 0)
             dpo = _safe_div(ap[i], cogs[i], 0)
-            v = (dio + dso - dpo) * 365 if all(x is not None for x in (dio, dso, dpo)) else None
+            v = (dio + dso - dpo) * days_factor if all(x is not None for x in (dio, dso, dpo)) else None
             ccc.append(round(v, 1) if v is not None else None)
 
-        # 4. Piotroski F-Score （0-9，需要前一年对比 → 最老一年 = None）
-        piotroski = [None]  # 第 0 年无前一年对比
-        for i in range(1, n):
+        # 4. Piotroski F-Score（0-9）
+        # year 模式: 比较前一年 (lag=1)
+        # quarter 模式: YoY 同季对比 (lag=4)，避免季节性
+        piotroski = [None] * min(piotroski_lag, n)  # 前 lag 期无对比
+        for i in range(piotroski_lag, n):
             score = 0
+            j = i - piotroski_lag  # 对比期
             # a) profitability
             score += 1 if net_income[i] > 0 else 0
             score += 1 if ocf[i] > 0 else 0
-            roa_now  = _safe_div(net_income[i],   total_assets[i],   0)
-            roa_prev = _safe_div(net_income[i-1], total_assets[i-1], 0)
+            roa_now  = _safe_div(net_income[i], total_assets[i], 0)
+            roa_prev = _safe_div(net_income[j], total_assets[j], 0)
             score += 1 if roa_now > roa_prev else 0
             score += 1 if ocf[i] > net_income[i] else 0
-            # b) leverage / liquidity / source of funds
-            score += 1 if lt_debt[i] < lt_debt[i-1] else 0  # 借款减少 = 好
-            cur_ratio_now  = _safe_div(current_assets[i],   current_liab[i],   0)
-            cur_ratio_prev = _safe_div(current_assets[i-1], current_liab[i-1], 0)
-            score += 1 if cur_ratio_now > cur_ratio_prev else 0
-            score += 1 if shares_out[i] <= shares_out[i-1] else 0   # 未增发
+            # b) leverage / liquidity
+            score += 1 if lt_debt[i] < lt_debt[j] else 0
+            cr_now  = _safe_div(current_assets[i], current_liab[i], 0)
+            cr_prev = _safe_div(current_assets[j], current_liab[j], 0)
+            score += 1 if cr_now > cr_prev else 0
+            score += 1 if shares_out[i] <= shares_out[j] else 0
             # c) operating efficiency
-            gm_now  = _safe_div(gross[i],   revenue[i],   0)
-            gm_prev = _safe_div(gross[i-1], revenue[i-1], 0)
+            gm_now  = _safe_div(gross[i], revenue[i], 0)
+            gm_prev = _safe_div(gross[j], revenue[j], 0)
             score += 1 if gm_now > gm_prev else 0
-            turn_now  = _safe_div(revenue[i],   total_assets[i],   0)
-            turn_prev = _safe_div(revenue[i-1], total_assets[i-1], 0)
+            turn_now  = _safe_div(revenue[i], total_assets[i], 0)
+            turn_prev = _safe_div(revenue[j], total_assets[j], 0)
             score += 1 if turn_now > turn_prev else 0
             piotroski.append(score)
 
         return {
             "ticker":       tk,
             "source_stock": stock,
-            "years":        years,
+            "period":       period,
+            "years":        years,     # 保持字段名向后兼容（年度是 "2025"，季度是 "Q3'25"）
             "croic":        croic,
             "financial_debt": fin_debt,
             "ccc":          ccc,
             "piotroski":    piotroski,
-            # 供 UI 快速判断当前状况
             "latest": {
-                "croic":     croic[-1],
-                "fin_debt":  fin_debt[-1],
-                "ccc":       ccc[-1],
-                "piotroski": piotroski[-1],
+                "croic":     croic[-1] if croic else None,
+                "fin_debt":  fin_debt[-1] if fin_debt else None,
+                "ccc":       ccc[-1] if ccc else None,
+                "piotroski": piotroski[-1] if piotroski else None,
             },
         }
     except Exception as e:
-        return {"ticker": tk, "source": stock, "error": str(e)[:150]}
+        return {"ticker": tk, "source": stock, "period": period, "error": str(e)[:150]}
 
 
 def api_events(days_ahead: int = 45) -> dict:
@@ -1841,7 +1865,8 @@ class Handler(BaseHTTPRequestHandler):
                 self._json(api_supply_chain_graph(tk, depth=dp))
             elif path == "/api/fundamentals":
                 tk = qs.get("ticker", [""])[0]
-                self._json(api_fundamentals(tk))
+                pd = qs.get("period", ["year"])[0]
+                self._json(api_fundamentals(tk, period=pd))
             else:
                 self.send_error(404, f"route not found: {path}")
         except Exception as e:

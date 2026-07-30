@@ -820,11 +820,15 @@ function _sparkline(vals, w = 60, h = 20, color = '#58a6ff') {
   </svg>`;
 }
 
-function renderFundamentals(fd, ticker) {
+function renderFundamentals(fd, ticker, period) {
   if (!fd) return '<small style="color:var(--muted)">🔄 加载中…</small>';
   if (fd.error) return `<small class="muted">${fd.error === 'no_fundamentals_for_this_type' ? '此类型无基本面（ETF/大宗商品）' : '数据不可用: ' + fd.error.slice(0,80)}</small>`;
   const years = fd.years || [];
+  period = period || fd.period || 'year';
   const src = fd.source_stock && fd.source_stock !== ticker ? `<small style="color:var(--muted); font-size:9px" title="ETF 用代表单股做基本面代理">← ${fd.source_stock} 财报</small>` : '';
+  const periodBtn = `<button onclick="toggleFundPeriod('${ticker}','fd-${ticker}')" style="background:transparent; border:1px solid var(--blue); color:var(--blue); font-size:9px; padding:1px 6px; border-radius:3px; cursor:pointer" title="年度=长线视角(4-5年趋势) / 季度=波段视角(抓拐点，YoY 同季对比)">
+    ${period === 'quarter' ? '📅 8 季 · 切年度' : '📆 4 年 · 切季度'}
+  </button>`;
   const cell = (key, vals) => {
     const meta = FUND_META[key];
     const last = vals.at(-1);
@@ -840,10 +844,12 @@ function renderFundamentals(fd, ticker) {
       ${_sparkline(vals, 55, 18, cls === 'ok' ? '#3fb950' : (cls === 'bad' ? '#f85149' : (cls === 'warn' ? '#d29922' : '#58a6ff')))}
     </div>`;
   };
+  const label = period === 'quarter' ? '📊 8 季季度' : '📊 4 年年度';
   return `<div style="padding:5px 0">
-    <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:10px; color:var(--muted)">
-      <span>📊 4 年年度基本面 ${src}</span>
-      <span>${years.join(' · ')}</span>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px; font-size:10px; color:var(--muted); gap:6px; flex-wrap:wrap">
+      <span>${label}基本面 ${src}</span>
+      <span style="flex:1; text-align:right; opacity:0.7">${years.join(' · ')}</span>
+      ${periodBtn}
     </div>
     <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:4px">
       ${cell('croic', fd.croic || [])}
@@ -882,15 +888,41 @@ function restoreDetailsState() {
   });
 }
 
-async function loadFundamentalsOnDemand(ticker, containerId) {
+// 记住每 ticker 的期间选择（默认 year）
+function _getFundPeriod(ticker) {
+  try { return (JSON.parse(localStorage.getItem('fundPeriod') || '{}'))[ticker] || 'year'; } catch (e) { return 'year'; }
+}
+function _setFundPeriod(ticker, p) {
+  try {
+    const m = JSON.parse(localStorage.getItem('fundPeriod') || '{}');
+    m[ticker] = p;
+    localStorage.setItem('fundPeriod', JSON.stringify(m));
+  } catch (e) {}
+}
+
+async function loadFundamentalsOnDemand(ticker, containerId, forcePeriod) {
   const el = document.getElementById(containerId);
-  if (!el || el.dataset.loaded === 'true' || el.dataset.loading === 'true') return;
+  if (!el) return;
+  const period = forcePeriod || _getFundPeriod(ticker);
+  // 若已经加载 且 period 一致 → 跳过
+  if (el.dataset.loaded === 'true' && el.dataset.period === period) return;
+  if (el.dataset.loading === 'true') return;
   el.dataset.loading = 'true';
-  el.innerHTML = '<small style="color:var(--muted); padding:6px; display:block">🔄 yfinance 拉财报中… (首次 2-4s)</small>';
-  const r = await fetchJson(`/api/fundamentals?ticker=${encodeURIComponent(ticker)}`);
+  el.innerHTML = `<small style="color:var(--muted); padding:6px; display:block">🔄 yfinance 拉${period === 'quarter' ? '季度' : '年度'}财报中…</small>`;
+  const r = await fetchJson(`/api/fundamentals?ticker=${encodeURIComponent(ticker)}&period=${period}`);
   el.dataset.loading = 'false';
-  el.innerHTML = renderFundamentals(r, ticker);
+  el.innerHTML = renderFundamentals(r, ticker, period);
   el.dataset.loaded = 'true';
+  el.dataset.period = period;
+}
+
+async function toggleFundPeriod(ticker, containerId) {
+  const cur = _getFundPeriod(ticker);
+  const nxt = cur === 'quarter' ? 'year' : 'quarter';
+  _setFundPeriod(ticker, nxt);
+  const el = document.getElementById(containerId);
+  if (el) { el.dataset.loaded = 'false'; el.dataset.period = ''; }
+  await loadFundamentalsOnDemand(ticker, containerId);
 }
 
 async function loadSupplyChainOnDemand(ticker, containerId) {
