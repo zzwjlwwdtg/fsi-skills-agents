@@ -1025,16 +1025,37 @@ def api_jp_watch() -> dict:
 
 
 def _compute_jp_watch() -> dict:
-    """3 只日股：完整技术栈（RSI/MA/BB/MACD/ADX/CCI/PSAR-lite/量比 + 共振）+ 一目均衡表。"""
+    """3 只日股：完整技术栈（RSI/MA/BB/MACD/ADX/CCI/量比 + 共振）+ 一目均衡表。
+
+    双轨：优先 moomoo openD JP kline（如果订阅了 JP 行情），失败降级 yfinance。
+    """
     import yfinance as yf
     import pandas as pd
     import numpy as np
-    out = {"ts": datetime.now(timezone.utc).isoformat(), "tickers": []}
+    # openD JP kline 尝试
+    try:
+        from moomoo_data import get_kline_via_openD, health_check
+        h_state = health_check()
+        openD_jp_ok = h_state.get("available") and h_state.get("market_jp") not in (None, "NONE")
+    except Exception:
+        openD_jp_ok = False
+        get_kline_via_openD = None
+
+    out = {"ts": datetime.now(timezone.utc).isoformat(), "tickers": [],
+           "data_source": "openD JP + yfinance fallback" if openD_jp_ok else "yfinance"}
     for entry in JP_WATCH_LIST:
         try:
-            t = yf.Ticker(entry["symbol"])
-            # 6 月足够算 Ichimoku 52 期 + Kijun 26 期 + 观察 60 天
-            h = t.history(period="6mo", auto_adjust=True)
+            h = None
+            source_used = "yfinance"
+            if openD_jp_ok and get_kline_via_openD:
+                h = get_kline_via_openD(entry["symbol"], days=180)
+                if h is not None and not h.empty and len(h) >= 55:
+                    source_used = "openD"
+                else:
+                    h = None
+            if h is None:
+                t = yf.Ticker(entry["symbol"])
+                h = t.history(period="6mo", auto_adjust=True)
             if h.empty or len(h) < 55:
                 out["tickers"].append({**entry, "error": f"insufficient bars ({len(h)})"})
                 continue
@@ -1199,6 +1220,7 @@ def _compute_jp_watch() -> dict:
                     "span_b": [round(float(v), 2) if v == v else None for v in series_span_b],
                 },
                 "currency": "JPY",
+                "source":   source_used,
             })
         except Exception as e:
             out["tickers"].append({**entry, "error": str(e)[:100]})
@@ -1750,19 +1772,44 @@ def api_ticker_options() -> dict:
 
 
 def _compute_ticker_options() -> dict:
-    """对每个 tracked ticker 拉最近到期日期权链 + 分析。串行 ~15-30s 首次。"""
+    """对每个 tracked ticker 拉最近到期日期权链 + 分析。串行 ~15-30s 首次。
+
+    双轨：优先 moomoo openD（更快 + JP 支持），失败降级 yfinance。
+    """
     import yfinance as yf
-    out = {"ts": datetime.now(timezone.utc).isoformat(), "tickers": {}}
+    # 检查 openD 可用性（每次 refresh 只查一次）
+    try:
+        from moomoo_data import get_option_chain_via_openD, health_check
+        openD_ok = health_check().get("available", False)
+    except Exception:
+        openD_ok = False
+        get_option_chain_via_openD = None
+
+    out = {"ts": datetime.now(timezone.utc).isoformat(), "tickers": {}, "data_source": "yfinance"}
+    if openD_ok:
+        out["data_source"] = "openD + yfinance fallback"
+
     for tk, underlying in TICKER_TO_OPTION_SOURCE.items():
         try:
             t = yf.Ticker(underlying)
-            expiries = list(t.options or [])
-            if not expiries:
-                out["tickers"][tk] = {"underlying": underlying, "error": "no_option_chain"}
-                continue
-            exp = expiries[0]
-            ch = t.option_chain(exp)
-            calls, puts = ch.calls.copy(), ch.puts.copy()
+            source_used = "yfinance"
+            # 优先尝试 openD
+            openD_chain = None
+            if openD_ok and get_option_chain_via_openD:
+                openD_chain = get_option_chain_via_openD(underlying)
+            if openD_chain:
+                exp   = openD_chain["expiry"]
+                calls = openD_chain["calls"].copy()
+                puts  = openD_chain["puts"].copy()
+                source_used = "openD"
+            else:
+                expiries = list(t.options or [])
+                if not expiries:
+                    out["tickers"][tk] = {"underlying": underlying, "error": "no_option_chain"}
+                    continue
+                exp = expiries[0]
+                ch = t.option_chain(exp)
+                calls, puts = ch.calls.copy(), ch.puts.copy()
             try:
                 spot = float(t.history(period="1d")["Close"].iloc[-1])
             except Exception:
@@ -1923,6 +1970,7 @@ def _compute_ticker_options() -> dict:
                 "call_wall_oi_strike": call_wall_oi["strike"] if call_wall_oi else None,
                 "put_wall_oi_strike":  put_wall_oi["strike"]  if put_wall_oi  else None,
                 "max_pain":         best_s,
+                "source":           source_used,   # openD or yfinance
                 **analysis,
                 **earnings_meta,
             }
