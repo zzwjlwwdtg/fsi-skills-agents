@@ -1049,27 +1049,77 @@ function _renderGraphSVG(nodes, links) {
   const width  = container.clientWidth || 1000;
   const height = container.clientHeight || 620;
 
+  // 深度 2 时 viewbox 放大画布，节点有更多铺开空间
+  const maxLayer = Math.max(...nodes.map(n => n.layer || 0));
+  const canvasScale = maxLayer >= 2 ? 1.6 : 1;
+  const W = width * canvasScale, H = height * canvasScale;
+
   const svg = d3.select(container).append('svg')
     .attr('width', '100%').attr('height', '100%')
-    .attr('viewBox', `0 0 ${width} ${height}`);
+    .attr('viewBox', `0 0 ${W} ${H}`);
+
+  // zoom + pan
+  const zoomG = svg.append('g');
+  const zoom = d3.zoom()
+    .scaleExtent([0.2, 5])
+    .on('zoom', (event) => zoomG.attr('transform', event.transform));
+  svg.call(zoom);
+  // 初始适配 —— fit to view
+  const initScale = maxLayer >= 2 ? 0.7 : 0.95;
+  svg.call(zoom.transform, d3.zoomIdentity.translate(W*(1-initScale)/2, H*(1-initScale)/2).scale(initScale));
+
+  // zoom 按钮
+  const btnStyle = 'position:absolute; right:10px; width:32px; height:32px; background:rgba(22,27,34,0.9); border:1px solid var(--border); color:var(--fg); cursor:pointer; font-size:16px; border-radius:4px; z-index:10';
+  container.style.position = 'relative';
+  container.insertAdjacentHTML('beforeend', `
+    <button id="_zbtn_in"  style="${btnStyle}; top:10px" title="放大 (滚轮)">＋</button>
+    <button id="_zbtn_out" style="${btnStyle}; top:48px" title="缩小 (滚轮)">－</button>
+    <button id="_zbtn_fit" style="${btnStyle}; top:86px" title="重置 (fit)">⤾</button>
+  `);
+  document.getElementById('_zbtn_in').onclick  = () => svg.transition().duration(300).call(zoom.scaleBy, 1.4);
+  document.getElementById('_zbtn_out').onclick = () => svg.transition().duration(300).call(zoom.scaleBy, 0.7);
+  document.getElementById('_zbtn_fit').onclick = () => svg.transition().duration(400).call(zoom.transform,
+    d3.zoomIdentity.translate(W*(1-initScale)/2, H*(1-initScale)/2).scale(initScale));
 
   const COLOR = {center: '#58a6ff', up: '#f85149', down: '#3fb950', peer: '#d29922'};
 
-  // 力学模拟
+  // 力学模拟 —— 深度 2 时用 radial force 按 layer 分环，减少混乱
+  const centerX = W / 2, centerY = H / 2;
   const sim = d3.forceSimulation(nodes)
     .force('link',   d3.forceLink(links).id(d => d.id)
-                       .distance(d => 100 + (100 - (d.weight || 30))))
-    .force('charge', d3.forceManyBody().strength(-500))
-    .force('center', d3.forceCenter(width / 2, height / 2))
-    .force('collision', d3.forceCollide().radius(d => d.size + 12));
+                       .distance(d => maxLayer >= 2 ? (80 + (d.weight || 30) * 0.5) : (100 + (100 - (d.weight || 30))))
+                       .strength(d => maxLayer >= 2 ? 0.4 : 0.7))
+    .force('charge', d3.forceManyBody().strength(maxLayer >= 2 ? -280 : -500))
+    .force('center', d3.forceCenter(centerX, centerY))
+    .force('collision', d3.forceCollide().radius(d => d.size + (maxLayer >= 2 ? 8 : 12)));
 
-  // 边
-  const link = svg.append('g')
+  // 径向 layout：layer 0 中心，layer 1 内环，layer 2 外环
+  if (maxLayer >= 1) {
+    const ringSize = Math.min(W, H);
+    sim.force('radial', d3.forceRadial(d => {
+      if (d.group === 'center') return 0;
+      if (d.layer === 1) return ringSize * 0.20;
+      if (d.layer === 2) return ringSize * 0.38;
+      return ringSize * 0.45;
+    }, centerX, centerY).strength(maxLayer >= 2 ? 0.35 : 0.1));
+  }
+
+  // 边（含 arrow marker）
+  svg.append('defs').selectAll('marker')
+    .data(['supply','customer','peer']).join('marker')
+      .attr('id', d => 'arr-' + d)
+      .attr('viewBox', '0 -5 10 10').attr('refX', 15).attr('refY', 0)
+      .attr('markerWidth', 5).attr('markerHeight', 5).attr('orient', 'auto')
+      .append('path').attr('d', 'M0,-5L10,0L0,5')
+        .attr('fill', d => d === 'peer' ? '#d29922' : (d === 'supply' ? '#f85149' : '#3fb950'));
+
+  const link = zoomG.append('g')
     .selectAll('line').data(links).join('line')
       .attr('stroke', d => d.kind === 'peer' ? '#d29922' : (d.kind === 'supply' ? '#f85149' : '#3fb950'))
       .attr('stroke-width', d => 0.8 + (d.weight || 20) / 30)
       .attr('stroke-dasharray', d => d.confidence === 'high' ? null : '4,3')
       .attr('opacity', 0.65)
+      .attr('marker-end', d => `url(#arr-${d.kind})`)
       .style('cursor', 'help');
   link.append('title').text(d => {
     const src = typeof d.source === 'object' ? d.source.id : d.source;
@@ -1079,7 +1129,7 @@ function _renderGraphSVG(nodes, links) {
   });
 
   // 节点组
-  const node = svg.append('g')
+  const node = zoomG.append('g')
     .selectAll('g').data(nodes).join('g')
       .style('cursor', 'grab')
       .call(d3.drag()
@@ -1094,15 +1144,17 @@ function _renderGraphSVG(nodes, links) {
     .attr('stroke-width', d => d.fmp ? 3 : (d.group === 'center' ? 3 : 1.5))
     .attr('opacity', d => d.confidence === 'low' ? 0.55 : (d.confidence === 'medium' ? 0.8 : 1));
 
+  // 节点标签 —— layer2 时更小、layer1 稍大，避免堆叠
   node.append('text')
     .text(d => d.label)
-    .attr('font-size', d => d.group === 'center' ? '14px' : '11px')
+    .attr('font-size', d => d.group === 'center' ? '15px' : (d.layer === 1 ? '11px' : '9px'))
     .attr('font-weight', d => d.group === 'center' ? 'bold' : 'normal')
     .attr('fill', '#e6edf3')
     .attr('text-anchor', 'middle')
-    .attr('dy', d => d.size + 12)
+    .attr('dy', d => d.size + 10)
     .style('pointer-events', 'none')
-    .style('text-shadow', '0 0 4px rgba(13,17,23,0.9)');
+    .style('text-shadow', '0 0 4px rgba(13,17,23,0.95), 0 0 2px rgba(13,17,23,0.95)')
+    .style('opacity', d => (maxLayer >= 2 && d.layer >= 2) ? 0.6 : 1);
 
   // ticker 小标签
   node.filter(d => d.ticker && d.group !== 'center').append('text')
@@ -1150,7 +1202,7 @@ document.addEventListener('keydown', e => {
       <span><span style="color:#3fb950">●</span> 下游 客户</span>
       <span><span style="color:#d29922">●</span> 同行 竞争</span>
       <span>· 节点大小 ∝ weight · 边实线=high confidence，虚线=medium/low · <span style="border:2px solid #3fb950; border-radius:50%; padding:0 2px">○</span> = FMP 已验证</span>
-      <span style="margin-left:auto">拖动节点调整布局</span>
+      <span style="margin-left:auto">🖱 滚轮缩放 · 拖动节点/画布 · 右上角 ＋ － ⤾ 缩放按钮</span>
     </div>
   </div>
 </div>
