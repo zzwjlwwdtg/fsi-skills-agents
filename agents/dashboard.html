@@ -690,21 +690,27 @@ async function loadSignals() {
         const srcBadge = src === 'live'
           ? `<span style="color:#3fb950; font-size:9px" title="基于当前 signals+期权数据即时生成，${aiLiveMtime}">🟢 LIVE ${aiLiveMtime}</span>`
           : `<span style="color:var(--muted); font-size:9px" title="来自 orchestrator 定时快照 ${aiSnapMtime}">📸 SNAPSHOT ${aiSnapMtime}</span>`;
-        return `<details style="border-top:1px dashed var(--border); margin-top:6px; padding-top:5px" open>
+        return `<details data-details-key="ai-${t.ticker}" open style="border-top:1px dashed var(--border); margin-top:6px; padding-top:5px" ontoggle="rememberDetailsState(this)">
           <summary style="cursor:pointer; list-style:none; font-size:10px; color:var(--muted); margin-bottom:4px">🤖 <b style="color:#58a6ff">Claude 分析</b> ${srcBadge} <span style="font-size:9px">▲折叠</span></summary>
           <div class="analysis" style="font-size:11px; line-height:1.55">${(typeof marked !== 'undefined' ? marked.parse(body) : body.replace(/\n/g,'<br>'))}</div>
         </details>`;
       })()}
-      <details style="border-top:1px dashed var(--border); margin-top:6px; padding-top:5px" ontoggle="if(this.open) loadSupplyChainOnDemand('${t.ticker}', 'sc-${t.ticker}')">
+      <details data-details-key="sc-${t.ticker}" style="border-top:1px dashed var(--border); margin-top:6px; padding-top:5px" ontoggle="rememberDetailsState(this); if(this.open) loadSupplyChainOnDemand('${t.ticker}', 'sc-${t.ticker}')">
         <summary style="cursor:pointer; list-style:none; font-size:10px; color:var(--muted); margin-bottom:4px">🔗 <b style="color:#58a6ff">上下游供应链</b> <small style="font-size:9px">▼展开加载 (Claude 生成，缓存 14 天)</small></summary>
         <div id="sc-${t.ticker}"></div>
       </details>
-      <details style="border-top:1px dashed var(--border); margin-top:6px; padding-top:5px" ontoggle="if(this.open) loadFundamentalsOnDemand('${t.ticker}', 'fd-${t.ticker}')">
-        <summary style="cursor:pointer; list-style:none; font-size:10px; color:var(--muted); margin-bottom:4px">📊 <b style="color:#58a6ff">4 年基本面</b> <small style="font-size:9px">▼展开加载 (yfinance，缓存 30 天)</small></summary>
+      <details data-details-key="fd-${t.ticker}" open style="border-top:1px dashed var(--border); margin-top:6px; padding-top:5px" ontoggle="rememberDetailsState(this); if(this.open) loadFundamentalsOnDemand('${t.ticker}', 'fd-${t.ticker}')">
+        <summary style="cursor:pointer; list-style:none; font-size:10px; color:var(--muted); margin-bottom:4px">📊 <b style="color:#58a6ff">4 年基本面</b> <small style="font-size:9px">▲折叠 (yfinance，缓存 30 天)</small></summary>
         <div id="fd-${t.ticker}"></div>
       </details>
     </div>`;
   }).join('');
+  // 恢复用户展开状态 + 触发默认展开的懒加载
+  restoreDetailsState();
+  // 首次进入：所有默认 open 的 details 触发一次 toggle 事件加载数据
+  document.querySelectorAll('details[open][data-details-key]').forEach(el => {
+    if (el.getAttribute('ontoggle')) el.dispatchEvent(new Event('toggle'));
+  });
 }
 
 async function loadPositions() {
@@ -849,6 +855,31 @@ function renderFundamentals(fd, ticker) {
       💡 hover 各卡片看用途；小图=4年趋势；颜色 绿=好/黄=警惕/红=差
     </div>
   </div>`;
+}
+
+// 30s 自动刷新会 innerHTML replace，用户展开的 details 会被重置回默认。
+// 用 localStorage 记住每个 data-details-key 的 open 状态，渲染后统一恢复。
+window.__detailsState = window.__detailsState || (() => {
+  try { return JSON.parse(localStorage.getItem('detailsState') || '{}'); } catch (e) { return {}; }
+})();
+function rememberDetailsState(el) {
+  const key = el.dataset.detailsKey;
+  if (!key) return;
+  window.__detailsState[key] = el.open;
+  try { localStorage.setItem('detailsState', JSON.stringify(window.__detailsState)); } catch (e) {}
+}
+function restoreDetailsState() {
+  document.querySelectorAll('details[data-details-key]').forEach(el => {
+    const key = el.dataset.detailsKey;
+    if (key in window.__detailsState) {
+      const wasOpen = el.open;
+      el.open = window.__detailsState[key];
+      // 若恢复为 open 且尚未加载 → 触发懒加载
+      if (el.open && !wasOpen && el.getAttribute('ontoggle')) {
+        el.dispatchEvent(new Event('toggle'));
+      }
+    }
+  });
 }
 
 async function loadFundamentalsOnDemand(ticker, containerId) {

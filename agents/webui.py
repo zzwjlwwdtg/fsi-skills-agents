@@ -1000,6 +1000,8 @@ TICKER_TO_FUNDAMENTAL_STOCK = {
     "AMAT": "AMAT",
     "GOOGL":"GOOGL",
     "NVDA": "NVDA",
+    "MSFT": "MSFT",
+    "AAPL": "AAPL",
 }
 
 
@@ -1374,6 +1376,8 @@ TICKER_TO_OPTION_SOURCE = {
     "AMAT": "AMAT",
     "GOOGL": "GOOGL",
     "NVDA": "NVDA",
+    "MSFT": "MSFT",
+    "AAPL": "AAPL",
 }
 
 

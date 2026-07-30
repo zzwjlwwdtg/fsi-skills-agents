@@ -34,8 +34,11 @@ def _cfg(key: str, default=""):
 TICKERS = ["US.TQQQ", "US.SOXL", "US.DRAM", "US.MULL"]
 
 # WATCH-only：只 scan 信号 + 供 dashboard 展示，不触发 trade_execute
-# 用于关注但不打算持仓的板块风向标（比如 NVDA 是半导体链条领头，看它就知道 SOXL/DRAM 方向）
-WATCH_ONLY_TICKERS = ["US.NVDA"]
+# 用于关注但不打算持仓的板块风向标
+#   NVDA — 半导体链条领头，看它就知道 SOXL/DRAM 方向
+#   MSFT — 云 AI 大客户 + FAANG 权重股（TQQQ 组成）
+#   AAPL — TQQQ/QQQ 最大权重股，苹果链跟踪
+WATCH_ONLY_TICKERS = ["US.NVDA", "US.MSFT", "US.AAPL"]
 
 # --- Leverage Factors ---
 # 杠杆 ETF 单日波动是标的的 N 倍 → 各种"暴跌/暴涨"绝对阈值要按倍数缩放
