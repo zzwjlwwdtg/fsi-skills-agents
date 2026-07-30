@@ -296,6 +296,70 @@ function eventHint(evName) {
   return '';
 }
 
+// Ichimoku 云图（SVG）—— 显示最后 90 天 close + tenkan + kijun + Kumo 云
+function renderIchimoku(t, W = 260, H = 90) {
+  const s = t.series || {};
+  const close = s.close || [];
+  if (close.length < 30) return '';
+  const tenkan = s.tenkan || [];
+  const kijun  = s.kijun || [];
+  const spanA  = s.span_a || [];
+  const spanB  = s.span_b || [];
+  // 过滤 null，同步 index
+  const all = [...close, ...tenkan, ...kijun, ...spanA, ...spanB].filter(v => v != null);
+  const lo = Math.min(...all), hi = Math.max(...all);
+  const pad = (hi - lo) * 0.05 || 1;
+  const yLo = lo - pad, yHi = hi + pad;
+  const n = close.length;
+  const xAt = i => (i / (n - 1)) * W;
+  const yAt = v => v == null ? null : H - ((v - yLo) / (yHi - yLo)) * H;
+
+  // Kumo 云：spanA/spanB 之间的填充
+  const cloudPts = [];
+  for (let i = 0; i < n; i++) {
+    const a = spanA[i], b = spanB[i];
+    if (a == null || b == null) continue;
+    cloudPts.push({ x: xAt(i), a: yAt(a), b: yAt(b) });
+  }
+  let cloudPath = '';
+  if (cloudPts.length >= 2) {
+    // 分段染色：spanA > spanB → 绿云（多） / else 红云（空）
+    const buildSeg = (segPts, isBull) => {
+      const top = segPts.map(p => `${p.x.toFixed(1)},${p.a.toFixed(1)}`).join(' L');
+      const bot = [...segPts].reverse().map(p => `${p.x.toFixed(1)},${p.b.toFixed(1)}`).join(' L');
+      const fill = isBull ? 'rgba(63,185,80,0.22)' : 'rgba(248,81,73,0.22)';
+      return `<path d="M${top} L${bot} Z" fill="${fill}"/>`;
+    };
+    let cur = [], curBull = null;
+    cloudPts.forEach(p => {
+      const isBull = p.a < p.b ? false : true;   // svg y 是反的：yAt(spanA) < yAt(spanB) 对应 spanA > spanB
+      // 修正判断：spanA_val > spanB_val → 绿
+      // p.a = yAt(spanA), p.b = yAt(spanB). 由于 y 轴反向，yAt(spanA) < yAt(spanB) 表示 spanA 数值大 → 绿
+      const bull = p.a < p.b;
+      if (curBull === null || curBull === bull) {
+        cur.push(p); curBull = bull;
+      } else {
+        if (cur.length >= 2) cloudPath += buildSeg(cur, curBull);
+        cur = [cur.at(-1), p]; curBull = bull;
+      }
+    });
+    if (cur.length >= 2) cloudPath += buildSeg(cur, curBull);
+  }
+  const linePath = (arr, color, w = 1.2, dash = null) => {
+    const pts = arr.map((v, i) => v == null ? null : `${xAt(i).toFixed(1)},${yAt(v).toFixed(1)}`)
+                    .filter(Boolean).join(' L');
+    return pts ? `<path d="M${pts}" stroke="${color}" stroke-width="${w}" fill="none"${dash ? ` stroke-dasharray="${dash}"` : ''}/>` : '';
+  };
+  return `<svg width="100%" height="${H}" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="display:block; background:rgba(13,17,23,0.5); border-radius:3px">
+    ${cloudPath}
+    ${linePath(spanA, 'rgba(63,185,80,0.5)', 0.8, '2,2')}
+    ${linePath(spanB, 'rgba(248,81,73,0.5)', 0.8, '2,2')}
+    ${linePath(kijun, '#d29922', 1.2)}
+    ${linePath(tenkan, '#58a6ff', 1.2)}
+    ${linePath(close, '#e6edf3', 1.5)}
+  </svg>`;
+}
+
 async function loadJPWatch() {
   const r = await fetchJson('/api/jp_watch');
   const el = $('jp-watch');
@@ -306,18 +370,47 @@ async function loadJPWatch() {
     const p1cls = t.pct_1d > 0 ? 'ok' : (t.pct_1d < 0 ? 'bad' : 'muted');
     const p5cls = t.pct_5d != null ? (t.pct_5d > 0 ? 'ok' : (t.pct_5d < 0 ? 'bad' : 'muted')) : 'muted';
     const rsiCls = t.rsi >= 70 ? 'warn' : (t.rsi <= 30 ? 'warn' : 'muted');
+    const total = (t.bull_count || 0) + (t.bear_count || 0);
+    const bullPct = total ? (t.bull_count / total * 100) : 50;
+    const bearPct = total ? (t.bear_count / total * 100) : 50;
+    const actionCls = sideCls(t.action_zh);
+    const ichi = t.ichimoku || {};
+    const ichiCls = { bullish:'ok', bearish:'bad', neutral:'warn' }[ichi.direction] || '';
+    const cloudBadge = { bullish:'🟢 多云', bearish:'🔴 空云' }[ichi.cloud_color] || '⚪ 云';
+    const macdCls = t.macd_dif > t.macd_dea ? 'ok' : 'bad';
     return `
-    <div class="signal-card" title="${t.thesis}">
+    <div class="signal-card">
       <div class="top-row">
         <span class="ticker-name">${t.ticker} <small style="color:var(--muted); font-size:9px">${t.symbol}</small></span>
         <span class="price">¥${t.price}</span>
       </div>
       <div style="font-size:11px; margin:3px 0"><b>${t.name_zh}</b> <small style="color:var(--muted)">${t.name_en}</small></div>
-      <div style="display:flex; justify-content:space-between; font-size:10px; margin:4px 0">
-        <span>1d <b class="${p1cls}">${t.pct_1d > 0 ? '+' : ''}${t.pct_1d}%</b></span>
-        <span>5d <b class="${p5cls}">${t.pct_5d != null ? (t.pct_5d > 0 ? '+' : '') + t.pct_5d + '%' : '-'}</b></span>
-        <span>RSI <b class="${rsiCls}">${t.rsi}</b></span>
+      <div class="top-row">
+        <span class="${actionCls}">${t.action_zh}</span>
+        <span style="font-size:10px" class="${ichiCls}" title="一目均衡表判定：云上=多头 / 云下=空头 / 云中=震荡；${cloudBadge}=Kumo 云自身色">
+          <b>一目 ${ichi.position}</b> <small>${cloudBadge}·${ichi.tk_cross}</small>
+        </span>
       </div>
+      <div class="bar-container" title="共振多空条：绿=看多信号数，红=看空信号数">
+        <div class="bar-bull" style="width:${bullPct}%"></div>
+        <div class="bar-bear" style="width:${bearPct}%"></div>
+      </div>
+      <div style="font-size:10px; color:var(--muted); display:flex; justify-content:space-between">
+        <span>多${t.bull_count} vs 空${t.bear_count}</span>
+        <span>1d <b class="${p1cls}">${t.pct_1d > 0 ? '+' : ''}${t.pct_1d}%</b> · 5d <b class="${p5cls}">${t.pct_5d != null ? (t.pct_5d > 0 ? '+' : '') + t.pct_5d + '%' : '-'}</b></span>
+      </div>
+      <div style="font-size:10px; color:var(--muted); display:grid; grid-template-columns:1fr 1fr 1fr; gap:4px; margin-top:4px">
+        <span title="Relative Strength Index 14 · <30 超卖 / >70 超买">RSI <b class="${rsiCls}">${t.rsi}</b></span>
+        <span title="Average Directional Index · >25 有趋势 / >40 强趋势">ADX <b>${t.adx}</b></span>
+        <span title="Commodity Channel Index · <-100 超卖 / >100 超买">CCI <b>${t.cci}</b></span>
+        <span title="Bollinger %B · <0 破下轨 / >100 破上轨">BB%B <b>${t.bb_pct_b}%</b></span>
+        <span title="MACD DIF/DEA · DIF>DEA 多头">MACD <b class="${macdCls}">${t.macd_dif > 0 ? '+' : ''}${t.macd_dif}</b></span>
+        <span title="量比 · >1.5 放量">量 <b>${t.vol_ratio}</b></span>
+      </div>
+      <div style="font-size:9px; color:var(--muted); margin-top:5px" title="日线 90 天 · 白=价格 · 蓝=転換線(9) · 橙=基準線(26) · 绿虚=先行 Span A · 红虚=先行 Span B · 云=Kumo">
+        📉 一目均衡表 90 天
+      </div>
+      ${renderIchimoku(t)}
       <div style="font-size:9px; color:var(--muted); line-height:1.4; margin-top:4px; border-top:1px dashed var(--border); padding-top:4px">${t.thesis}</div>
       <details data-details-key="jpsc-${t.ticker}" style="border-top:1px dashed var(--border); margin-top:5px; padding-top:4px" ontoggle="rememberDetailsState(this); if(this.open) loadSupplyChainOnDemand('${t.ticker}', 'jpsc-body-${t.ticker}')">
         <summary style="cursor:pointer; list-style:none; font-size:10px; color:var(--muted)">🔗 <b style="color:#58a6ff">供应链</b> <small style="font-size:9px">▼</small></summary>
@@ -329,7 +422,6 @@ async function loadJPWatch() {
       </details>
     </div>`;
   }).join('');
-  // 恢复用户展开状态 + 触发默认 open 的懒加载
   restoreDetailsState();
   document.querySelectorAll('#jp-watch details[open][data-details-key]').forEach(el => {
     if (el.getAttribute('ontoggle')) el.dispatchEvent(new Event('toggle'));

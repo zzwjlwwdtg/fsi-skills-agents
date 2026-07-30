@@ -1025,37 +1025,183 @@ def api_jp_watch() -> dict:
 
 
 def _compute_jp_watch() -> dict:
+    """3 只日股：完整技术栈（RSI/MA/BB/MACD/ADX/CCI/PSAR-lite/量比 + 共振）+ 一目均衡表。"""
     import yfinance as yf
+    import pandas as pd
+    import numpy as np
     out = {"ts": datetime.now(timezone.utc).isoformat(), "tickers": []}
     for entry in JP_WATCH_LIST:
         try:
             t = yf.Ticker(entry["symbol"])
-            h = t.history(period="10d", auto_adjust=True)
-            if h.empty:
-                out["tickers"].append({**entry, "error": "no data"})
+            # 6 月足够算 Ichimoku 52 期 + Kijun 26 期 + 观察 60 天
+            h = t.history(period="6mo", auto_adjust=True)
+            if h.empty or len(h) < 55:
+                out["tickers"].append({**entry, "error": f"insufficient bars ({len(h)})"})
                 continue
             close = h["Close"].astype(float)
+            high  = h["High"].astype(float)
+            low   = h["Low"].astype(float)
+            vol   = h["Volume"].astype(float)
             price = float(close.iloc[-1])
-            prev  = float(close.iloc[-2]) if len(close) >= 2 else price
-            pct_1d = ((price / prev) - 1) * 100 if prev else 0
+            prev  = float(close.iloc[-2])
+            pct_1d = ((price / prev) - 1) * 100
             pct_5d = ((price / float(close.iloc[-6])) - 1) * 100 if len(close) >= 6 else None
-            # 简单 RSI 14
-            deltas = close.diff().dropna()
-            gains  = deltas.clip(lower=0)
-            losses = -deltas.clip(upper=0)
-            avg_gain = gains.tail(14).mean() if len(gains) >= 14 else gains.mean()
-            avg_loss = losses.tail(14).mean() if len(losses) >= 14 else losses.mean()
-            rsi = 100 - (100 / (1 + (avg_gain / avg_loss))) if avg_loss and avg_loss > 0 else 50
+
+            # ── RSI(14) ──
+            delta = close.diff()
+            gain  = delta.clip(lower=0).rolling(14).mean()
+            loss  = (-delta.clip(upper=0)).rolling(14).mean()
+            rs    = gain / loss.replace(0, 1e-9)
+            rsi_val = float((100 - 100 / (1 + rs)).iloc[-1])
+
+            # ── MA5/20/50 ──
+            ma5  = float(close.rolling(5).mean().iloc[-1])
+            ma20 = float(close.rolling(20).mean().iloc[-1])
+            ma50 = float(close.rolling(50).mean().iloc[-1]) if len(close) >= 50 else None
+
+            # ── Bollinger(20, 2σ) ──
+            bb_m = close.rolling(20).mean()
+            bb_s = close.rolling(20).std()
+            bb_up = float((bb_m + 2 * bb_s).iloc[-1])
+            bb_dn = float((bb_m - 2 * bb_s).iloc[-1])
+            bb_pct_b = (price - bb_dn) / (bb_up - bb_dn) if bb_up > bb_dn else 0.5
+
+            # ── MACD(12,26,9) ──
+            ema12 = close.ewm(span=12, adjust=False).mean()
+            ema26 = close.ewm(span=26, adjust=False).mean()
+            macd_line = ema12 - ema26
+            signal_line = macd_line.ewm(span=9, adjust=False).mean()
+            macd_dif = float(macd_line.iloc[-1])
+            macd_dea = float(signal_line.iloc[-1])
+
+            # ── ADX(14) ──
+            up_move   = high.diff()
+            down_move = -low.diff()
+            plus_dm   = up_move.where((up_move > down_move) & (up_move > 0), 0)
+            minus_dm  = down_move.where((down_move > up_move) & (down_move > 0), 0)
+            tr1 = high - low
+            tr2 = (high - close.shift()).abs()
+            tr3 = (low - close.shift()).abs()
+            tr  = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
+            atr = tr.rolling(14).mean().replace(0, 1e-9)
+            plus_di  = 100 * plus_dm.rolling(14).mean()  / atr
+            minus_di = 100 * minus_dm.rolling(14).mean() / atr
+            dx = 100 * (plus_di - minus_di).abs() / (plus_di + minus_di).replace(0, 1e-9)
+            adx_val = float(dx.rolling(14).mean().iloc[-1])
+
+            # ── CCI(20) ──
+            tp = (high + low + close) / 3
+            sma_tp = tp.rolling(20).mean()
+            mad = tp.rolling(20).apply(lambda x: (x - x.mean()).abs().mean(), raw=False)
+            cci_val = float(((tp - sma_tp) / (0.015 * mad.replace(0, 1e-9))).iloc[-1])
+
+            # ── 量比 ──
+            vol_avg = float(vol.tail(20).mean())
+            vol_ratio = float(vol.iloc[-1]) / vol_avg if vol_avg else 1
+
+            # ── 一目均衡表 Ichimoku ──
+            # 転換線 Tenkan(9), 基準線 Kijun(26), Senkou A/B(52), 遅行 = 当前价 推 26 天前
+            tenkan_series   = (high.rolling(9).max() + low.rolling(9).min()) / 2
+            kijun_series    = (high.rolling(26).max() + low.rolling(26).min()) / 2
+            senkou_a_series = (tenkan_series + kijun_series) / 2
+            senkou_b_series = (high.rolling(52).max() + low.rolling(52).min()) / 2
+            tenkan   = float(tenkan_series.iloc[-1])
+            kijun    = float(kijun_series.iloc[-1])
+            senkou_a = float(senkou_a_series.iloc[-1])
+            senkou_b = float(senkou_b_series.iloc[-1])
+            cloud_top = max(senkou_a, senkou_b)
+            cloud_bot = min(senkou_a, senkou_b)
+            if price > cloud_top:
+                ichi_pos, ichi_dir = "云上", "bullish"
+            elif price < cloud_bot:
+                ichi_pos, ichi_dir = "云下", "bearish"
+            else:
+                ichi_pos, ichi_dir = "云中", "neutral"
+            cloud_color = "bullish" if senkou_a > senkou_b else "bearish"
+            tk_cross = "金叉" if tenkan > kijun else "死叉"
+
+            # ── 共振（bull/bear count）──
+            bull, bear = 0, 0
+            reasons_bull, reasons_bear = [], []
+            def _add(cond, label, side):
+                nonlocal bull, bear
+                if cond:
+                    if side == 'b': bull += 1; reasons_bull.append(label)
+                    else: bear += 1; reasons_bear.append(label)
+            _add(price > ma20, "价格站上MA20", 'b')
+            _add(price < ma20, "价格跌破MA20", 's')
+            if ma50:
+                _add(ma20 > ma50, "均线多排 MA20>MA50", 'b')
+                _add(ma20 < ma50, "均线空排 MA20<MA50", 's')
+            _add(rsi_val < 30, f"RSI 超卖 {rsi_val:.0f}", 'b')
+            _add(rsi_val > 70, f"RSI 超买 {rsi_val:.0f}", 's')
+            _add(bb_pct_b < 0.1, "跌破布林下轨", 'b')
+            _add(bb_pct_b > 0.9, "冲破布林上轨", 's')
+            _add(macd_dif > macd_dea and macd_dif > 0, "MACD 多头零轴上", 'b')
+            _add(macd_dif < macd_dea and macd_dif < 0, "MACD 空头零轴下", 's')
+            _add(cci_val < -100, "CCI 超卖", 'b')
+            _add(cci_val > 100, "CCI 超买", 's')
+            _add(ichi_dir == "bullish", "一目 云上", 'b')
+            _add(ichi_dir == "bearish", "一目 云下", 's')
+            _add(tk_cross == "金叉" and price > kijun, "转换>基准 (金叉)", 'b')
+            _add(tk_cross == "死叉" and price < kijun, "转换<基准 (死叉)", 's')
+
+            # 简单 action
+            if bull - bear >= 3 and rsi_val < 40: action = "关注买入"
+            elif bull - bear >= 3: action = "偏多"
+            elif bear - bull >= 3 and rsi_val > 60: action = "警示"
+            elif bear - bull >= 3: action = "偏空"
+            else: action = "观望"
+
+            trend = "up" if price > ma20 else "down"
+
+            # ── 时间序列（供 SVG 画 Ichimoku 云图，最后 90 天）──
+            N = min(90, len(close))
+            series_close   = close.tail(N).tolist()
+            series_tenkan  = tenkan_series.tail(N).tolist()
+            series_kijun   = kijun_series.tail(N).tolist()
+            series_span_a  = senkou_a_series.tail(N).tolist()
+            series_span_b  = senkou_b_series.tail(N).tolist()
+
             out["tickers"].append({
                 **entry,
-                "price":  round(price, 2),
-                "pct_1d": round(pct_1d, 2),
-                "pct_5d": round(pct_5d, 2) if pct_5d is not None else None,
-                "rsi":    round(float(rsi), 1),
+                "price":     round(price, 2),
+                "pct_1d":    round(pct_1d, 2),
+                "pct_5d":    round(pct_5d, 2) if pct_5d is not None else None,
+                "rsi":       round(rsi_val, 1),
+                "ma20":      round(ma20, 2),
+                "ma50":      round(ma50, 2) if ma50 else None,
+                "bb_pct_b":  round(bb_pct_b * 100, 1),
+                "macd_dif":  round(macd_dif, 2),
+                "macd_dea":  round(macd_dea, 2),
+                "adx":       round(adx_val, 1),
+                "cci":       round(cci_val, 1),
+                "vol_ratio": round(vol_ratio, 2),
+                "trend":     trend,
+                "bull_count": bull, "bear_count": bear,
+                "reasons_bull": reasons_bull, "reasons_bear": reasons_bear,
+                "action_zh": action,
+                "ichimoku": {
+                    "tenkan":   round(tenkan, 2),
+                    "kijun":    round(kijun, 2),
+                    "senkou_a": round(senkou_a, 2),
+                    "senkou_b": round(senkou_b, 2),
+                    "position": ichi_pos,       # 云上/云中/云下
+                    "direction": ichi_dir,
+                    "cloud_color": cloud_color, # 云的颜色（红=空 / 绿=多）
+                    "tk_cross": tk_cross,
+                },
+                "series": {
+                    "close":  [round(float(v), 2) for v in series_close],
+                    "tenkan": [round(float(v), 2) if v == v else None for v in series_tenkan],
+                    "kijun":  [round(float(v), 2) if v == v else None for v in series_kijun],
+                    "span_a": [round(float(v), 2) if v == v else None for v in series_span_a],
+                    "span_b": [round(float(v), 2) if v == v else None for v in series_span_b],
+                },
                 "currency": "JPY",
             })
         except Exception as e:
-            out["tickers"].append({**entry, "error": str(e)[:80]})
+            out["tickers"].append({**entry, "error": str(e)[:100]})
     return out
 
 
