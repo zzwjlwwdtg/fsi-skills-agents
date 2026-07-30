@@ -812,7 +812,8 @@ def api_supply_chain(ticker: str) -> dict:
     ticker = (ticker or "").upper().strip()
     if not ticker or len(ticker) > 8 or not ticker.replace(".", "").replace("-", "").isalnum():
         return {"error": "invalid ticker"}
-    return _cached(f"supply_chain_{ticker}", ttl_sec=7 * 24 * 3600,
+    # 14 天 TTL —— 供应链变动慢，无必要频繁调 Claude（用户 quota 保护）
+    return _cached(f"supply_chain_{ticker}", ttl_sec=14 * 24 * 3600,
                     compute_fn=lambda: _compute_supply_chain(ticker))
 
 
@@ -1333,7 +1334,9 @@ def _analyze_walls(spot, call_wall, put_wall, max_pain,
 
 def api_ticker_options() -> dict:
     """每个 tracked ticker 的期权墙 + 攻防位 + 挤压风险。10min 后台缓存。"""
-    return _cached("ticker_options", ttl_sec=600, compute_fn=_compute_ticker_options)
+    # 24h TTL —— 期权 wall/OI 日级变化就够，无必要秒级刷（拖累 yfinance + 间接
+    # 让 ticker_ai 的 Claude hash 每天最多变一次）
+    return _cached("ticker_options", ttl_sec=24 * 3600, compute_fn=_compute_ticker_options)
 
 
 def _compute_ticker_options() -> dict:
@@ -1526,7 +1529,7 @@ def api_option_walls_chart() -> dict:
       · GLD  ← 黄金现货
     15 min 后台缓存。
     """
-    return _cached("option_walls_chart", ttl_sec=900, compute_fn=_compute_option_walls_chart)
+    return _cached("option_walls_chart", ttl_sec=24 * 3600, compute_fn=_compute_option_walls_chart)
 
 
 def _compute_option_walls_chart() -> dict:
