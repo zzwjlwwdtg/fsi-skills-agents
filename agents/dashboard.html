@@ -420,12 +420,57 @@ async function loadJPWatch() {
         <summary style="cursor:pointer; list-style:none; font-size:10px; color:var(--muted)">📊 <b style="color:#58a6ff">基本面</b> <small style="font-size:9px">▲</small></summary>
         <div id="jpfd-body-${t.ticker}"></div>
       </details>
+      <details data-details-key="jpgd-${t.ticker}" open style="border-top:1px dashed var(--border); margin-top:5px; padding-top:4px" ontoggle="rememberDetailsState(this); if(this.open) loadJPGuidanceOnDemand('${t.ticker}', 'jpgd-body-${t.ticker}')">
+        <summary style="cursor:pointer; list-style:none; font-size:10px; color:var(--muted)">📢 <b style="color:#58a6ff">業績予想</b> <small style="font-size:9px">▲ (Claude 生成，7 天缓存)</small></summary>
+        <div id="jpgd-body-${t.ticker}"></div>
+      </details>
     </div>`;
   }).join('');
   restoreDetailsState();
   document.querySelectorAll('#jp-watch details[open][data-details-key]').forEach(el => {
     if (el.getAttribute('ontoggle')) el.dispatchEvent(new Event('toggle'));
   });
+}
+
+async function loadJPGuidanceOnDemand(ticker, containerId) {
+  const el = document.getElementById(containerId);
+  if (!el || el.dataset.loaded === 'true' || el.dataset.loading === 'true') return;
+  el.dataset.loading = 'true';
+  el.innerHTML = '<small style="color:var(--muted); padding:6px; display:block">🔄 Claude 生成中… (首次 30-60s)</small>';
+  const r = await fetchJson(`/api/jp_guidance?ticker=${encodeURIComponent(ticker)}`);
+  el.dataset.loading = 'false';
+  if (!r || r.error) {
+    el.innerHTML = `<small class="muted">生成失败：${(r && r.error) || 'no data'}</small>`;
+    return;
+  }
+  const DIR_CLS = { '上修':'ok', '据え置き':'muted', '下修':'bad' };
+  const DIR_ICON= { '上修':'📈', '据え置き':'📊', '下修':'📉' };
+  const MAG_CLS = { '大':'bad', '中':'warn', '小':'muted', '无':'muted' };
+  const REACT_CLS = { '高':'bad', '中':'warn', '低':'muted' };
+  const CONF_LABEL = { high:'高', medium:'中', low:'低（AI 训练数据估算，非实时 IR）' };
+  const dCls = DIR_CLS[r.direction] || 'muted';
+  const dIcon = DIR_ICON[r.direction] || '❓';
+  return el.innerHTML = `
+    <div style="font-size:10px; padding:5px 0">
+      <div style="display:flex; align-items:center; gap:6px; margin-bottom:5px">
+        <span style="font-size:14px">${dIcon}</span>
+        <b class="${dCls}" style="font-size:13px">${r.direction || '-'}</b>
+        <span class="badge ${MAG_CLS[r.magnitude] || ''}" style="font-size:9px">幅度 ${r.magnitude || '-'}</span>
+        <span class="badge ${REACT_CLS[r.market_reaction] || ''}" style="font-size:9px" title="发布后股价反应强度">市場反応 ${r.market_reaction || '-'}</span>
+      </div>
+      ${r.guidance_note ? `<div style="border-left:2px solid var(--blue); padding:3px 6px; margin-bottom:4px; background:rgba(88,166,255,0.05); font-size:10px; line-height:1.4">
+        <b style="color:#58a6ff">全年指引</b>: ${r.guidance_note}
+      </div>` : ''}
+      ${r.revision_reason ? `<div style="border-left:2px solid var(--warn); padding:3px 6px; margin-bottom:4px; background:rgba(210,153,34,0.05); font-size:10px; line-height:1.4">
+        <b style="color:var(--warn)">修正理由</b>: ${r.revision_reason}
+      </div>` : ''}
+      <div style="display:flex; justify-content:space-between; font-size:9px; color:var(--muted); margin-top:5px">
+        <span>更新: ${r.last_update || '-'} · 下次财报: ${r.next_earnings || '-'}</span>
+        <span title="Claude 说明这是训练数据 vs 实时 IR，用户应交叉验证">信頼度 ${CONF_LABEL[r.confidence] || r.confidence || '-'}</span>
+      </div>
+    </div>
+  `;
+  el.dataset.loaded = 'true';
 }
 
 async function loadEvents() {
@@ -999,9 +1044,43 @@ function renderFundamentals(fd, ticker, period) {
       ${cell('financial_debt', fd.financial_debt || [])}
       ${cell('ccc', fd.ccc || [])}
     </div>
+    <!-- Phase 3a: JP 文化核心指标（PBR / PER / ROE / 股息率 + 权益比率）—— 美股也适用 -->
+    ${(fd.pbr != null || fd.per != null || fd.roe_pct != null) ? `
+    <div style="margin-top:6px; padding-top:5px; border-top:1px dashed var(--border)">
+      <div style="font-size:9px; color:var(--muted); margin-bottom:3px" title="日本市场文化更看重这几个：PBR<1=东证改革催化剂 / ROE≥8%=治理规范目标 / 权益比率=厌恶杠杆文化">🇯🇵 估值 & 财务健康</div>
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:4px">
+        ${_jpCell('PBR', fd.pbr, '', v => v == null ? '' : (v < 1 ? 'ok' : (v < 3 ? 'muted' : 'warn')),
+                  'Price-to-Book · 日本文化：PBR<1 = 破净 = 东证改革催化剂 / 1-3 合理 / >3 溢价')}
+        ${_jpCell('PER', fd.per, '', v => v == null ? '' : (v < 15 ? 'ok' : (v < 25 ? 'muted' : 'warn')),
+                  'Price-to-Earnings TTM · <15 便宜 / 15-25 合理 / >25 溢价')}
+        ${_jpCell('ROE', fd.roe_pct, '%', v => v == null ? '' : (v >= 15 ? 'ok' : (v >= 8 ? 'muted' : 'warn')),
+                  '净资产收益率 · 日本治理规范目标 ≥ 8% / ≥ 15% 优秀 / < 8% 待改善')}
+        ${_jpCell('股息率', fd.div_yield_pct, '%', v => v == null ? '' : (v >= 3 ? 'ok' : 'muted'),
+                  '股息率 · 日本文化重视累进股息 / ≥3% 高股息 / <1% 成长股')}
+      </div>
+      ${(fd.equity_ratio && fd.equity_ratio.some(x => x != null)) ? `
+        <div style="margin-top:5px; padding:4px 6px; border:1px solid var(--border); border-radius:4px" title="Total Equity ÷ Total Assets · 日本厌恶杠杆文化：≥ 50% 稳健 / 30-50% 正常 / <30% 高杠杆">
+          <div style="display:flex; justify-content:space-between; align-items:center">
+            <span style="font-size:9px; color:var(--muted)">权益比率（Equity Ratio）</span>
+            <span style="font-size:11px"><b class="${(fd.equity_ratio.at(-1) >= 50) ? 'ok' : (fd.equity_ratio.at(-1) >= 30 ? 'muted' : 'warn')}">${fd.equity_ratio.at(-1) != null ? fd.equity_ratio.at(-1) + '%' : '-'}</b></span>
+          </div>
+          ${_sparkline(fd.equity_ratio, 220, 22, '#58a6ff')}
+        </div>
+      ` : ''}
+    </div>` : ''}
     <div style="font-size:9px; color:var(--muted); margin-top:4px; line-height:1.4">
       💡 hover 各卡片看用途；小图=4年趋势；颜色 绿=好/黄=警惕/红=差
     </div>
+  </div>`;
+}
+
+// helper: 单个指标 mini cell（用于 JP 文化指标行）
+function _jpCell(label, val, unit, bandFn, hint) {
+  const cls = bandFn(val);
+  const disp = val == null ? '-' : (typeof val === 'number' ? val.toLocaleString('en-US') : val);
+  return `<div style="border:1px solid var(--border); border-radius:3px; padding:3px 5px; background:rgba(88,166,255,0.03); text-align:center" title="${hint}">
+    <div style="font-size:8px; color:var(--muted)">${label}</div>
+    <b class="${cls}" style="font-size:11px">${disp}${unit}</b>
   </div>`;
 }
 

@@ -1382,6 +1382,27 @@ def _compute_fundamentals(tk: str, stock: str, period: str = 'year') -> dict:
             score += 1 if turn_now > turn_prev else 0
             piotroski.append(score)
 
+        # === Phase 3a: JP 核心指标 (PBR / PER / ROE / 股息率 / 权益比率) ===
+        # 前 4 项从 yfinance .info 拉当前值，权益比率从 balance_sheet 算历史序列
+        pbr = per = roe_pct = div_yield = None
+        try:
+            info = t.info or {}
+            pbr       = round(info["priceToBook"], 2)      if info.get("priceToBook") else None
+            per       = round(info["trailingPE"], 2)       if info.get("trailingPE")  else None
+            roe_val   = info.get("returnOnEquity")
+            roe_pct   = round(roe_val * 100, 2) if roe_val is not None else None
+            div_val   = info.get("dividendYield")
+            # yfinance 有时给百分数（3.5）有时给小数（0.035）
+            if div_val is not None:
+                div_yield = round(div_val * 100, 2) if div_val < 1 else round(div_val, 2)
+        except Exception:
+            pass
+        # 权益比率 series: Total Equity / Total Assets（每年一个数）
+        equity_ratio = []
+        for i in range(n):
+            v = _safe_div(total_equity[i], total_assets[i], None)
+            equity_ratio.append(round(v * 100, 1) if v is not None else None)
+
         return {
             "ticker":       tk,
             "source_stock": stock,
@@ -1391,17 +1412,82 @@ def _compute_fundamentals(tk: str, stock: str, period: str = 'year') -> dict:
             "financial_debt": fin_debt,
             "ccc":          ccc,
             "piotroski":    piotroski,
-            "piotroski_max": piotroski_max,   # 9 (完整) 或 7 (无 cashflow)
+            "piotroski_max": piotroski_max,
             "cf_available":  cf_available,
+            # Phase 3a: JP 文化核心指标
+            "pbr":            pbr,
+            "per":            per,
+            "roe_pct":        roe_pct,
+            "div_yield_pct":  div_yield,
+            "equity_ratio":   equity_ratio,  # 4 年 series (%)
             "latest": {
                 "croic":     croic[-1] if croic else None,
                 "fin_debt":  fin_debt[-1] if fin_debt else None,
                 "ccc":       ccc[-1] if ccc else None,
                 "piotroski": piotroski[-1] if piotroski else None,
+                "equity_ratio": equity_ratio[-1] if equity_ratio else None,
             },
         }
     except Exception as e:
         return {"ticker": tk, "source": stock, "period": period, "error": str(e)[:150]}
+
+
+def api_jp_guidance(ticker: str) -> dict:
+    """業績予想 (JP guidance) 状态。仅日股用。Claude 生成，7 天缓存。
+
+    返 {ticker, direction: 上修/下修/据え置き/不明, magnitude: 小/中/大,
+        last_update, ref: 关键理由, next_earnings, confidence}
+    """
+    tk = (ticker or "").upper().strip()
+    # 只 JP 有意义
+    stock = TICKER_TO_FUNDAMENTAL_STOCK.get(tk, tk)
+    if not (stock and (stock.endswith(".T") or tk in ["TDK", "KIOXIA", "FUJIKURA"])):
+        return {"ticker": tk, "error": "not_jp_stock"}
+    return _cached(f"jp_guidance_{tk}", ttl_sec=7 * 24 * 3600,
+                    compute_fn=lambda: _compute_jp_guidance(tk, stock))
+
+
+def _compute_jp_guidance(tk: str, stock: str) -> dict:
+    try:
+        from ai_prompt import query_claude_cli
+    except Exception as e:
+        return {"ticker": tk, "error": f"ai_prompt: {e}"}
+    prompt = (
+        f"你是日本股票业绩予想分析师。对下面标的输出严格 JSON（无 markdown 围栏）。\n"
+        f"Ticker: {tk}\n"
+        f"东证 code: {stock}\n\n"
+        "输出格式（英文 key，中文 value）:\n"
+        "{\n"
+        '  "direction":    "上修 | 下修 | 据え置き | 不明",\n'
+        '  "magnitude":    "大 | 中 | 小 | 无",\n'
+        '  "last_update":  "YYYY-MM-DD (最近一次予想公布/修正日)",\n'
+        '  "next_earnings":"YYYY-MM-DD (下次预定财报日)",\n'
+        '  "guidance_note":"1 句核心指引内容 (营收/营业利益/纯利 YoY 目标)",\n'
+        '  "revision_reason":"1 句 revision 理由（如有）",\n'
+        '  "market_reaction":"高 | 中 | 低 (发布后股价反应强度)",\n'
+        '  "confidence":   "high | medium | low"\n'
+        "}\n\n"
+        "参考：JP 上市公司必须发全年业绩予想（yosou）+ 季度予想。\n"
+        "上修 = 予想 revised upward, 下修 = revised downward, 据え置き = 维持不变\n"
+        "严格只输出 JSON，不要 preamble。\n"
+    )
+    out, status = query_claude_cli(prompt, timeout=60)
+    if not out:
+        return {"ticker": tk, "error": f"claude {status}"}
+    import re
+    txt = out.strip()
+    txt = re.sub(r"^```(?:json)?\s*", "", txt)
+    txt = re.sub(r"\s*```\s*$", "", txt)
+    try:
+        data = json.loads(txt)
+    except Exception as e:
+        return {"ticker": tk, "error": f"json parse: {e}", "raw": out[:300]}
+    return {
+        "ticker":         tk,
+        "source_stock":   stock,
+        "generated_at":   datetime.now(timezone.utc).isoformat(),
+        **data,
+    }
 
 
 def api_events(days_ahead: int = 45) -> dict:
@@ -2141,6 +2227,9 @@ class Handler(BaseHTTPRequestHandler):
                 self._json(api_fundamentals(tk, period=pd))
             elif path == "/api/jp_watch":
                 self._json(api_jp_watch())
+            elif path == "/api/jp_guidance":
+                tk = qs.get("ticker", [""])[0]
+                self._json(api_jp_guidance(tk))
             else:
                 self.send_error(404, f"route not found: {path}")
         except Exception as e:
