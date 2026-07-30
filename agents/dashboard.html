@@ -696,8 +696,12 @@ async function loadSignals() {
         </details>`;
       })()}
       <details style="border-top:1px dashed var(--border); margin-top:6px; padding-top:5px" ontoggle="if(this.open) loadSupplyChainOnDemand('${t.ticker}', 'sc-${t.ticker}')">
-        <summary style="cursor:pointer; list-style:none; font-size:10px; color:var(--muted); margin-bottom:4px">🔗 <b style="color:#58a6ff">上下游供应链</b> <small style="font-size:9px">▼展开加载 (Claude 生成，缓存 7 天)</small></summary>
+        <summary style="cursor:pointer; list-style:none; font-size:10px; color:var(--muted); margin-bottom:4px">🔗 <b style="color:#58a6ff">上下游供应链</b> <small style="font-size:9px">▼展开加载 (Claude 生成，缓存 14 天)</small></summary>
         <div id="sc-${t.ticker}"></div>
+      </details>
+      <details style="border-top:1px dashed var(--border); margin-top:6px; padding-top:5px" ontoggle="if(this.open) loadFundamentalsOnDemand('${t.ticker}', 'fd-${t.ticker}')">
+        <summary style="cursor:pointer; list-style:none; font-size:10px; color:var(--muted); margin-bottom:4px">📊 <b style="color:#58a6ff">4 年基本面</b> <small style="font-size:9px">▼展开加载 (yfinance，缓存 30 天)</small></summary>
+        <div id="fd-${t.ticker}"></div>
       </details>
     </div>`;
   }).join('');
@@ -763,6 +767,99 @@ function renderSupplyChain(sc, ticker) {
     ${peers ? `<div style="margin-top:6px; border-top:1px dashed var(--border); padding-top:4px"><small style="color:var(--muted)">⚔ 同行竞争:</small><br>${peers}</div>` : ''}
     ${sc.fmp_error ? `<div style="font-size:8px; color:var(--muted); margin-top:3px">FMP: ${sc.fmp_error}</div>` : ''}
   </div>`;
+}
+
+// 基本面 mini 图 + 解读（4 年年度数据）
+const FUND_META = {
+  croic: {
+    zh: 'CROIC 现金回报率', unit: '%',
+    good_hint: '自由现金流÷投入资本。> 10% = 健康生意，> 20% = 摇钱树。看趋势比绝对值重要：连年上升 = 护城河变宽',
+    band: v => v == null ? '' : (v >= 20 ? 'ok' : (v >= 10 ? 'warn' : (v > 0 ? 'muted' : 'bad'))),
+  },
+  piotroski: {
+    zh: 'Piotroski F 分数', unit: '/9',
+    good_hint: '9 项财务打分（盈利/杠杆/效率）。7-9 = 强财务改善 / 4-6 = 普通 / 0-3 = 警示。年度对比看改善趋势',
+    band: v => v == null ? '' : (v >= 7 ? 'ok' : (v >= 4 ? 'warn' : 'bad')),
+  },
+  financial_debt: {
+    zh: '金融借款', unit: '$M',
+    good_hint: '长短期金融借款绝对额。连年上升 = 杠杆放大风险，稳定/下降 = 财务健康。结合 CROIC 看：借钱能赚更多钱=OK',
+    band: (v, arr) => {
+      if (v == null || !arr || arr.length < 2) return '';
+      const prev = arr[arr.length - 2];
+      return v > prev * 1.2 ? 'warn' : (v < prev * 0.8 ? 'ok' : 'muted');
+    },
+  },
+  ccc: {
+    zh: '现金周转循环', unit: '天',
+    good_hint: '存货 → 应收 → 变现 的天数。越短越好。<30=效率极高 / 30-100=正常 / >120=库存/回款压力',
+    band: v => v == null ? '' : (v <= 30 ? 'ok' : (v <= 100 ? 'muted' : (v <= 150 ? 'warn' : 'bad'))),
+  },
+};
+
+function _sparkline(vals, w = 60, h = 20, color = '#58a6ff') {
+  const valid = vals.map(v => (v == null ? null : v));
+  const nums = valid.filter(v => v != null);
+  if (nums.length < 2) return `<svg width="${w}" height="${h}"></svg>`;
+  const lo = Math.min(...nums), hi = Math.max(...nums), rng = (hi - lo) || 1;
+  const step = w / (vals.length - 1);
+  const pts = valid.map((v, i) => v == null ? null : `${(i * step).toFixed(1)},${(h - ((v - lo) / rng) * (h - 4) - 2).toFixed(1)}`).filter(Boolean);
+  const path = 'M' + pts.join(' L');
+  const last = valid.at(-1);
+  const lastX = (vals.length - 1) * step;
+  const lastY = last == null ? h/2 : (h - ((last - lo) / rng) * (h - 4) - 2);
+  return `<svg width="${w}" height="${h}" style="vertical-align:middle">
+    <path d="${path}" stroke="${color}" stroke-width="1.5" fill="none"/>
+    <circle cx="${lastX}" cy="${lastY}" r="2" fill="${color}"/>
+  </svg>`;
+}
+
+function renderFundamentals(fd, ticker) {
+  if (!fd) return '<small style="color:var(--muted)">🔄 加载中…</small>';
+  if (fd.error) return `<small class="muted">${fd.error === 'no_fundamentals_for_this_type' ? '此类型无基本面（ETF/大宗商品）' : '数据不可用: ' + fd.error.slice(0,80)}</small>`;
+  const years = fd.years || [];
+  const src = fd.source_stock && fd.source_stock !== ticker ? `<small style="color:var(--muted); font-size:9px" title="ETF 用代表单股做基本面代理">← ${fd.source_stock} 财报</small>` : '';
+  const cell = (key, vals) => {
+    const meta = FUND_META[key];
+    const last = vals.at(-1);
+    const cls = meta.band(last, vals);
+    const arrow = vals.length >= 2 && vals.at(-2) != null && last != null ? (last > vals.at(-2) ? '↑' : (last < vals.at(-2) ? '↓' : '→')) : '';
+    const displayVal = last == null ? '-' : (typeof last === 'number' ? last.toLocaleString('en-US') : last);
+    return `<div style="border:1px solid var(--border); border-radius:4px; padding:5px 6px; background:rgba(88,166,255,0.03)" title="${meta.good_hint}">
+      <div style="font-size:9px; color:var(--muted); margin-bottom:2px">${meta.zh}</div>
+      <div style="display:flex; align-items:baseline; gap:4px">
+        <b class="${cls}" style="font-size:13px">${displayVal}${meta.unit}</b>
+        <small class="${cls}" style="font-size:10px">${arrow}</small>
+      </div>
+      ${_sparkline(vals, 55, 18, cls === 'ok' ? '#3fb950' : (cls === 'bad' ? '#f85149' : (cls === 'warn' ? '#d29922' : '#58a6ff')))}
+    </div>`;
+  };
+  return `<div style="padding:5px 0">
+    <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:10px; color:var(--muted)">
+      <span>📊 4 年年度基本面 ${src}</span>
+      <span>${years.join(' · ')}</span>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:4px">
+      ${cell('croic', fd.croic || [])}
+      ${cell('piotroski', fd.piotroski || [])}
+      ${cell('financial_debt', fd.financial_debt || [])}
+      ${cell('ccc', fd.ccc || [])}
+    </div>
+    <div style="font-size:9px; color:var(--muted); margin-top:4px; line-height:1.4">
+      💡 hover 各卡片看用途；小图=4年趋势；颜色 绿=好/黄=警惕/红=差
+    </div>
+  </div>`;
+}
+
+async function loadFundamentalsOnDemand(ticker, containerId) {
+  const el = document.getElementById(containerId);
+  if (!el || el.dataset.loaded === 'true' || el.dataset.loading === 'true') return;
+  el.dataset.loading = 'true';
+  el.innerHTML = '<small style="color:var(--muted); padding:6px; display:block">🔄 yfinance 拉财报中… (首次 2-4s)</small>';
+  const r = await fetchJson(`/api/fundamentals?ticker=${encodeURIComponent(ticker)}`);
+  el.dataset.loading = 'false';
+  el.innerHTML = renderFundamentals(r, ticker);
+  el.dataset.loaded = 'true';
 }
 
 async function loadSupplyChainOnDemand(ticker, containerId) {

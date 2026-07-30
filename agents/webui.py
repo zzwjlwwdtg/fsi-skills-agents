@@ -989,6 +989,149 @@ def _cfg_helper(key: str, default: str = "") -> str:
         return default
 
 
+TICKER_TO_FUNDAMENTAL_STOCK = {
+    "TQQQ": "NVDA",   # 3x QQQ, 用 QQQ 最大权重股 NVDA 代表
+    "SOXL": "NVDA",   # 3x SOX, 用半导体龙头 NVDA
+    "DRAM": "MU",     # Memory ETF, MU 是锚
+    "MULL": "MU",     # 2x MU
+    "GLD":  None,     # 大宗商品 ETF, 无 fundamentals
+    "TSLA": "TSLA",
+    "KLAC": "KLAC",
+    "AMAT": "AMAT",
+    "GOOGL":"GOOGL",
+    "NVDA": "NVDA",
+}
+
+
+def api_fundamentals(ticker: str) -> dict:
+    """4 个基本面指标 × 4 年年度：CROIC / Piotroski F / 金融借款 / 现金周转循环。
+
+    ETF 映射到代表单股（TQQQ/SOXL→NVDA, DRAM/MULL→MU）。
+    30 天缓存（财报季度更新，无必要频刷）。
+    """
+    tk = (ticker or "").upper().strip()
+    stock = TICKER_TO_FUNDAMENTAL_STOCK.get(tk, tk)
+    if stock is None:
+        return {"ticker": tk, "error": "no_fundamentals_for_this_type"}
+    return _cached(f"fundamentals_{tk}", ttl_sec=30 * 24 * 3600,
+                    compute_fn=lambda: _compute_fundamentals(tk, stock))
+
+
+def _compute_fundamentals(tk: str, stock: str) -> dict:
+    """从 yfinance 拉 4 年年度财报，算 4 个指标。"""
+    import yfinance as yf
+    try:
+        t = yf.Ticker(stock)
+        inc = t.income_stmt        # yearly income statement
+        bal = t.balance_sheet
+        cf  = t.cashflow
+        if inc.empty or bal.empty or cf.empty:
+            return {"ticker": tk, "source": stock, "error": "no financial statements from yfinance"}
+
+        # yfinance 返 columns=日期（最近在左），rows=科目。倒序让最老在左
+        def _get(df, keys, default=0):
+            """按候选 key 列表查行，取所有列返 list（老 → 新）"""
+            for k in keys:
+                if k in df.index:
+                    vals = list(reversed(df.loc[k].tolist()))
+                    return [float(v) if v == v else 0 for v in vals]  # NaN → 0
+            return [default] * len(df.columns)
+
+        years = [str(c.year) for c in reversed(inc.columns)]
+
+        revenue      = _get(inc, ["Total Revenue", "TotalRevenue"])
+        cogs         = _get(inc, ["Cost Of Revenue", "CostOfRevenue"])
+        net_income   = _get(inc, ["Net Income", "NetIncome"])
+        gross        = _get(inc, ["Gross Profit", "GrossProfit"])
+
+        total_assets      = _get(bal, ["Total Assets", "TotalAssets"])
+        total_equity      = _get(bal, ["Total Equity Gross Minority Interest", "StockholdersEquity",
+                                       "Total Stockholder Equity"])
+        current_assets    = _get(bal, ["Current Assets", "CurrentAssets"])
+        current_liab      = _get(bal, ["Current Liabilities", "CurrentLiabilities"])
+        st_debt           = _get(bal, ["Current Debt", "Short Long Term Debt", "ShortLongTermDebt",
+                                       "CurrentDebt"])
+        lt_debt           = _get(bal, ["Long Term Debt", "LongTermDebt"])
+        cash              = _get(bal, ["Cash And Cash Equivalents", "CashAndCashEquivalents"])
+        inventory         = _get(bal, ["Inventory"])
+        ar                = _get(bal, ["Accounts Receivable", "AccountsReceivable"])
+        ap                = _get(bal, ["Accounts Payable", "AccountsPayable"])
+        shares_out        = _get(bal, ["Ordinary Shares Number", "Share Issued", "ShareIssued"])
+
+        ocf  = _get(cf, ["Operating Cash Flow", "OperatingCashFlow", "Total Cash From Operating Activities"])
+        capex = _get(cf, ["Capital Expenditure", "CapitalExpenditure", "CapitalExpenditures"])
+
+        n = len(years)
+
+        def _safe_div(a, b, default=None):
+            return (a / b) if b else default
+
+        # 1. CROIC = FCF / Invested Capital （%）
+        croic = []
+        for i in range(n):
+            fcf = ocf[i] - abs(capex[i])
+            ic  = (st_debt[i] + lt_debt[i]) + total_equity[i] - cash[i]
+            v = _safe_div(fcf, ic)
+            croic.append(round(v * 100, 2) if v is not None else None)
+
+        # 2. 金融借款 = ST + LT debt （$M）
+        fin_debt = [round((st_debt[i] + lt_debt[i]) / 1e6, 1) for i in range(n)]
+
+        # 3. 现金周转循环 = DIO + DSO - DPO （天）
+        ccc = []
+        for i in range(n):
+            dio = _safe_div(inventory[i], cogs[i], 0)
+            dso = _safe_div(ar[i], revenue[i], 0)
+            dpo = _safe_div(ap[i], cogs[i], 0)
+            v = (dio + dso - dpo) * 365 if all(x is not None for x in (dio, dso, dpo)) else None
+            ccc.append(round(v, 1) if v is not None else None)
+
+        # 4. Piotroski F-Score （0-9，需要前一年对比 → 最老一年 = None）
+        piotroski = [None]  # 第 0 年无前一年对比
+        for i in range(1, n):
+            score = 0
+            # a) profitability
+            score += 1 if net_income[i] > 0 else 0
+            score += 1 if ocf[i] > 0 else 0
+            roa_now  = _safe_div(net_income[i],   total_assets[i],   0)
+            roa_prev = _safe_div(net_income[i-1], total_assets[i-1], 0)
+            score += 1 if roa_now > roa_prev else 0
+            score += 1 if ocf[i] > net_income[i] else 0
+            # b) leverage / liquidity / source of funds
+            score += 1 if lt_debt[i] < lt_debt[i-1] else 0  # 借款减少 = 好
+            cur_ratio_now  = _safe_div(current_assets[i],   current_liab[i],   0)
+            cur_ratio_prev = _safe_div(current_assets[i-1], current_liab[i-1], 0)
+            score += 1 if cur_ratio_now > cur_ratio_prev else 0
+            score += 1 if shares_out[i] <= shares_out[i-1] else 0   # 未增发
+            # c) operating efficiency
+            gm_now  = _safe_div(gross[i],   revenue[i],   0)
+            gm_prev = _safe_div(gross[i-1], revenue[i-1], 0)
+            score += 1 if gm_now > gm_prev else 0
+            turn_now  = _safe_div(revenue[i],   total_assets[i],   0)
+            turn_prev = _safe_div(revenue[i-1], total_assets[i-1], 0)
+            score += 1 if turn_now > turn_prev else 0
+            piotroski.append(score)
+
+        return {
+            "ticker":       tk,
+            "source_stock": stock,
+            "years":        years,
+            "croic":        croic,
+            "financial_debt": fin_debt,
+            "ccc":          ccc,
+            "piotroski":    piotroski,
+            # 供 UI 快速判断当前状况
+            "latest": {
+                "croic":     croic[-1],
+                "fin_debt":  fin_debt[-1],
+                "ccc":       ccc[-1],
+                "piotroski": piotroski[-1],
+            },
+        }
+    except Exception as e:
+        return {"ticker": tk, "source": stock, "error": str(e)[:150]}
+
+
 def api_events(days_ahead: int = 45) -> dict:
     """未来 N 天内的宏观 + 财报事件（CPI/PPI/NFP/FOMC/NVDA earnings 等）。
 
@@ -1128,6 +1271,20 @@ def _ticker_ai_live_all(signals: dict, options: dict) -> dict:
                             ratio = p_oi / c_oi
                             if ratio >= 3 or ratio <= 0.33:
                                 lines.append(f"  ⚠ Put OI/Call OI = {ratio:.1f}倍 严重失衡")
+                    # 基本面（若缓存里有 —— 不主动拉，避免拖慢 Claude 调用）
+                    try:
+                        fd_cache = _WEBUI_CACHE_DIR / f"fundamentals_{tk}.json"
+                        if fd_cache.exists():
+                            fd = json.loads(fd_cache.read_text(encoding="utf-8"))
+                            if "error" not in fd:
+                                latest = fd.get("latest", {})
+                                lines.append(
+                                    f"  基本面(来源 {fd.get('source_stock','?')}): CROIC={latest.get('croic')}% "
+                                    f"Piotroski={latest.get('piotroski')}/9 借款=${latest.get('fin_debt')}M "
+                                    f"CCC={latest.get('ccc')}天 · 4 年趋势 CROIC={fd.get('croic')}"
+                                )
+                    except Exception:
+                        pass
                     lines.append("")
 
                 prompt = (
@@ -1142,7 +1299,8 @@ def _ticker_ai_live_all(signals: dict, options: dict) -> dict:
                     "2. Call OI 远大于 Put OI 时：上方是 pin 磁吸位 / 下方无护盘\n"
                     "3. gamma_up 挤压[high] = 突破 call wall 加速上涨；put_break 挤压[high] = 跌破 put wall 加速下跌\n"
                     "4. 信号 conf ≥ 4 且期权攻防共振 → 明确机会；信号看多但 put OI 大幅堆积 → 警示 divergence\n"
-                    "5. 严格只输出 ### 段落，不要总结不要展望不要重复问题\n\n"
+                    "5. 若基本面存在 → 综合行里带一句：CROIC 趋势方向 + Piotroski 强/弱 + 借款激增警示\n"
+                    "6. 严格只输出 ### 段落，不要总结不要展望不要重复问题\n\n"
                     "标的数据：\n"
                     + "\n".join(lines)
                 )
@@ -1677,6 +1835,9 @@ class Handler(BaseHTTPRequestHandler):
                 tk = qs.get("ticker", [""])[0]
                 dp = int(qs.get("depth", ["2"])[0])
                 self._json(api_supply_chain_graph(tk, depth=dp))
+            elif path == "/api/fundamentals":
+                tk = qs.get("ticker", [""])[0]
+                self._json(api_fundamentals(tk))
             else:
                 self.send_error(404, f"route not found: {path}")
         except Exception as e:

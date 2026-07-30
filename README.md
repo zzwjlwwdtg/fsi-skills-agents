@@ -35,6 +35,15 @@ WebUI（`webui.bat` → http://127.0.0.1:8080）— 零依赖 http.server + 单�
 
 **2 层示例（NVDA 深度扩展）**：![NVDA 2 跳供应链](docs/supply-chain-nvda-depth2.png)
 
+**📊 4 年基本面（財報狗风格）**：每张卡新增折叠面板，4 个免费指标（yfinance 拉，30 天缓存）：
+- **CROIC 现金回报率** — FCF ÷ Invested Capital，>10% 健康 / >20% 摇钱树
+- **Piotroski F 分数** — 9 项财务打分，7-9 强 / 4-6 普通 / 0-3 警示
+- **金融借款** — ST + LT debt，连年上升 = 杠杆放大
+- **现金周转循环** — DIO + DSO - DPO，越短越好，>120 天警惕库存压力
+- 每格：最新值 + 涨/跌箭头 + 4 年 SVG sparkline + hover 用途解释
+- ETF 用代表单股（TQQQ/SOXL → NVDA / DRAM/MULL → MU）；GLD 跳过
+- **Claude 分析里也会引用**（发现 CROIC 骤跌 / 借款激增 / Piotroski<4 时会主动警示）
+
 **🔥 大单高亮 + 财报结合**：
 - 期权 wall 的 OI ≥ 5K 手 或 名义敞口 ≥ $30M → 攻防位表格显示 🔥，迷你 SVG 图的柱子加深填充 + 顶部 🟠 圆点
 - 「异常成交」（当日 vol > 0.5 × OI）→ hover 显示 ⚡
