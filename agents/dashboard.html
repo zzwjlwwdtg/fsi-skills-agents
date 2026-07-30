@@ -1044,8 +1044,8 @@ function renderFundamentals(fd, ticker, period) {
       ${cell('financial_debt', fd.financial_debt || [])}
       ${cell('ccc', fd.ccc || [])}
     </div>
-    <!-- Phase 3a: JP 文化核心指标（PBR / PER / ROE / 股息率 + 权益比率）—— 美股也适用 -->
-    ${(fd.pbr != null || fd.per != null || fd.roe_pct != null) ? `
+    <!-- Phase 3a: JP 文化核心指标 —— 仅在 JP 卡片显示（避免美股 dividendYield 单位混乱等 yfinance 数据问题）-->
+    ${(fd.is_jp && (fd.pbr != null || fd.per != null || fd.roe_pct != null)) ? `
     <div style="margin-top:6px; padding-top:5px; border-top:1px dashed var(--border)">
       <div style="font-size:9px; color:var(--muted); margin-bottom:3px" title="日本市场文化更看重这几个：PBR<1=东证改革催化剂 / ROE≥8%=治理规范目标 / 权益比率=厌恶杠杆文化">🇯🇵 估值 & 财务健康</div>
       <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:4px">

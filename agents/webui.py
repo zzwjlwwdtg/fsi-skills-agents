@@ -1382,8 +1382,9 @@ def _compute_fundamentals(tk: str, stock: str, period: str = 'year') -> dict:
             score += 1 if turn_now > turn_prev else 0
             piotroski.append(score)
 
-        # === Phase 3a: JP 核心指标 (PBR / PER / ROE / 股息率 / 权益比率) ===
-        # 前 4 项从 yfinance .info 拉当前值，权益比率从 balance_sheet 算历史序列
+        # === Phase 3a: 5 项估值指标（PBR/PER/ROE/股息率/权益比率）
+        # yfinance 返 dividendYield 已是 %（MSFT=0.93 表示 0.93%），不再 ×100
+        # yfinance 返 returnOnEquity 是小数（0.30 表示 30%），需 ×100
         pbr = per = roe_pct = div_yield = None
         try:
             info = t.info or {}
@@ -1392,9 +1393,7 @@ def _compute_fundamentals(tk: str, stock: str, period: str = 'year') -> dict:
             roe_val   = info.get("returnOnEquity")
             roe_pct   = round(roe_val * 100, 2) if roe_val is not None else None
             div_val   = info.get("dividendYield")
-            # yfinance 有时给百分数（3.5）有时给小数（0.035）
-            if div_val is not None:
-                div_yield = round(div_val * 100, 2) if div_val < 1 else round(div_val, 2)
+            div_yield = round(div_val, 2) if div_val is not None else None
         except Exception:
             pass
         # 权益比率 series: Total Equity / Total Assets（每年一个数）
@@ -1414,7 +1413,8 @@ def _compute_fundamentals(tk: str, stock: str, period: str = 'year') -> dict:
             "piotroski":    piotroski,
             "piotroski_max": piotroski_max,
             "cf_available":  cf_available,
-            # Phase 3a: JP 文化核心指标
+            "is_jp":          stock.endswith(".T") or tk in ("TDK", "KIOXIA", "FUJIKURA"),
+            # Phase 3a: 估值指标（PBR/PER/ROE/股息/权益比率）
             "pbr":            pbr,
             "per":            per,
             "roe_pct":        roe_pct,
