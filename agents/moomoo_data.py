@@ -157,28 +157,36 @@ def get_option_chain_via_openD(ticker: str, expiry: str | None = None) -> Option
         if not snaps:
             return None
         snap_all = pd.concat(snaps, ignore_index=True)
-        # 关键字段
-        snap_all = snap_all[[
-            "code", "last_price", "bid_price", "ask_price",
-            "volume", "open_interest",
-        ]].rename(columns={
-            "last_price":     "lastPrice",
-            "bid_price":      "bid",
-            "ask_price":      "ask",
-            "open_interest":  "openInterest",
+        # openD 期权字段是 option_open_interest / option_implied_volatility 等（前缀 option_）
+        keep_cols = [
+            "code", "last_price", "bid_price", "ask_price", "volume",
+            "option_open_interest", "option_implied_volatility",
+            "option_delta", "option_gamma", "option_vega", "option_theta",
+        ]
+        snap_all = snap_all[[c for c in keep_cols if c in snap_all.columns]].rename(columns={
+            "last_price":                "lastPrice",
+            "bid_price":                 "bid",
+            "ask_price":                 "ask",
+            "option_open_interest":      "openInterest",
+            "option_implied_volatility": "impliedVolatility",
+            "option_delta":              "delta",
+            "option_gamma":              "gamma",
+            "option_vega":               "vega",
+            "option_theta":              "theta",
         })
         merged = chain.merge(snap_all, on="code", how="left")
         merged["strike"] = merged["strike_price"].astype(float)
         merged["volume"] = merged["volume"].fillna(0).astype(int)
         merged["openInterest"] = merged["openInterest"].fillna(0).astype(int)
 
-        calls = merged[merged["option_type"] == "CALL"][
-            ["strike", "volume", "openInterest", "lastPrice", "bid", "ask"]
-        ].copy()
-        puts  = merged[merged["option_type"] == "PUT"][
-            ["strike", "volume", "openInterest", "lastPrice", "bid", "ask"]
-        ].copy()
-        return {"expiry": expiry, "calls": calls, "puts": puts}
+        base_cols = ["strike", "volume", "openInterest", "lastPrice", "bid", "ask"]
+        greek_cols = [c for c in ["impliedVolatility", "delta", "gamma", "vega", "theta"]
+                      if c in merged.columns]
+        cols = base_cols + greek_cols
+        calls = merged[merged["option_type"] == "CALL"][cols].copy()
+        puts  = merged[merged["option_type"] == "PUT"][cols].copy()
+        return {"expiry": expiry, "calls": calls, "puts": puts,
+                "has_greeks": bool(greek_cols)}
     except Exception:
         return None
 
