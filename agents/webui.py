@@ -1241,18 +1241,33 @@ def _compute_fundamentals(tk: str, stock: str, period: str = 'year') -> dict:
             piotroski_lag = 1
             annualize     = 1
             days_factor   = 365
-        if inc.empty or bal.empty or cf.empty:
+        # 主基准：income statement 必须有；balance_sheet 也基本必要；cashflow 若空则相关指标降级
+        if inc.empty or bal.empty:
             return {"ticker": tk, "source": stock, "period": period,
-                    "error": f"no {period} financial statements from yfinance"}
+                    "error": f"no {period} income/balance statements from yfinance"}
+        # 记录 cashflow 是否可用（JP 季度常常缺失）
+        cf_available = not cf.empty
+        # 取 inc/bal 交集的期数（JP 常出现 inc=4 bal=3 → 用 min=3 避免越界）
+        n_periods = min(len(inc.columns), len(bal.columns))
+        if n_periods == 0:
+            return {"ticker": tk, "source": stock, "period": period,
+                    "error": "empty income or balance sheet"}
+        # 若 inc 比 n_periods 多，只取最近 n_periods 期（columns 最左=最近）
+        inc = inc.iloc[:, :n_periods]
+        bal = bal.iloc[:, :n_periods]
+        if cf_available:
+            cf = cf.iloc[:, :min(len(cf.columns), n_periods)]
 
         # yfinance 返 columns=日期（最近在左），rows=科目。倒序让最老在左
         def _get(df, keys, default=0):
-            """按候选 key 列表查行，取所有列返 list（老 → 新）"""
+            """按候选 key 列表查行，取所有列返 list（老 → 新）。空 df 返 [default]*n_periods。"""
+            if df.empty:
+                return [default] * n_periods
             for k in keys:
                 if k in df.index:
                     vals = list(reversed(df.loc[k].tolist()))
                     return [float(v) if v == v else 0 for v in vals]
-            return [default] * len(df.columns)
+            return [default] * n_periods
 
         # Period 标签: year → "2025" / quarter → "Q3'25"
         def _fmt(col):
@@ -1290,8 +1305,12 @@ def _compute_fundamentals(tk: str, stock: str, period: str = 'year') -> dict:
             return (a / b) if b else default
 
         # 1. CROIC = FCF / IC（%）—— 季度用 × 4 年化，可与年度比较
+        # 若 cashflow 缺失（yfinance JP 季度常见）→ 全部 None
         croic = []
         for i in range(n):
+            if not cf_available:
+                croic.append(None)
+                continue
             fcf = ocf[i] - abs(capex[i])
             ic  = (st_debt[i] + lt_debt[i]) + total_equity[i] - cash[i]
             v = _safe_div(fcf, ic)
@@ -1312,17 +1331,20 @@ def _compute_fundamentals(tk: str, stock: str, period: str = 'year') -> dict:
         # 4. Piotroski F-Score（0-9）
         # year 模式: 比较前一年 (lag=1)
         # quarter 模式: YoY 同季对比 (lag=4)，避免季节性
-        piotroski = [None] * min(piotroski_lag, n)  # 前 lag 期无对比
+        # Piotroski: 若 cashflow 缺失，2 项测试无法算，最多得 7 分（标注 max=7）
+        piotroski_max = 9 if cf_available else 7
+        piotroski = [None] * min(piotroski_lag, n)
         for i in range(piotroski_lag, n):
             score = 0
-            j = i - piotroski_lag  # 对比期
+            j = i - piotroski_lag
             # a) profitability
             score += 1 if net_income[i] > 0 else 0
-            score += 1 if ocf[i] > 0 else 0
+            if cf_available:
+                score += 1 if ocf[i] > 0 else 0
+                score += 1 if ocf[i] > net_income[i] else 0  # quality of earnings
             roa_now  = _safe_div(net_income[i], total_assets[i], 0)
             roa_prev = _safe_div(net_income[j], total_assets[j], 0)
             score += 1 if roa_now > roa_prev else 0
-            score += 1 if ocf[i] > net_income[i] else 0
             # b) leverage / liquidity
             score += 1 if lt_debt[i] < lt_debt[j] else 0
             cr_now  = _safe_div(current_assets[i], current_liab[i], 0)
@@ -1342,11 +1364,13 @@ def _compute_fundamentals(tk: str, stock: str, period: str = 'year') -> dict:
             "ticker":       tk,
             "source_stock": stock,
             "period":       period,
-            "years":        years,     # 保持字段名向后兼容（年度是 "2025"，季度是 "Q3'25"）
+            "years":        years,     # 保持字段名向后兼容
             "croic":        croic,
             "financial_debt": fin_debt,
             "ccc":          ccc,
             "piotroski":    piotroski,
+            "piotroski_max": piotroski_max,   # 9 (完整) 或 7 (无 cashflow)
+            "cf_available":  cf_available,
             "latest": {
                 "croic":     croic[-1] if croic else None,
                 "fin_debt":  fin_debt[-1] if fin_debt else None,

@@ -923,8 +923,8 @@ const FUND_META = {
     band: v => v == null ? '' : (v >= 20 ? 'ok' : (v >= 10 ? 'warn' : (v > 0 ? 'muted' : 'bad'))),
   },
   piotroski: {
-    zh: 'Piotroski F 分数', unit: '/9',
-    good_hint: '9 项财务打分（盈利/杠杆/效率）。7-9 = 强财务改善 / 4-6 = 普通 / 0-3 = 警示。年度对比看改善趋势',
+    zh: 'Piotroski F 分数', unit: '/9',  // 默认；渲染时会覆盖为 /N (fd.piotroski_max)
+    good_hint: '9 项财务打分（盈利/杠杆/效率）。满分 9 分：7-9 强 / 4-6 普通 / 0-3 警示。yfinance JP 季度无现金流数据时降为满分 7',
     band: v => v == null ? '' : (v >= 7 ? 'ok' : (v >= 4 ? 'warn' : 'bad')),
   },
   financial_debt: {
@@ -975,10 +975,12 @@ function renderFundamentals(fd, ticker, period) {
     const cls = meta.band(last, vals);
     const arrow = vals.length >= 2 && vals.at(-2) != null && last != null ? (last > vals.at(-2) ? '↑' : (last < vals.at(-2) ? '↓' : '→')) : '';
     const displayVal = last == null ? '-' : (typeof last === 'number' ? last.toLocaleString('en-US') : last);
+    // piotroski unit 动态：JP 季度无 cashflow 时降为 /7
+    const unit = (key === 'piotroski' && fd.piotroski_max) ? `/${fd.piotroski_max}` : meta.unit;
     return `<div style="border:1px solid var(--border); border-radius:4px; padding:5px 6px; background:rgba(88,166,255,0.03)" title="${meta.good_hint}">
       <div style="font-size:9px; color:var(--muted); margin-bottom:2px">${meta.zh}</div>
       <div style="display:flex; align-items:baseline; gap:4px">
-        <b class="${cls}" style="font-size:13px">${displayVal}${meta.unit}</b>
+        <b class="${cls}" style="font-size:13px">${displayVal}${unit}</b>
         <small class="${cls}" style="font-size:10px">${arrow}</small>
       </div>
       ${_sparkline(vals, 55, 18, cls === 'ok' ? '#3fb950' : (cls === 'bad' ? '#f85149' : (cls === 'warn' ? '#d29922' : '#58a6ff')))}
