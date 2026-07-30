@@ -221,6 +221,14 @@
   </div>
 </div>
 
+<!-- Row 4.5: 日股关注（不参与 orchestrator scan，仅供参考） -->
+<div class="grid">
+  <div class="card">
+    <h2 title="东证日股关注 · 半导体供应链 exposure · 无期权（yfinance 无 JP 期权链）">🇯🇵 日股关注 <small>东证 · 供应链 exposure</small></h2>
+    <div id="jp-watch" class="grid g3"></div>
+  </div>
+</div>
+
 <!-- Row 5: 持仓 + AI 分析 -->
 <div class="grid g2">
   <div class="card">
@@ -286,6 +294,46 @@ function eventHint(evName) {
     if (evName.includes(key)) return EVENT_HINT[key];
   }
   return '';
+}
+
+async function loadJPWatch() {
+  const r = await fetchJson('/api/jp_watch');
+  const el = $('jp-watch');
+  if (!el) return;
+  if (!r || !r.tickers) { el.innerHTML = '<small>无数据</small>'; return; }
+  el.innerHTML = r.tickers.map(t => {
+    if (t.error) return `<div class="signal-card"><b>${t.ticker}</b><br><small class="bad">${t.error}</small></div>`;
+    const p1cls = t.pct_1d > 0 ? 'ok' : (t.pct_1d < 0 ? 'bad' : 'muted');
+    const p5cls = t.pct_5d != null ? (t.pct_5d > 0 ? 'ok' : (t.pct_5d < 0 ? 'bad' : 'muted')) : 'muted';
+    const rsiCls = t.rsi >= 70 ? 'warn' : (t.rsi <= 30 ? 'warn' : 'muted');
+    return `
+    <div class="signal-card" title="${t.thesis}">
+      <div class="top-row">
+        <span class="ticker-name">${t.ticker} <small style="color:var(--muted); font-size:9px">${t.symbol}</small></span>
+        <span class="price">¥${t.price}</span>
+      </div>
+      <div style="font-size:11px; margin:3px 0"><b>${t.name_zh}</b> <small style="color:var(--muted)">${t.name_en}</small></div>
+      <div style="display:flex; justify-content:space-between; font-size:10px; margin:4px 0">
+        <span>1d <b class="${p1cls}">${t.pct_1d > 0 ? '+' : ''}${t.pct_1d}%</b></span>
+        <span>5d <b class="${p5cls}">${t.pct_5d != null ? (t.pct_5d > 0 ? '+' : '') + t.pct_5d + '%' : '-'}</b></span>
+        <span>RSI <b class="${rsiCls}">${t.rsi}</b></span>
+      </div>
+      <div style="font-size:9px; color:var(--muted); line-height:1.4; margin-top:4px; border-top:1px dashed var(--border); padding-top:4px">${t.thesis}</div>
+      <details data-details-key="jpsc-${t.ticker}" style="border-top:1px dashed var(--border); margin-top:5px; padding-top:4px" ontoggle="rememberDetailsState(this); if(this.open) loadSupplyChainOnDemand('${t.ticker}', 'jpsc-body-${t.ticker}')">
+        <summary style="cursor:pointer; list-style:none; font-size:10px; color:var(--muted)">🔗 <b style="color:#58a6ff">供应链</b> <small style="font-size:9px">▼</small></summary>
+        <div id="jpsc-body-${t.ticker}"></div>
+      </details>
+      <details data-details-key="jpfd-${t.ticker}" open style="border-top:1px dashed var(--border); margin-top:5px; padding-top:4px" ontoggle="rememberDetailsState(this); if(this.open) loadFundamentalsOnDemand('${t.ticker}', 'jpfd-body-${t.ticker}')">
+        <summary style="cursor:pointer; list-style:none; font-size:10px; color:var(--muted)">📊 <b style="color:#58a6ff">基本面</b> <small style="font-size:9px">▲</small></summary>
+        <div id="jpfd-body-${t.ticker}"></div>
+      </details>
+    </div>`;
+  }).join('');
+  // 恢复用户展开状态 + 触发默认 open 的懒加载
+  restoreDetailsState();
+  document.querySelectorAll('#jp-watch details[open][data-details-key]').forEach(el => {
+    if (el.getAttribute('ontoggle')) el.dispatchEvent(new Event('toggle'));
+  });
 }
 
 async function loadEvents() {
@@ -1104,7 +1152,7 @@ async function loadAll() {
   await Promise.all([
     loadHealth(), loadNav(), loadHmm(), loadBanners(), loadSectors(),
     loadSignals(), loadPositions(), loadTrades(), loadLog(), loadAI(),
-    loadEvents(),
+    loadEvents(), loadJPWatch(),
   ]);
 }
 

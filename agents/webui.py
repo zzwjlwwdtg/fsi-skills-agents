@@ -1002,7 +1002,61 @@ TICKER_TO_FUNDAMENTAL_STOCK = {
     "NVDA": "NVDA",
     "MSFT": "MSFT",
     "AAPL": "AAPL",
+    # 日股（东证）：仅基本面+供应链，无期权，不进 orchestrator scan
+    "TDK":      "6762.T",   # TDK — 电子元器件/固态电池/HDD磁头，AAPL/NVDA 供应链
+    "KIOXIA":   "285A.T",   # キオクシア — NAND 闪存全球#2（前东芝存储），2024-12 IPO
+    "FUJIKURA": "5803.T",   # 藤倉 — 光纤/海底电缆/AI 数据中心互联概念
 }
+
+# 日股关注列表（不参与 orchestrator scan，只在 dashboard 单独展示）
+JP_WATCH_LIST = [
+    {"ticker": "TDK",      "symbol": "6762.T", "name_zh": "TDK",      "name_en": "TDK",
+     "thesis": "电子元器件龙头 · Apple/NVDA 供应链 · MLCC + 固态电池 + HDD 磁头 + 无线充电"},
+    {"ticker": "KIOXIA",   "symbol": "285A.T", "name_zh": "铠侠",     "name_en": "Kioxia",
+     "thesis": "NAND 闪存全球#2 · 前东芝存储 · 2024-12 IPO · Data-center SSD + Client SSD"},
+    {"ticker": "FUJIKURA", "symbol": "5803.T", "name_zh": "藤仓",     "name_en": "Fujikura",
+     "thesis": "光纤/海底电缆 · AI 数据中心光互联需求爆发 · NVDA GPU 集群互联受益股"},
+]
+
+
+def api_jp_watch() -> dict:
+    """日股关注列表当前行情（不进 orchestrator scan）。5 min 缓存。"""
+    return _cached("jp_watch", ttl_sec=300, compute_fn=_compute_jp_watch)
+
+
+def _compute_jp_watch() -> dict:
+    import yfinance as yf
+    out = {"ts": datetime.now(timezone.utc).isoformat(), "tickers": []}
+    for entry in JP_WATCH_LIST:
+        try:
+            t = yf.Ticker(entry["symbol"])
+            h = t.history(period="10d", auto_adjust=True)
+            if h.empty:
+                out["tickers"].append({**entry, "error": "no data"})
+                continue
+            close = h["Close"].astype(float)
+            price = float(close.iloc[-1])
+            prev  = float(close.iloc[-2]) if len(close) >= 2 else price
+            pct_1d = ((price / prev) - 1) * 100 if prev else 0
+            pct_5d = ((price / float(close.iloc[-6])) - 1) * 100 if len(close) >= 6 else None
+            # 简单 RSI 14
+            deltas = close.diff().dropna()
+            gains  = deltas.clip(lower=0)
+            losses = -deltas.clip(upper=0)
+            avg_gain = gains.tail(14).mean() if len(gains) >= 14 else gains.mean()
+            avg_loss = losses.tail(14).mean() if len(losses) >= 14 else losses.mean()
+            rsi = 100 - (100 / (1 + (avg_gain / avg_loss))) if avg_loss and avg_loss > 0 else 50
+            out["tickers"].append({
+                **entry,
+                "price":  round(price, 2),
+                "pct_1d": round(pct_1d, 2),
+                "pct_5d": round(pct_5d, 2) if pct_5d is not None else None,
+                "rsi":    round(float(rsi), 1),
+                "currency": "JPY",
+            })
+        except Exception as e:
+            out["tickers"].append({**entry, "error": str(e)[:80]})
+    return out
 
 
 def api_fundamentals(ticker: str, period: str = 'year') -> dict:
@@ -1867,6 +1921,8 @@ class Handler(BaseHTTPRequestHandler):
                 tk = qs.get("ticker", [""])[0]
                 pd = qs.get("period", ["year"])[0]
                 self._json(api_fundamentals(tk, period=pd))
+            elif path == "/api/jp_watch":
+                self._json(api_jp_watch())
             else:
                 self.send_error(404, f"route not found: {path}")
         except Exception as e:
