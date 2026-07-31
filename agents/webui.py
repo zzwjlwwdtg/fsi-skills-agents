@@ -1010,6 +1010,8 @@ TICKER_TO_FUNDAMENTAL_STOCK = {
     "TDK":      "6762.T",   # TDK — 电子元器件/固态电池/HDD磁头，AAPL/NVDA 供应链
     "KIOXIA":   "285A.T",   # キオクシア — NAND 闪存全球#2（前东芝存储），2024-12 IPO
     "FUJIKURA": "5803.T",   # 藤倉 — 光纤/海底电缆/AI 数据中心互联概念
+    "MURATA":   "6981.T",   # 村田製作所 — MLCC 全球龙头，Apple/NVDA 直接供应
+    "TEKSCEND": "429A.T",   # TEKSCEND PHOTOMASK — 光罩制造，TSMC 关键工艺供应
 }
 
 # 日股关注列表（不参与 orchestrator scan，只在 dashboard 单独展示）
@@ -1020,6 +1022,10 @@ JP_WATCH_LIST = [
      "thesis": "NAND 闪存全球#2 · 前东芝存储 · 2024-12 IPO · Data-center SSD + Client SSD"},
     {"ticker": "FUJIKURA", "symbol": "5803.T", "name_zh": "藤仓",     "name_en": "Fujikura",
      "thesis": "光纤/海底电缆 · AI 数据中心光互联需求爆发 · NVDA GPU 集群互联受益股"},
+    {"ticker": "MURATA",   "symbol": "6981.T", "name_zh": "村田",     "name_en": "Murata",
+     "thesis": "MLCC 全球龙头（市占 40%+）· Apple/NVDA/Tesla 直接供应 · AI 服务器 + EV 高价值 MLCC 需求"},
+    {"ticker": "TEKSCEND", "symbol": "429A.T", "name_zh": "TEKSCEND", "name_en": "Tekscend Photomask",
+     "thesis": "半导体光罩制造 · TSMC/Samsung 关键工艺供应 · 光刻上游（ASML 之外的国产替代）"},
 ]
 
 
