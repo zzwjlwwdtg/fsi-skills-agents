@@ -38,7 +38,16 @@ TICKERS = ["US.TQQQ", "US.SOXL", "US.DRAM", "US.MULL"]
 #   NVDA — 半导体链条领头，看它就知道 SOXL/DRAM 方向
 #   MSFT — 云 AI 大客户 + FAANG 权重股（TQQQ 组成）
 #   AAPL — TQQQ/QQQ 最大权重股，苹果链跟踪
-WATCH_ONLY_TICKERS = ["US.NVDA", "US.MSFT", "US.AAPL"]
+WATCH_ONLY_TICKERS = [
+    # AI/tech 权重股
+    "US.NVDA",   # 半导体链条领头
+    "US.MSFT",   # 云 AI + FAANG
+    "US.AAPL",   # QQQ 最大权重
+    # 2026-Q3 thesis 新增：AI 云 pure-play + 债券对冲（详见 memory/project_thesis_2026Q3.md）
+    "US.NBIS",   # Nebius AI cloud pure-play — 云端消费增长表达
+    "US.SHY",    # 1-3Y Treasury ETF — 2Y 债券多仓代理
+    "US.IEI",    # 3-7Y Treasury ETF — 5Y 债券多仓代理
+]
 
 # --- Leverage Factors ---
 # 杠杆 ETF 单日波动是标的的 N 倍 → 各种"暴跌/暴涨"绝对阈值要按倍数缩放

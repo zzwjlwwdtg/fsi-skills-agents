@@ -1002,6 +1002,10 @@ TICKER_TO_FUNDAMENTAL_STOCK = {
     "NVDA": "NVDA",
     "MSFT": "MSFT",
     "AAPL": "AAPL",
+    # 2026-Q3 thesis
+    "NBIS": "NBIS",   # Nebius (pure-play AI cloud，有股票基本面)
+    "SHY":  None,     # 债券 ETF 无股票基本面
+    "IEI":  None,     # 债券 ETF 无股票基本面
     # 日股（东证）：仅基本面+供应链，无期权，不进 orchestrator scan
     "TDK":      "6762.T",   # TDK — 电子元器件/固态电池/HDD磁头，AAPL/NVDA 供应链
     "KIOXIA":   "285A.T",   # キオクシア — NAND 闪存全球#2（前东芝存储），2024-12 IPO
@@ -1788,6 +1792,10 @@ TICKER_TO_OPTION_SOURCE = {
     "NVDA": "NVDA",
     "MSFT": "MSFT",
     "AAPL": "AAPL",
+    # 2026-Q3 thesis
+    "NBIS": "NBIS",
+    "SHY":  "SHY",   # 1-3Y Treasury ETF
+    "IEI":  "IEI",   # 3-7Y Treasury ETF
 }
 
 

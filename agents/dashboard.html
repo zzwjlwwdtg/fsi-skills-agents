@@ -286,8 +286,11 @@ const EVENT_HINT = {
   'PPI Release':    '生产者物价指数 · 上游通胀先行指标',
   'NFP Release':    '非农就业 · Fed 就业目标 + 经济强弱',
   'Retail Sales':   '零售销售 · 消费者信心 + 经济动能',
-  'PCE':            '个人消费支出物价 · Fed 首选通胀指标',
+  'PCE Release':    '🔥 核心 PCE · Fed 首选通胀指标 · thesis invalidation: >0.25% m/m = 平 SHY/IEI 债券多仓',
   'NVDA Earnings':  'NVDA 财报 · 半导体链条领头（SOXL/DRAM/MULL 都会跟）',
+  'GOOG Q3':        '🔥 GOOG Q3 · thesis check: capex 若继续上调 → AI 价值链 shift 判断错，平 GOOG 多仓',
+  'AMZN Q3':        '🔥 AMZN Q3 · thesis check: capex 若继续上调 → 云端 shift 未确认',
+  'MSFT Q1':        '🔥 MSFT Q1 · thesis check: capex 是否继续收窄决定 shift 是否孤立事件',
 };
 function eventHint(evName) {
   for (const key in EVENT_HINT) {
