@@ -165,6 +165,30 @@ def notify_crisis(ticker: str, pct_chg: float, reason: str = "") -> dict:
     return send_alert(msg, level="crisis")
 
 
+def notify_jp_guidance_opportunity(ticker: str, name: str, rsi: float,
+                                     pct_5d: float, guidance: dict) -> dict:
+    """JP 股极端超卖 + 業績予想上修 双重共振 → 高价值 catalyst 提示。
+
+    guidance: {direction, magnitude, guidance_note, revision_reason, ...}
+    只在两个条件同时满足时触发（调用方保证）:
+      - RSI < 35 (极端超卖)
+      - guidance.direction == "上修"
+    """
+    mag = guidance.get("magnitude", "?")
+    note = (guidance.get("guidance_note") or "")[:100]
+    reason = (guidance.get("revision_reason") or "")[:100]
+    reaction = guidance.get("market_reaction", "?")
+    msg = (
+        f"**🇯🇵 JP CATALYST — {ticker} ({name})**\n"
+        f"技术: RSI **{rsi:.0f}** 极端超卖 · 5d {pct_5d:+.1f}%\n"
+        f"业绩指引: **上修 {mag}** · 市場反応 {reaction}\n"
+        f"指引: {note}\n"
+        f"理由: {reason}\n"
+        f"→ 技术 + 基本面双重共振，可关注反弹机会（人工判断）"
+    )
+    return send_alert(msg, level="jp_catalyst")
+
+
 def notify_watchdog(event: str, old_pid=None, new_pid=None) -> dict:
     if event == "dead_restart":
         msg = f"orchestrator 死亡（旧 PID {old_pid}），已自动重启 → 新 PID {new_pid}"

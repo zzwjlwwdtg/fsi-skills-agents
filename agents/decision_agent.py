@@ -740,6 +740,39 @@ def _etf_rules(market: dict, events: dict, macro: dict, regime: str = "neutral",
         return {"action": "REDUCE", "confidence": _normalize_confidence(bear + 2),
                 "reason": "new high + vol diverge + RSI extreme", "stop_ref": None}
 
+    cum_5d = market.get("cum_5d_pct", 0) or 0   # 5 天累计涨跌 %
+
+    # ── Crisis V-bounce Probe（extreme oversold + strong technical confluence 例外）──
+    # 昨日 2026-07-30 遗漏 SOXL +24% / MULL +28% 反弹的直接原因：crisis regime
+    # bull_thresh=6 屏蔽了 bull_count=5 的强多头共振。
+    #
+    # 例外条件（严格 AND）：
+    #   1. regime = crisis (被极端保护屏蔽了)
+    #   2. RSI < 32 （极端超卖）
+    #   3. bull_count >= 4 （强技术共振，即使不满 bull_thresh=6）
+    #   4. cum_5d <= -12% （确认深跌，不是伪跌破）
+    #   5. pct_eff_b >= -1% (今日至少不再深跌)
+    #   6. vol_rat < 1.5 （不是恐慌卖出中，缩量止跌 / 温和拉起）
+    #   7. env var CRISIS_VBOUNCE_ENABLED=1 （feature flag, 默认关闭待回测）
+    # 输出：WATCH_BUY_PROBE (paper_trader 按 30% 常规仓位; 严格 stop)
+    # 需回测验证 —— 详见 _backtest_crisis_vbounce.py（TODO）
+    if (os.environ.get("CRISIS_VBOUNCE_ENABLED") == "1"
+            and regime == "crisis"
+            and rsi < 32
+            and bull >= 4
+            and cum_5d <= -12
+            and pct_eff_b >= -1
+            and vol_rat < 1.5):
+        v_stop = _compute_buy_stop_ref(market)
+        return {"action": "WATCH_BUY_PROBE",
+                "confidence": _normalize_confidence(3),  # 强制 probe 级别
+                "reason": (f"crisis-vbounce probe: RSI={rsi:.0f} bull={bull} "
+                           f"cum_5d={cum_5d:+.1f}% today={pct_eff_b:+.1f}% "
+                           f"vol={vol_rat:.2f} (未回测，probe 30% 仓位)"),
+                "stop_ref": v_stop,
+                "score_breakdown": {"crisis_vbounce": True, "rsi": rsi, "bull": bull,
+                                    "cum_5d": cum_5d, "pct_today": pct_eff_b}}
+
     # 阈值由 regime 决定（基于新的 confluence 计数范围调整）
     # bull_trending 适度放宽；crisis 极敏感
     _RT = {

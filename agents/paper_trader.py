@@ -450,9 +450,10 @@ LEVERAGED_PAIRS = {
     "US.AMZN":  ["US.AMZU", "US.AMZD"],
 }
 
-BUY_ACTIONS    = {"BUY", "WATCH_BUY"}
+BUY_ACTIONS    = {"BUY", "WATCH_BUY", "WATCH_BUY_PROBE"}
 SELL_ACTIONS   = {"SELL"}
 REDUCE_ACTIONS = {"REDUCE"}
+PROBE_ONLY_ACTIONS = {"WATCH_BUY_PROBE"}  # 强制 30% 仓位，无视 conf → mult
 
 # 连续亏损暂停（P4.2）：最近 N 笔已平仓全亏 → 暂停新仓 PAUSE_HOURS 小时
 LOSS_STREAK_THRESHOLD = 3
@@ -597,7 +598,7 @@ def _group_cap_usd(ticker: str) -> tuple[float, str] | tuple[None, None]:
     return remaining, group
 
 
-def _position_size_usd(ticker: str, conf: int = 6) -> float:
+def _position_size_usd(ticker: str, conf: int = 6, action: str = "BUY") -> float:
     """
     Vol-Target + DD Floor + VIX Multiplier (机构标准 sizing):
 
@@ -622,8 +623,14 @@ def _position_size_usd(ticker: str, conf: int = 6) -> float:
     except Exception:
         regime = "neutral"
     target_vol = TARGET_PORT_VOL.get(regime, 0.12)
+
+    # WATCH_BUY_PROBE 例外：crisis 下允许极小 probe 仓位（1/2 normal probe）
+    is_probe = (action in PROBE_ONLY_ACTIONS)
     if target_vol <= 0:
-        return 0.0   # crisis / 未知 regime → 不开新仓
+        if is_probe:
+            target_vol = 0.05   # probe 极小 target vol (~5% 常规仓)
+        else:
+            return 0.0   # crisis / 未知 regime → 不开新仓
 
     # 2) 单股年化波动
     asset_vol = _annual_vol(ticker)
@@ -633,17 +640,18 @@ def _position_size_usd(ticker: str, conf: int = 6) -> float:
     vix_mult  = _vix_multiplier()
     dd_mult   = _drawdown_multiplier()
     # conf → mult：低信心 = 试探仓 (probe)，高信心 = 满仓 + boost
-    # 自适应 5 分制 / 10 分制（按 conf/scale 归一化）
+    # PROBE_ONLY_ACTIONS: 强制 0.30 (30% 常规仓)，无视 conf
     try:
         from decision_agent import _conf_scale
         scale = _conf_scale()
     except Exception:
         scale = 10
     pct = conf / scale if scale > 0 else 0.5
-    if pct < 0.40:    conf_mult = 0.30   # probe 试探（20% 仓位级别）
-    elif pct < 0.60:  conf_mult = 0.65   # 半仓
-    elif pct < 0.80:  conf_mult = 1.00   # 满仓
-    else:             conf_mult = 1.0 + (pct - 0.80) * 2.0   # boost 最高 1.40
+    if is_probe:      conf_mult = 0.30   # probe: 强制 30%
+    elif pct < 0.40:  conf_mult = 0.30
+    elif pct < 0.60:  conf_mult = 0.65
+    elif pct < 0.80:  conf_mult = 1.00
+    else:             conf_mult = 1.0 + (pct - 0.80) * 2.0
 
     kelly_mult = _kelly_mult(ticker)
     final_pct = raw_pct * vix_mult * dd_mult * conf_mult * kelly_mult
@@ -886,7 +894,7 @@ def execute(ticker: str, decision: dict, mkt: dict, window: str | None,
             logger.info(f"[trader] {ticker} {action_for_sizing} 跳过：连续亏损暂停 ({p_reason})")
             return
 
-    size_usd = _position_size_usd(ticker, conf=conf_for_sizing)
+    size_usd = _position_size_usd(ticker, conf=conf_for_sizing, action=action)
     # 卫星票必须在今日 picks 里才允许 BUY；老仓 SELL/REDUCE 仍允许
     if not is_core and size_usd == 0:
         # 未上今日候选池：仅当已有仓位且收到 SELL/REDUCE 时继续；其它跳过
@@ -999,7 +1007,7 @@ def execute(ticker: str, decision: dict, mkt: dict, window: str | None,
                     and bounce >= _rebuy_bounce_pct(ticker)
                     and not tstate.get("rebuy_done")):
                 # v2: 算出 vol-target 应有仓位，与当前差额就是 rebuy 量
-                target_size_usd = _position_size_usd(ticker, conf=conf)
+                target_size_usd = _position_size_usd(ticker, conf=conf, action=action)
                 target_qty = int(target_size_usd // cur_price)
                 current_qty = _position_qty(ticker)
                 rebuy_qty = max(0, target_qty - current_qty)

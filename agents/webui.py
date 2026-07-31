@@ -1020,8 +1020,62 @@ JP_WATCH_LIST = [
 
 
 def api_jp_watch() -> dict:
-    """日股关注列表当前行情（不进 orchestrator scan）。5 min 缓存。"""
-    return _cached("jp_watch", ttl_sec=300, compute_fn=_compute_jp_watch)
+    """日股关注列表当前行情（不进 orchestrator scan）。5 min 缓存。
+
+    同时检查 JP catalyst 触发条件（RSI<35 + 業績予想上修），触发则推送 Discord/TG。
+    dedup 24h 防止刷屏。
+    """
+    result = _cached("jp_watch", ttl_sec=300, compute_fn=_compute_jp_watch)
+    # 检查 catalyst 触发（不阻断响应，静默 fire-and-forget）
+    try:
+        threading.Thread(target=_check_jp_catalyst_triggers, args=(result,), daemon=True).start()
+    except Exception:
+        pass
+    return result
+
+
+def _check_jp_catalyst_triggers(jp_watch_data: dict) -> None:
+    """检查每只 JP 股是否 满足 catalyst 条件 → 触发 Discord/TG 推送。
+
+    条件（AND）：RSI < 35 且 guidance.direction = '上修'
+    dedup: 每 24h 每 ticker 只推一次
+    """
+    dedup_dir = _WEBUI_CACHE_DIR / "jp_catalyst_sent"
+    dedup_dir.mkdir(exist_ok=True)
+    for t in (jp_watch_data or {}).get("tickers", []):
+        if "error" in t:
+            continue
+        rsi = t.get("rsi", 100)
+        tk  = t.get("ticker", "")
+        if rsi >= 35 or not tk:
+            continue
+        # 读 guidance cache
+        gd_cache = _WEBUI_CACHE_DIR / f"jp_guidance_{tk}.json"
+        if not gd_cache.exists():
+            continue
+        try:
+            gd = json.loads(gd_cache.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        if gd.get("direction") != "上修":
+            continue
+        # dedup: 24h per ticker
+        dedup_file = dedup_dir / f"{tk}.txt"
+        if dedup_file.exists():
+            age = datetime.now().timestamp() - dedup_file.stat().st_mtime
+            if age < 24 * 3600:
+                continue
+        # fire
+        try:
+            from notifications import notify_jp_guidance_opportunity
+            notify_jp_guidance_opportunity(
+                ticker=tk, name=t.get("name_zh", tk),
+                rsi=rsi, pct_5d=t.get("pct_5d", 0) or 0,
+                guidance=gd,
+            )
+            dedup_file.write_text(datetime.now().isoformat(), encoding="utf-8")
+        except Exception:
+            pass
 
 
 def _compute_jp_watch() -> dict:
