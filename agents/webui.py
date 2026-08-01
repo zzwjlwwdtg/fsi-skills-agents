@@ -106,6 +106,56 @@ PORT = int(os.environ.get("WEBUI_PORT", "8080"))
 HOST = os.environ.get("WEBUI_HOST", "127.0.0.1")
 
 
+# ---- Dashboard display capabilities ----
+# Keep asset classification and card capabilities in one backend contract. The
+# frontend consumes this profile instead of maintaining a second ticker list.
+_DEFAULT_TICKER_DISPLAY_PROFILE = {
+    "card_group": "main",
+    "asset_class": "equity",
+    "asset_label_zh": "股票 / 股票 ETF",
+    "show_options": True,
+    "show_fundamentals": True,
+    "show_ai_analysis": True,
+    "show_supply_chain": True,
+}
+
+TICKER_DISPLAY_PROFILES = {
+    "GLD": {
+        "card_group": "macro",
+        "asset_class": "commodity",
+        "asset_label_zh": "黄金大宗商品",
+        "show_options": False,
+        "show_fundamentals": False,
+        "show_ai_analysis": False,
+        "show_supply_chain": False,
+    },
+    "SHY": {
+        "card_group": "macro",
+        "asset_class": "fixed_income",
+        "asset_label_zh": "1–3 年美国国债",
+        "show_options": False,
+        "show_fundamentals": False,
+        "show_ai_analysis": False,
+        "show_supply_chain": False,
+    },
+    "IEI": {
+        "card_group": "macro",
+        "asset_class": "fixed_income",
+        "asset_label_zh": "3–7 年美国国债",
+        "show_options": False,
+        "show_fundamentals": False,
+        "show_ai_analysis": False,
+        "show_supply_chain": False,
+    },
+}
+
+
+def ticker_display_profile(ticker: str) -> dict:
+    """Return a copy of the dashboard capability profile for ``ticker``."""
+    tk = (ticker or "").upper().removeprefix("US.")
+    return {**_DEFAULT_TICKER_DISPLAY_PROFILE, **TICKER_DISPLAY_PROFILES.get(tk, {})}
+
+
 def _trump_summary_recent3(items: list) -> dict:
     """对最近 3 条推文调 Claude CLI 出一句话概括。缓存 by post_ids sha1。非阻塞。
 
@@ -385,6 +435,7 @@ def api_signals() -> dict:
             "vol_ratio": float(m.group(4)),
             "trend":     m.group(5),
             "ts":        lines[i][:19],
+            "display_profile": ticker_display_profile(tk),
         }
         # 找该 ticker 之后 6 行内的 信号 + 共振
         for j in range(i, min(i + 10, len(lines))):
@@ -1300,6 +1351,8 @@ def api_fundamentals(ticker: str, period: str = 'year') -> dict:
     """
     tk = (ticker or "").upper().strip()
     period = 'quarter' if period == 'quarter' else 'year'
+    if not ticker_display_profile(tk)["show_fundamentals"]:
+        return {"ticker": tk, "error": "no_fundamentals_for_this_type"}
     stock = TICKER_TO_FUNDAMENTAL_STOCK.get(tk, tk)
     if stock is None:
         return {"ticker": tk, "error": "no_fundamentals_for_this_type"}
@@ -1619,34 +1672,98 @@ def _ticker_ai_snapshot_parse() -> dict:
     }
 
 
+def _read_fundamentals_cache_for_ai(ticker: str) -> dict | None:
+    """Read the current fundamentals cache naming scheme for equity AI context."""
+    tk = (ticker or "").upper().removeprefix("US.")
+    if not ticker_display_profile(tk)["show_fundamentals"]:
+        return None
+    # Annual data is the stable long-horizon context. Fall back to quarterly
+    # and then the pre-period legacy filename so existing caches remain usable.
+    for name in (
+        f"fundamentals_{tk}_year.json",
+        f"fundamentals_{tk}_quarter.json",
+        f"fundamentals_{tk}.json",
+    ):
+        path = _WEBUI_CACHE_DIR / name
+        if not path.exists():
+            continue
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        if isinstance(data, dict) and "error" not in data:
+            return data
+    return None
+
+
+_TICKER_AI_CACHE_SCHEMA = 2
+
+
+def _ticker_ai_cache_key(ticker_rows: list[tuple]) -> str:
+    """Hash every input that can alter the generated per-ticker AI analysis."""
+    import hashlib
+
+    payload = {
+        "schema": _TICKER_AI_CACHE_SCHEMA,
+        "tickers": [
+            {
+                "ticker": tk,
+                "signal": {
+                    key: sig.get(key)
+                    for key in ("action_zh", "conf", "scale", "bull_count", "bear_count",
+                                "rsi", "vol_ratio", "regime")
+                },
+                "options": {
+                    "spot": opt.get("spot"),
+                    "call_wall_oi": opt.get("call_wall_oi"),
+                    "put_wall_oi": opt.get("put_wall_oi"),
+                    "squeeze_type": (
+                        opt.get("squeeze_risk", {}).get("type")
+                        if isinstance(opt.get("squeeze_risk"), dict) else None
+                    ),
+                },
+                "fundamentals": (
+                    {
+                        key: fundamentals.get(key)
+                        for key in ("source_stock", "period", "years", "latest", "croic",
+                                    "piotroski", "financial_debt", "ccc")
+                    }
+                    if fundamentals else None
+                ),
+            }
+            for tk, sig, opt, fundamentals in ticker_rows
+        ],
+    }
+    raw = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha1(raw.encode("utf-8")).hexdigest()[:12]
+
+
 def _ticker_ai_live_all(signals: dict, options: dict) -> dict:
     """一次 Claude 调用生成所有 tracked ticker 的即时分析。
 
     缓存 key = sha1(标的 + action + conf + spot + wall OI)。数据变才重跑 Claude。
     非阻塞：无缓存时后台线程跑，本次请求返 state=generating。
     """
-    import hashlib
     if not signals and not options:
         return {"tickers": {}, "state": "empty"}
 
     tk_list = []
-    for tk in sorted(TICKER_TO_OPTION_SOURCE.keys()):
+    # AI coverage follows actual signal/option data, not the unrelated option
+    # source mapping. Macro cards intentionally opt out via their profile.
+    for tk in sorted(set(signals) | set(options)):
+        if not ticker_display_profile(tk)["show_ai_analysis"]:
+            continue
         sig = signals.get(tk, {})
         opt = options.get(tk, {})
         if not sig and (not opt or 'error' in opt):
             continue
-        tk_list.append((tk, sig, opt))
+        fundamentals = _read_fundamentals_cache_for_ai(tk)
+        tk_list.append((tk, sig, opt, fundamentals))
 
     if not tk_list:
         return {"tickers": {}, "state": "empty"}
 
-    hash_input = json.dumps([
-        (tk, sig.get("action_zh"), sig.get("conf"), sig.get("bull_count"), sig.get("bear_count"),
-         opt.get("spot"), opt.get("call_wall_oi"), opt.get("put_wall_oi"),
-         opt.get("squeeze_risk", {}).get("type") if isinstance(opt.get("squeeze_risk"), dict) else None)
-        for tk, sig, opt in tk_list
-    ], sort_keys=True)
-    key = hashlib.sha1(hash_input.encode()).hexdigest()[:12]
+    key = _ticker_ai_cache_key(tk_list)
     cache_path = _WEBUI_CACHE_DIR / f"ticker_ai_live_{key}.json"
 
     if cache_path.exists():
@@ -1664,14 +1781,14 @@ def _ticker_ai_live_all(signals: dict, options: dict) -> dict:
             try:
                 from ai_prompt import query_claude_cli
                 lines = []
-                for tk, s, o in tk_list:
+                for tk, s, o, fd in tk_list:
                     lines.append(f"--- {tk} ---")
                     lines.append(
                         f"信号: {s.get('action_zh','?')} conf={s.get('conf','?')}/{s.get('scale','?')} "
                         f"| 多{s.get('bull_count',0)}/空{s.get('bear_count',0)} | "
                         f"RSI={s.get('rsi','?')} 量比={s.get('vol_ratio','?')} regime={s.get('regime','?')}"
                     )
-                    if 'error' not in o:
+                    if o and 'error' not in o:
                         of = o.get('offense', {}) or {}
                         ds = o.get('defense', {}) or {}
                         sr = o.get('squeeze_risk', {}) or {}
@@ -1694,19 +1811,13 @@ def _ticker_ai_live_all(signals: dict, options: dict) -> dict:
                             if ratio >= 3 or ratio <= 0.33:
                                 lines.append(f"  ⚠ Put OI/Call OI = {ratio:.1f}倍 严重失衡")
                     # 基本面（若缓存里有 —— 不主动拉，避免拖慢 Claude 调用）
-                    try:
-                        fd_cache = _WEBUI_CACHE_DIR / f"fundamentals_{tk}.json"
-                        if fd_cache.exists():
-                            fd = json.loads(fd_cache.read_text(encoding="utf-8"))
-                            if "error" not in fd:
-                                latest = fd.get("latest", {})
-                                lines.append(
-                                    f"  基本面(来源 {fd.get('source_stock','?')}): CROIC={latest.get('croic')}% "
-                                    f"Piotroski={latest.get('piotroski')}/9 借款=${latest.get('fin_debt')}M "
-                                    f"CCC={latest.get('ccc')}天 · 4 年趋势 CROIC={fd.get('croic')}"
-                                )
-                    except Exception:
-                        pass
+                    if fd:
+                        latest = fd.get("latest", {})
+                        lines.append(
+                            f"  基本面(来源 {fd.get('source_stock','?')}): CROIC={latest.get('croic')}% "
+                            f"Piotroski={latest.get('piotroski')}/9 借款=${latest.get('fin_debt')}M "
+                            f"CCC={latest.get('ccc')}天 · 4 年趋势 CROIC={fd.get('croic')}"
+                        )
                     lines.append("")
 
                 prompt = (
@@ -1766,10 +1877,14 @@ def api_ticker_ai() -> dict:
     sources: dict[str, str] = {}
     # 优先 live
     for tk, body in (live.get("tickers") or {}).items():
+        if not ticker_display_profile(tk)["show_ai_analysis"]:
+            continue
         tickers[tk] = body
         sources[tk] = "live"
     # 补 snapshot（未被 live 覆盖的）
     for tk, body in (snapshot.get("tickers") or {}).items():
+        if not ticker_display_profile(tk)["show_ai_analysis"]:
+            continue
         if tk not in tickers:
             tickers[tk] = body
             sources[tk] = "snapshot"
@@ -1922,7 +2037,15 @@ def api_ticker_options() -> dict:
     """每个 tracked ticker 的期权墙 + 攻防位 + 挤压风险。10min 后台缓存。"""
     # 24h TTL —— 期权 wall/OI 日级变化就够，无必要秒级刷（拖累 yfinance + 间接
     # 让 ticker_ai 的 Claude hash 每天最多变一次）
-    return _cached("ticker_options", ttl_sec=24 * 3600, compute_fn=_compute_ticker_options)
+    data = _cached("ticker_options", ttl_sec=24 * 3600, compute_fn=_compute_ticker_options)
+    # Old cache files can still contain macro assets. Enforce the current
+    # capability contract at the API boundary as well as during recomputation.
+    if isinstance(data.get("tickers"), dict):
+        data["tickers"] = {
+            tk: value for tk, value in data["tickers"].items()
+            if ticker_display_profile(tk)["show_options"]
+        }
+    return data
 
 
 def _compute_ticker_options() -> dict:
@@ -1944,6 +2067,8 @@ def _compute_ticker_options() -> dict:
         out["data_source"] = "openD + yfinance fallback"
 
     for tk, underlying in TICKER_TO_OPTION_SOURCE.items():
+        if not ticker_display_profile(tk)["show_options"]:
+            continue
         try:
             t = yf.Ticker(underlying)
             source_used = "yfinance"

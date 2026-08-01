@@ -60,9 +60,11 @@
   small { color: var(--muted); }
   canvas { max-height: 260px; }
   .signal-card { padding: 8px 10px; background: rgba(255,255,255,0.02); border-left: 3px solid var(--border); border-radius: 4px; margin-bottom: 6px; }
+  .signal-card.macro-asset { border-left-color: var(--purple); background: rgba(163,113,247,0.05); }
   .signal-card .top-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
   .signal-card .ticker-name { font-size: 14px; font-weight: 700; }
   .signal-card .price { font-family: "Consolas", monospace; }
+  .macro-meta { display: flex; justify-content: space-between; gap: 8px; margin: 5px 0; font-size: 10px; color: var(--muted); }
   .bar-container { display: flex; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin: 3px 0; }
   .bar-bull { background: var(--green); height: 100%; }
   .bar-bear { background: var(--red); height: 100%; }
@@ -216,12 +218,20 @@
 <!-- Row 4: 每标的信号卡 -->
 <div class="grid">
   <div class="card">
-    <h2 title="每个标的的技术信号：多空共振条 + action + regime + RSI/量比">标的实时信号 <small>技术面共振</small></h2>
+    <h2 title="股票与股票 ETF 的完整分析：技术信号、期权攻防、Claude、供应链和基本面">股票与股票 ETF <small>完整分析</small></h2>
     <div id="signals" class="grid g3"></div>
   </div>
 </div>
 
-<!-- Row 4.5: 日股关注（不参与 orchestrator scan，仅供参考） -->
+<!-- Row 4.5: 大宗商品与债券（简化技术视图） -->
+<div class="grid">
+  <div class="card">
+    <h2 title="大宗商品与债券 ETF 独立专栏：只保留价格、趋势与技术共振，不计算期权墙、个股基本面或供应链分析">大宗商品与债券 <small>简化技术视图 · 无期权墙/基本面</small></h2>
+    <div id="macro-signals" class="grid g3"></div>
+  </div>
+</div>
+
+<!-- Row 4.6: 日股关注（不参与 orchestrator scan，仅供参考） -->
 <div class="grid">
   <div class="card">
     <h2 title="东证日股关注 · 半导体供应链 exposure · 无期权（yfinance 无 JP 期权链）">🇯🇵 日股关注 <small>东证 · 供应链 exposure</small></h2>
@@ -817,82 +827,115 @@ function renderOptAnalysis(opt) {
   </div>`;
 }
 
+function renderSignalOverview(t, optSrc = '') {
+  const total = (t.bull_count || 0) + (t.bear_count || 0);
+  const bullPct = total ? (t.bull_count / total * 100) : 50;
+  const bearPct = total ? (t.bear_count / total * 100) : 50;
+  const actionCls = sideCls(t.action_zh);
+  const regimeCls = 'regime ' + (t.regime || 'neutral');
+  const rsiTip = t.rsi < 30 ? '超卖（可能反弹）' : (t.rsi > 70 ? '超买（可能回调）' : '正常');
+  const volTip = t.vol_ratio > 1.5 ? '放量' : (t.vol_ratio < 0.7 ? '缩量' : '正常');
+  return `
+    <div class="top-row">
+      <span class="ticker-name" title="标的代码">${t.ticker} ${optSrc}</span>
+      <span class="price" title="当前价">$${fmt(t.price)}</span>
+    </div>
+    <div class="top-row">
+      <span class="${actionCls}" title="建议动作 + 置信度 (X/5)">${t.action_zh || '?'} <small>${t.conf||''}/${t.scale||''}</small></span>
+      <span class="badge ${regimeCls}" title="市场状态：crisis=危机 / overheated=过热 / bull=温和牛 / neutral=中性">${t.regime || 'neutral'}</span>
+    </div>
+    <div class="bar-container" title="共振多空条：绿=看多信号数，红=看空信号数">
+      <div class="bar-bull" style="width:${bullPct}%"></div>
+      <div class="bar-bear" style="width:${bearPct}%"></div>
+    </div>
+    <div style="font-size:10px; color:var(--muted); display:flex; justify-content:space-between">
+      <span title="9+ 维技术指标共振投票">多${t.bull_count||0} vs 空${t.bear_count||0}</span>
+      <span title="RSI ${rsiTip} · 量比 ${volTip}">RSI ${t.rsi} / 量比 ${t.vol_ratio}</span>
+    </div>`;
+}
+
+function renderTickerAI(t, context) {
+  const body = context.aiMap[t.ticker];
+  const src  = context.aiSrc[t.ticker];
+  if (!body) {
+    if (context.aiLiveState === 'generating') {
+      return `<div style="border-top:1px dashed var(--border); margin-top:6px; padding-top:5px; font-size:10px; color:var(--muted)">🤖 Claude 即时分析生成中… （首次 30-60s，之后刷新秒开）</div>`;
+    }
+    return `<div style="border-top:1px dashed var(--border); margin-top:6px; padding-top:5px; font-size:10px; color:var(--muted)">🤖 Claude 分析：数据不足或 Claude CLI 不可用</div>`;
+  }
+  const srcBadge = src === 'live'
+    ? `<span style="color:#3fb950; font-size:9px" title="基于当前 signals+期权数据即时生成，${context.aiLiveMtime}">🟢 LIVE ${context.aiLiveMtime}</span>`
+    : `<span style="color:var(--muted); font-size:9px" title="来自 orchestrator 定时快照 ${context.aiSnapMtime}">📸 SNAPSHOT ${context.aiSnapMtime}</span>`;
+  return `<details data-details-key="ai-${t.ticker}" open style="border-top:1px dashed var(--border); margin-top:6px; padding-top:5px" ontoggle="rememberDetailsState(this)">
+    <summary style="cursor:pointer; list-style:none; font-size:10px; color:var(--muted); margin-bottom:4px">🤖 <b style="color:#58a6ff">Claude 分析</b> ${srcBadge} <span style="font-size:9px">▲折叠</span></summary>
+    <div class="analysis" style="font-size:11px; line-height:1.55">${(typeof marked !== 'undefined' ? marked.parse(body) : body.replace(/\n/g,'<br>'))}</div>
+  </details>`;
+}
+
+function renderSignalCard(t, context) {
+  const profile = t.display_profile || {};
+  const isMacro = profile.card_group === 'macro';
+  const showOptions = profile.show_options !== false;
+  const showFundamentals = profile.show_fundamentals !== false;
+  const showAI = profile.show_ai_analysis !== false;
+  const showSupplyChain = profile.show_supply_chain !== false;
+  const opt = showOptions ? context.optMap[t.ticker] : null;
+  const optSrc = showOptions && opt && !opt.error && opt.underlying !== t.ticker
+    ? `<small style="color:var(--muted); font-size:9px" title="用 ${opt.underlying} 期权链 (标的自身期权流动性不足)">← ${opt.underlying} chain</small>` : '';
+  const trendZh = {up:'上行', down:'下行', flat:'横盘'}[t.trend] || (t.trend || '未知');
+  const macroMeta = isMacro ? `<div class="macro-meta">
+    <span class="badge info">${profile.asset_label_zh || '宏观资产'}</span>
+    <span title="日线趋势方向">趋势 ${trendZh} · 技术简报</span>
+  </div>` : '';
+  const supplyChain = showSupplyChain ? `<details data-details-key="sc-${t.ticker}" style="border-top:1px dashed var(--border); margin-top:6px; padding-top:5px" ontoggle="rememberDetailsState(this); if(this.open) loadSupplyChainOnDemand('${t.ticker}', 'sc-${t.ticker}')">
+    <summary style="cursor:pointer; list-style:none; font-size:10px; color:var(--muted); margin-bottom:4px">🔗 <b style="color:#58a6ff">上下游供应链</b> <small style="font-size:9px">▼展开加载 (Claude 生成，缓存 14 天)</small></summary>
+    <div id="sc-${t.ticker}"></div>
+  </details>` : '';
+  const fundamentals = showFundamentals ? `<details data-details-key="fd-${t.ticker}" open style="border-top:1px dashed var(--border); margin-top:6px; padding-top:5px" ontoggle="rememberDetailsState(this); if(this.open) loadFundamentalsOnDemand('${t.ticker}', 'fd-${t.ticker}')">
+    <summary style="cursor:pointer; list-style:none; font-size:10px; color:var(--muted); margin-bottom:4px">📊 <b style="color:#58a6ff">4 年基本面</b> <small style="font-size:9px">▲折叠 (yfinance，缓存 30 天)</small></summary>
+    <div id="fd-${t.ticker}"></div>
+  </details>` : '';
+  return `<div class="signal-card${isMacro ? ' macro-asset' : ''}">
+    ${renderSignalOverview(t, optSrc)}
+    ${macroMeta}
+    ${showOptions ? renderMiniWall(opt) : ''}
+    ${showOptions ? renderOptAnalysis(opt) : ''}
+    ${showAI ? renderTickerAI(t, context) : ''}
+    ${supplyChain}
+    ${fundamentals}
+  </div>`;
+}
+
 async function loadSignals() {
-  // 并行拉信号 + 每标的期权 + 每标的 Claude 分析
+  // 并行拉信号 + 股票标的期权 + 股票标的 Claude 分析
   const [s, tOpts, tAI] = await Promise.all([
     fetchJson('/api/signals'),
     fetchJson('/api/ticker_options'),
     fetchJson('/api/ticker_ai'),
   ]);
   if (!s || !s.tickers || !Object.keys(s.tickers).length) {
-    $('signals').innerHTML = '<div style="grid-column: span 3"><small>今日 log 暂无信号（orchestrator 未跑或未到 ET 窗口）</small></div>';
+    const empty = '<div style="grid-column: span 3"><small>今日 log 暂无信号（orchestrator 未跑或未到 ET 窗口）</small></div>';
+    $('signals').innerHTML = empty;
+    $('macro-signals').innerHTML = empty;
     return;
   }
-  const optMap = (tOpts && tOpts.tickers) || {};
-  const aiMap  = (tAI  && tAI.tickers)  || {};
-  const aiSrc  = (tAI  && tAI.sources)  || {};
-  const aiLiveState = tAI && tAI.live_state;
-  const aiLiveMtime = tAI && tAI.live_generated ? new Date(tAI.live_generated).toLocaleString('zh-CN', {hour:'2-digit',minute:'2-digit'}) : '';
-  const aiSnapMtime = tAI && tAI.snapshot_mtime ? new Date(tAI.snapshot_mtime).toLocaleString('zh-CN', {month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
+  const context = {
+    optMap: (tOpts && tOpts.tickers) || {},
+    aiMap:  (tAI && tAI.tickers) || {},
+    aiSrc:  (tAI && tAI.sources) || {},
+    aiLiveState: tAI && tAI.live_state,
+    aiLiveMtime: tAI && tAI.live_generated ? new Date(tAI.live_generated).toLocaleString('zh-CN', {hour:'2-digit',minute:'2-digit'}) : '',
+    aiSnapMtime: tAI && tAI.snapshot_mtime ? new Date(tAI.snapshot_mtime).toLocaleString('zh-CN', {month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '',
+  };
   const items = Object.values(s.tickers).sort((a,b) => a.ticker.localeCompare(b.ticker));
-  $('signals').innerHTML = items.map(t => {
-    const total = (t.bull_count || 0) + (t.bear_count || 0);
-    const bullPct = total ? (t.bull_count / total * 100) : 50;
-    const bearPct = total ? (t.bear_count / total * 100) : 50;
-    const actionCls = sideCls(t.action_zh);
-    const regimeCls = 'regime ' + (t.regime || 'neutral');
-    const rsiTip = t.rsi < 30 ? '超卖（可能反弹）' : (t.rsi > 70 ? '超买（可能回调）' : '正常');
-    const volTip = t.vol_ratio > 1.5 ? '放量' : (t.vol_ratio < 0.7 ? '缩量' : '正常');
-    const opt = optMap[t.ticker];
-    const optSrc = opt && !opt.error && opt.underlying !== t.ticker
-                   ? `<small style="color:var(--muted); font-size:9px" title="用 ${opt.underlying} 期权链 (标的自身期权流动性不足)">← ${opt.underlying} chain</small>` : '';
-    return `
-    <div class="signal-card">
-      <div class="top-row">
-        <span class="ticker-name" title="标的代码">${t.ticker} ${optSrc}</span>
-        <span class="price" title="当前价">$${fmt(t.price)}</span>
-      </div>
-      <div class="top-row">
-        <span class="${actionCls}" title="建议动作 + 置信度 (X/5)">${t.action_zh || '?'} <small>${t.conf||''}/${t.scale||''}</small></span>
-        <span class="badge ${regimeCls}" title="市场状态：crisis=危机 / overheated=过热 / bull=温和牛 / neutral=中性">${t.regime || 'neutral'}</span>
-      </div>
-      <div class="bar-container" title="共振多空条：绿=看多信号数，红=看空信号数">
-        <div class="bar-bull" style="width:${bullPct}%"></div>
-        <div class="bar-bear" style="width:${bearPct}%"></div>
-      </div>
-      <div style="font-size:10px; color:var(--muted); display:flex; justify-content:space-between">
-        <span title="9+ 维技术指标共振投票">多${t.bull_count||0} vs 空${t.bear_count||0}</span>
-        <span title="RSI ${rsiTip} · 量比 ${volTip}">RSI ${t.rsi} / 量比 ${t.vol_ratio}</span>
-      </div>
-      ${renderMiniWall(opt)}
-      ${renderOptAnalysis(opt)}
-      ${(() => {
-        const body = aiMap[t.ticker];
-        const src  = aiSrc[t.ticker];
-        if (!body) {
-          if (aiLiveState === 'generating') {
-            return `<div style="border-top:1px dashed var(--border); margin-top:6px; padding-top:5px; font-size:10px; color:var(--muted)">🤖 Claude 即时分析生成中… （首次 30-60s，之后刷新秒开）</div>`;
-          }
-          return `<div style="border-top:1px dashed var(--border); margin-top:6px; padding-top:5px; font-size:10px; color:var(--muted)">🤖 Claude 分析：数据不足或 Claude CLI 不可用</div>`;
-        }
-        const srcBadge = src === 'live'
-          ? `<span style="color:#3fb950; font-size:9px" title="基于当前 signals+期权数据即时生成，${aiLiveMtime}">🟢 LIVE ${aiLiveMtime}</span>`
-          : `<span style="color:var(--muted); font-size:9px" title="来自 orchestrator 定时快照 ${aiSnapMtime}">📸 SNAPSHOT ${aiSnapMtime}</span>`;
-        return `<details data-details-key="ai-${t.ticker}" open style="border-top:1px dashed var(--border); margin-top:6px; padding-top:5px" ontoggle="rememberDetailsState(this)">
-          <summary style="cursor:pointer; list-style:none; font-size:10px; color:var(--muted); margin-bottom:4px">🤖 <b style="color:#58a6ff">Claude 分析</b> ${srcBadge} <span style="font-size:9px">▲折叠</span></summary>
-          <div class="analysis" style="font-size:11px; line-height:1.55">${(typeof marked !== 'undefined' ? marked.parse(body) : body.replace(/\n/g,'<br>'))}</div>
-        </details>`;
-      })()}
-      <details data-details-key="sc-${t.ticker}" style="border-top:1px dashed var(--border); margin-top:6px; padding-top:5px" ontoggle="rememberDetailsState(this); if(this.open) loadSupplyChainOnDemand('${t.ticker}', 'sc-${t.ticker}')">
-        <summary style="cursor:pointer; list-style:none; font-size:10px; color:var(--muted); margin-bottom:4px">🔗 <b style="color:#58a6ff">上下游供应链</b> <small style="font-size:9px">▼展开加载 (Claude 生成，缓存 14 天)</small></summary>
-        <div id="sc-${t.ticker}"></div>
-      </details>
-      <details data-details-key="fd-${t.ticker}" open style="border-top:1px dashed var(--border); margin-top:6px; padding-top:5px" ontoggle="rememberDetailsState(this); if(this.open) loadFundamentalsOnDemand('${t.ticker}', 'fd-${t.ticker}')">
-        <summary style="cursor:pointer; list-style:none; font-size:10px; color:var(--muted); margin-bottom:4px">📊 <b style="color:#58a6ff">4 年基本面</b> <small style="font-size:9px">▲折叠 (yfinance，缓存 30 天)</small></summary>
-        <div id="fd-${t.ticker}"></div>
-      </details>
-    </div>`;
-  }).join('');
+  const macroItems = items.filter(t => (t.display_profile || {}).card_group === 'macro');
+  const mainItems = items.filter(t => (t.display_profile || {}).card_group !== 'macro');
+  $('signals').innerHTML = mainItems.length
+    ? mainItems.map(t => renderSignalCard(t, context)).join('')
+    : '<div style="grid-column: span 3"><small>暂无股票或股票 ETF 信号</small></div>';
+  $('macro-signals').innerHTML = macroItems.length
+    ? macroItems.map(t => renderSignalCard(t, context)).join('')
+    : '<div style="grid-column: span 3"><small>暂无大宗商品或债券信号</small></div>';
   // 恢复用户展开状态 + 触发默认展开的懒加载
   restoreDetailsState();
   // 首次进入：所有默认 open 的 details 触发一次 toggle 事件加载数据
