@@ -110,7 +110,7 @@ git config core.hooksPath .githooks
 :: 4. Start moomoo OpenD (keep running)
 
 :: 5. Pick a run mode
-run.bat        :: Long-running orchestrator (15min loop + 5 ET windows)
+run.bat        :: Long-running orchestrator (5min scheduler checks + 5 ET windows)
 snap.bat       :: One-shot daily snapshot (regime + Trump + signals + options + Claude)
 tools.bat      :: Tools menu (trader status / regime / picks / flatten etc.)
 backtest.bat   :: Backtest menu (regime / news / trump / modules / V-bounce)
@@ -159,6 +159,8 @@ webui.bat      :: WebUI dashboard at http://127.0.0.1:8080
    │ (V-bounce / Trump override / event-tier)│
    └──────────────────────────────────────┘
                         ↓
+   claude_gate.py (pre-trade approval; run.bat defaults fail-closed)
+                        ↓
    ┌──────────────────────────────────────┐
    │ paper_trader.execute() 7-stage chain:│
    │  ① window gating → ② discipline mgmt │
@@ -169,7 +171,7 @@ webui.bat      :: WebUI dashboard at http://127.0.0.1:8080
                         ↓
                   moomoo SIMULATE account
 
-   ＊ Claude CLI narrative layer (out-of-band):
+   ＊ Claude CLI narrative/report layer (out-of-band, separate from the gate):
      After run_cycle completes, invokes Claude CLI to summarize
      all 11 blocks into a 700-1000 word plain-language report
      + structured JSON price targets. Next cycle, paper_trader
@@ -214,6 +216,8 @@ webui.bat      :: WebUI dashboard at http://127.0.0.1:8080
 | [`_backtest_v_bounce.py`](agents/_backtest_v_bounce.py) | V-reversal chase-buy (leveraged ETFs 5d/10d/20d) |
 | [`_backtest_gold_macro.py`](agents/_backtest_gold_macro.py) | Gold macro signal injection backtest |
 | [`backtest_engine.py`](agents/backtest_engine.py) | Lite / Mid / Heavy full-system backtest tiers |
+
+Regression tests (run from `agents/`): `python -m unittest discover -s tests -v`
 
 Output report: `agents/signals/module_accuracy.md` (actual file is gitignored).
 

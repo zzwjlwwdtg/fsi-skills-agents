@@ -25,6 +25,7 @@ from openai import OpenAI
 
 from config import (OPENAI_API_KEY, DECISION_MODEL, RSI_OVERBOUGHT, RSI_OVERSOLD,
                     LEVERAGE_FACTORS)
+from trading_contracts import BULLISH_SIGNAL_ACTIONS, BUY_ACTIONS, confidence_min
 
 
 def _get_hmm_meta_state() -> str | None:
@@ -313,7 +314,7 @@ def _apply_trump_override(result: dict, trump_sig: dict | None) -> dict:
     td = trump_sig.get("direction")
     action = result.get("action")
     conf = result.get("confidence") or 0
-    if td == "bearish" and action in ("WATCH_BUY", "BUY") and conf < 7:
+    if td == "bearish" and action in BUY_ACTIONS and conf < 7:
         result["action"] = "CAUTION"
         result["trump_override"] = "bearish_strong"
     elif td == "bullish" and action == "WATCH_BUY":
@@ -493,7 +494,7 @@ def _apply_uncertain_guard(result: dict, ev: int) -> dict:
         return result
     action = result.get("action")
     conf   = result.get("confidence") or 0
-    if action not in ("BUY", "WATCH_BUY"):
+    if action not in BUY_ACTIONS:
         return result    # 防御性动作 (REDUCE/SELL) 始终允许
     if conf >= 8:
         return result    # 高信心信号 override 不确定性
@@ -532,7 +533,7 @@ def _apply_earnings_guard(result: dict, ticker: str, events: dict) -> dict:
     if not em or em.get("error"):
         return result
     action = result.get("action")
-    if action not in ("BUY", "WATCH_BUY", "WATCH_BUY_LONG_HOLD"):
+    if action not in BULLISH_SIGNAL_ACTIONS:
         return result
 
     im = em.get("smoothed_implied_move_pct") or em.get("implied_move_pct")
@@ -753,9 +754,9 @@ def _etf_rules(market: dict, events: dict, macro: dict, regime: str = "neutral",
     #   4. cum_5d <= -12% （确认深跌，不是伪跌破）
     #   5. pct_eff_b >= -1% (今日至少不再深跌)
     #   6. vol_rat < 1.5 （不是恐慌卖出中，缩量止跌 / 温和拉起）
-    #   7. env var CRISIS_VBOUNCE_ENABLED=1 （feature flag, 默认关闭待回测）
+    #   7. env var CRISIS_VBOUNCE_ENABLED=1（feature flag；run/watchdog 默认开启）
     # 输出：WATCH_BUY_PROBE (paper_trader 按 30% 常规仓位; 严格 stop)
-    # 需回测验证 —— 详见 _backtest_crisis_vbounce.py（TODO）
+    # 历史回测见 _backtest_crisis_vbounce.py；样本较小，因此保持 probe 极小仓位。
     if (os.environ.get("CRISIS_VBOUNCE_ENABLED") == "1"
             and regime == "crisis"
             and rsi < 32
@@ -765,7 +766,9 @@ def _etf_rules(market: dict, events: dict, macro: dict, regime: str = "neutral",
             and vol_rat < 1.5):
         v_stop = _compute_buy_stop_ref(market)
         return {"action": "WATCH_BUY_PROBE",
-                "confidence": _normalize_confidence(3),  # 强制 probe 级别
+                # Probe 必须正好落在常规交易窗口门槛：默认 /5 为 3，完整 /10 为 6。
+                # 不走 _normalize_confidence(3)，否则无校准的 /5 模式会被 round 成 2。
+                "confidence": int(confidence_min("post-open", _conf_scale())),
                 "reason": (f"crisis-vbounce probe: RSI={rsi:.0f} bull={bull} "
                            f"cum_5d={cum_5d:+.1f}% today={pct_eff_b:+.1f}% "
                            f"vol={vol_rat:.2f} (未回测，probe 30% 仓位)"),

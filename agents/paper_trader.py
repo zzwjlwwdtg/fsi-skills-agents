@@ -4,10 +4,10 @@
 调用 execute()。
 
 7 条核心规则：
-  1) 仅 BUY/SELL/WATCH_BUY/REDUCE 触发下单（CAUTION/HOLD 忽略）
-  2) confidence >= 6 才下单
+  1) 仅共享 ORDER_ACTIONS 中的动作触发下单（CAUTION/HOLD 忽略）
+  2) confidence 达到当前窗口门槛才下单（自动适配 5/10 分制）
   3) 仓位：每笔 = 账户购买力 × POSITION_FRACTION_BASE (1/10)；卫星 z 高时升到 MAX (1/6.7)
-  4) 仅 midday + pre-close 实际下单，pre-open 跳过
+  4) 仅 TRADE_WINDOWS 中的窗口实际下单，pre-open 只刷新候选池
   5) BUY 成交后挂 stop-loss（若 decision.stop_ref 给了价位）
   6) GLD 纳入交易
   7) 默认 LIVE（在 SIMULATE 账户实际下单）；DRY-run 见环境变量 TRADER_DRY_RUN=1
@@ -37,24 +37,32 @@ from moomoo import (
 
 from config import OPEND_HOST, OPEND_PORT, MOOMOO_ACC_ID
 from notifier import logger
+from atomic_io import atomic_write_json
+from trading_contracts import (
+    BUY_ACTIONS,
+    CRISIS_PROBE_TARGET_VOL,
+    ORDER_ACTIONS,
+    PROBE_ONLY_ACTIONS,
+    REDUCE_ACTIONS,
+    SELL_ACTIONS,
+    TRADE_WINDOWS,
+    confidence_min,
+    confidence_multiplier,
+)
 
 
 ACC_ID  = MOOMOO_ACC_ID
 TRD_ENV = TrdEnv.SIMULATE
 
-TRADE_WINDOWS = {"pre-market", "post-open", "midday", "pre-close"}
-
 # 每个窗口的下单参数（成熟系统标准）：盘前严门槛 + 大 buffer + 允许 RTH 外撮合
 # pre-market buffer 故意大（2.5%）因为日内 daily K 价和实时价可能有大 gap
 # （如 -10% 隔夜跌），太窄 buffer 会让单子挂在书上等不到撮合
 WINDOW_CFG = {
-    "pre-market": {"conf_min": 7, "buffer": 0.025, "fill_outside_rth": True},
-    "post-open":  {"conf_min": 6, "buffer": 0.005, "fill_outside_rth": False},
-    "midday":     {"conf_min": 6, "buffer": 0.005, "fill_outside_rth": False},
-    "pre-close":  {"conf_min": 6, "buffer": 0.005, "fill_outside_rth": False},
+    "pre-market": {"buffer": 0.025, "fill_outside_rth": True},
+    "post-open":  {"buffer": 0.005, "fill_outside_rth": False},
+    "midday":     {"buffer": 0.005, "fill_outside_rth": False},
+    "pre-close":  {"buffer": 0.005, "fill_outside_rth": False},
 }
-# 兼容旧用：默认阈值
-CONFIDENCE_THRESHOLD = 6
 
 # ========== 仓位规模引擎 (Vol-Target + DD Floor + VIX Multiplier) ==========
 #
@@ -299,9 +307,9 @@ def _check_loss_streak() -> tuple[bool, str]:
         return False, ""
 
 
-def _is_loss_streak_paused() -> tuple[bool, str]:
+def _is_loss_streak_paused(state: dict | None = None) -> tuple[bool, str]:
     """检查 trader_state 里的 pause_until 是否还有效。"""
-    state = _state_load()
+    state = _state_load() if state is None else state
     pause = state.get(LOSS_STREAK_STATE_KEY, {})
     if not pause:
         return False, ""
@@ -325,6 +333,22 @@ def _trigger_loss_streak_pause(reason: str) -> None:
                                     "triggered_at": datetime.now(timezone.utc).isoformat()}
     _state_save(state)
     logger.warning(f"[trader] 🛑 连续亏损暂停 → {until} ({reason})")
+
+
+def _apply_loss_streak_pause_after_sell() -> None:
+    """Persist a new loss-streak pause after the caller saved its trade state."""
+    try:
+        is_streak, reason = _check_loss_streak()
+        if not is_streak:
+            return
+        already_paused, _ = _is_loss_streak_paused()
+        if already_paused:
+            return
+        _trigger_loss_streak_pause(reason)
+        from notifications import send_alert
+        send_alert(f"⛔ 连续亏损暂停 24h: {reason}", level="warning")
+    except Exception:
+        pass
 
 
 def _update_nav_peak(current_nav: float) -> None:
@@ -450,11 +474,6 @@ LEVERAGED_PAIRS = {
     "US.AMZN":  ["US.AMZU", "US.AMZD"],
 }
 
-BUY_ACTIONS    = {"BUY", "WATCH_BUY", "WATCH_BUY_PROBE"}
-SELL_ACTIONS   = {"SELL"}
-REDUCE_ACTIONS = {"REDUCE"}
-PROBE_ONLY_ACTIONS = {"WATCH_BUY_PROBE"}  # 强制 30% 仓位，无视 conf → mult
-
 # 连续亏损暂停（P4.2）：最近 N 笔已平仓全亏 → 暂停新仓 PAUSE_HOURS 小时
 LOSS_STREAK_THRESHOLD = 3
 LOSS_STREAK_PAUSE_HOURS = 24
@@ -501,36 +520,68 @@ def _ctx_close() -> None:
 
 # ---------- State ----------
 
+class StateLoadError(RuntimeError):
+    """The persisted trader risk state exists but cannot be trusted."""
+
+
 def _state_load() -> dict:
     if not STATE_PATH.exists():
         return {}
     try:
-        return json.loads(STATE_PATH.read_text(encoding="utf-8"))
-    except Exception:
-        return {}
+        state = json.loads(STATE_PATH.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        message = f"交易状态不可读，已停止本轮下单: {STATE_PATH} ({exc})"
+        logger.error(f"[trader] {message}")
+        raise StateLoadError(message) from exc
+    if not isinstance(state, dict):
+        message = f"交易状态格式错误，已停止本轮下单: {STATE_PATH} (root must be object)"
+        logger.error(f"[trader] {message}")
+        raise StateLoadError(message)
+    return state
+
+
+def _entry_conf_on_scale(tstate: dict, current_scale: int,
+                         fallback: float) -> float:
+    """Convert persisted entry confidence to the active 5/10-point scale.
+
+    Legacy states did not persist the scale. A valid old 10-point entry was at
+    least 6, so values above 5 are unambiguously /10; values up to 5 are /5.
+    """
+    try:
+        raw_conf = float(tstate["entry_conf"])
+        if raw_conf <= 0:
+            raise ValueError("entry confidence must be positive")
+    except (KeyError, TypeError, ValueError):
+        return float(fallback)
+    try:
+        source_scale = int(tstate["entry_conf_scale"])
+        if source_scale not in (5, 10):
+            raise ValueError("unsupported confidence scale")
+    except (KeyError, TypeError, ValueError):
+        source_scale = 10 if raw_conf > 5 else 5
+    safe_current_scale = current_scale if current_scale in (5, 10) else 10
+    return raw_conf * safe_current_scale / source_scale
 
 
 def _state_save(state: dict) -> None:
-    STATE_PATH.write_text(
-        json.dumps(state, indent=2, ensure_ascii=False),
-        encoding="utf-8",
-    )
+    atomic_write_json(STATE_PATH, state)
 
 
 def _universe_load() -> dict:
     if not UNIVERSE_PATH.exists():
         return {"date": None, "regime": None, "picks": []}
     try:
-        return json.loads(UNIVERSE_PATH.read_text(encoding="utf-8"))
-    except Exception:
+        universe = json.loads(UNIVERSE_PATH.read_text(encoding="utf-8"))
+        if not isinstance(universe, dict):
+            raise ValueError("root must be object")
+        return universe
+    except Exception as exc:
+        logger.warning(f"[trader] universe state 不可读，禁用卫星开仓: {UNIVERSE_PATH} ({exc})")
         return {"date": None, "regime": None, "picks": []}
 
 
 def _universe_save(uni: dict) -> None:
-    UNIVERSE_PATH.write_text(
-        json.dumps(uni, indent=2, ensure_ascii=False),
-        encoding="utf-8",
-    )
+    atomic_write_json(UNIVERSE_PATH, uni)
 
 
 def _picks_by_ticker(uni: dict) -> dict:
@@ -628,7 +679,7 @@ def _position_size_usd(ticker: str, conf: int = 6, action: str = "BUY") -> float
     is_probe = (action in PROBE_ONLY_ACTIONS)
     if target_vol <= 0:
         if is_probe:
-            target_vol = 0.05   # probe 极小 target vol (~5% 常规仓)
+            target_vol = CRISIS_PROBE_TARGET_VOL
         else:
             return 0.0   # crisis / 未知 regime → 不开新仓
 
@@ -646,12 +697,7 @@ def _position_size_usd(ticker: str, conf: int = 6, action: str = "BUY") -> float
         scale = _conf_scale()
     except Exception:
         scale = 10
-    pct = conf / scale if scale > 0 else 0.5
-    if is_probe:      conf_mult = 0.30   # probe: 强制 30%
-    elif pct < 0.40:  conf_mult = 0.30
-    elif pct < 0.60:  conf_mult = 0.65
-    elif pct < 0.80:  conf_mult = 1.00
-    else:             conf_mult = 1.0 + (pct - 0.80) * 2.0
+    conf_mult = confidence_multiplier(conf, scale, probe=is_probe)
 
     kelly_mult = _kelly_mult(ticker)
     final_pct = raw_pct * vix_mult * dd_mult * conf_mult * kelly_mult
@@ -830,18 +876,6 @@ def _place(code: str, side, qty: int, price: float, tag: str = "",
         notify_trade(code, side_label.strip(), qty, order_price, tag=tag, conf=conf)
     except Exception:
         pass
-    # SELL 后检查连续亏损（仅 LIVE / 真实成交才触发暂停）
-    if side == TrdSide.SELL:
-        try:
-            is_streak, reason = _check_loss_streak()
-            if is_streak:
-                already_paused, _ = _is_loss_streak_paused()
-                if not already_paused:
-                    _trigger_loss_streak_pause(reason)
-                    from notifications import send_alert
-                    send_alert(f"⛔ 连续亏损暂停 24h: {reason}", level="warning")
-        except Exception:
-            pass
     return oid
 
 
@@ -883,57 +917,52 @@ def execute(ticker: str, decision: dict, mkt: dict, window: str | None,
     if window not in TRADE_WINDOWS:
         return
 
-    is_core = ticker in CORE_TICKERS
-    action_for_sizing = (decision or {}).get("action")
-    conf_for_sizing = (decision or {}).get("confidence") or 6
-
-    # ── 连续亏损暂停（P4.2）：BUY 全部跳过；SELL / REDUCE / 风控仍允许 ─────
-    if action_for_sizing in BUY_ACTIONS:
-        paused, p_reason = _is_loss_streak_paused()
-        if paused:
-            logger.info(f"[trader] {ticker} {action_for_sizing} 跳过：连续亏损暂停 ({p_reason})")
-            return
-
-    size_usd = _position_size_usd(ticker, conf=conf_for_sizing, action=action)
-    # 卫星票必须在今日 picks 里才允许 BUY；老仓 SELL/REDUCE 仍允许
-    if not is_core and size_usd == 0:
-        # 未上今日候选池：仅当已有仓位且收到 SELL/REDUCE 时继续；其它跳过
-        action_now = (decision or {}).get("action")
-        if action_now in BUY_ACTIONS:
-            return
-        size_usd = 0  # SELL 不需要 size_usd
-
     action = (decision or {}).get("action")
-    conf   = (decision or {}).get("confidence") or 0
-    price  = (mkt or {}).get("price")
-    if not action or not price:
-        return
-    win_cfg = WINDOW_CFG.get(window, {})
-    conf_min_raw = win_cfg.get("conf_min", CONFIDENCE_THRESHOLD)
-    # conf_min 在配置里按 /10 量程写；实际 conf 可能是 /5（TECH_ONLY）→ 等比缩放
-    try:
-        from decision_agent import _conf_scale
-        scale = _conf_scale()
-    except Exception:
-        scale = 10
-    conf_min = conf_min_raw * scale / 10
-    if conf < conf_min:
-        logger.info(f"[trader] {ticker} {action} conf {conf}/{scale} < min {conf_min:.1f} → 跳过")
+    conf = (decision or {}).get("confidence") or 0
+    price = (mkt or {}).get("price")
+    if not price:
         return
 
     state  = _state_load()
     tstate = state.get(ticker, {})
+    if not isinstance(tstate, dict):
+        message = f"{ticker} 交易状态格式错误，已停止本轮下单"
+        logger.error(f"[trader] {message}")
+        raise StateLoadError(message)
+
+    is_core = ticker in CORE_TICKERS
+    win_cfg = WINDOW_CFG.get(window, {})
+
+    # Build the idempotency key before any discipline branch can place an order.
+    today = datetime.now(timezone.utc).date().isoformat()
+    if _manual:
+        window_key = f"manual:{time.time_ns()}"
+    else:
+        window_key = f"{today}:{window}"
+
+    # A successful order in this window must block every branch, including
+    # trailing-stop/TP, when the scheduler retries a partially failed cycle.
+    if tstate.get("last_window_key") == window_key:
+        return
 
     # ── 纪律性管理（与方向信号解耦, 任一触发立刻 return 不走 normal action）──
     pos_qty_check = _position_qty(ticker)
     cur_price = float(price)
+    risk_state_dirty = False
     if pos_qty_check > 0:
         # 更新 entry_high (持仓期间最高)
         entry_price = float(tstate.get("entry_price") or cur_price)
         entry_high  = float(tstate.get("entry_high")  or entry_price)
+        if "entry_price" not in tstate:
+            tstate["entry_price"] = entry_price
+            risk_state_dirty = True
+        if "entry_high" not in tstate:
+            tstate["entry_high"] = entry_high
+            risk_state_dirty = True
         if cur_price > entry_high:
             entry_high = cur_price
             tstate["entry_high"] = entry_high
+            risk_state_dirty = True
 
         # #3 Trailing Stop: 从入场后高点跌 ≥ N% (按杠杆缩放) → 全平
         ts_pct = _trailing_stop_pct(ticker)
@@ -952,10 +981,15 @@ def execute(ticker: str, decision: dict, mkt: dict, window: str | None,
                 tstate.pop("first_entry_utc", None)
                 tstate.pop("entry_price", None)
                 tstate.pop("entry_high", None)
+                tstate.pop("entry_qty", None)
+                tstate.pop("entry_conf", None)
+                tstate.pop("entry_conf_scale", None)
                 tstate.pop("pyramid_layer", None)
                 tstate.pop("tp_levels_hit", None)
                 state[ticker] = tstate
                 _state_save(state)
+                if oid != "DRY":
+                    _apply_loss_streak_pause_after_sell()
                 return
 
         # #2 阶梯止盈: 涨 +15%/+30%/+50% 各卖 30%/30%/40%
@@ -981,21 +1015,50 @@ def execute(ticker: str, decision: dict, mkt: dict, window: str | None,
                                    "last_order_id": None if oid=="DRY" else oid})
                     state[ticker] = tstate
                     _state_save(state)
+                    if oid != "DRY":
+                        _apply_loss_streak_pause_after_sell()
                     return
                 break
 
-    # 每个 window 每天最多 1 笔（防同一窗口重复触发）
-    # _manual=True 时 key 用 "manual:<unix>" 不污染真窗口的去重
-    today = datetime.now(timezone.utc).date().isoformat()
-    if _manual:
-        window_key = f"manual:{int(time.time())}"
-    else:
-        window_key = f"{today}:{window}"
-    if tstate.get("last_window_key") == window_key:
+    # High-water marks are risk state too; persist them even when the current
+    # decision is HOLD/low-confidence and no order is placed.
+    if risk_state_dirty:
+        state[ticker] = tstate
+        _state_save(state)
+
+    # From here down are signal-driven orders. Discipline exits above must not
+    # depend on action membership, confidence, loss pause, or universe sizing.
+    if action not in ORDER_ACTIONS:
         return
 
+    # 门槛按 /10 量程定义；实际 conf 可能是 /5（TECH_ONLY）→ 等比缩放
+    try:
+        from decision_agent import _conf_scale
+        scale = _conf_scale()
+    except Exception:
+        scale = 10
+    conf_min = confidence_min(window, scale)
+    if conf < conf_min:
+        logger.info(f"[trader] {ticker} {action} conf {conf}/{scale} < min {conf_min:.1f} → 跳过")
+        return
+
+    # ── 连续亏损暂停（P4.2）：BUY 全部跳过；SELL / REDUCE / 风控仍允许 ─────
+    if action in BUY_ACTIONS:
+        paused, p_reason = _is_loss_streak_paused(state)
+        if paused:
+            logger.info(f"[trader] {ticker} {action} 跳过：连续亏损暂停 ({p_reason})")
+            return
+
+    size_usd = 0.0
+    if action in BUY_ACTIONS:
+        size_usd = _position_size_usd(ticker, conf=conf, action=action)
+        # 卫星票必须在今日 picks 里才允许 BUY；老仓 SELL/REDUCE 仍允许
+        if not is_core and size_usd == 0:
+            return
+
     # #3 修复 (v2): REDUCE 后自动 re-BUY — 回到 vol-target 目标仓位，不只是上次卖量
-    if (tstate.get("last_action") == "REDUCE"
+    if (action in BUY_ACTIONS
+            and tstate.get("last_action") == "REDUCE"
             and tstate.get("last_price")):
         try:
             last_time = datetime.fromisoformat(tstate["last_time_utc"])
@@ -1007,7 +1070,7 @@ def execute(ticker: str, decision: dict, mkt: dict, window: str | None,
                     and bounce >= _rebuy_bounce_pct(ticker)
                     and not tstate.get("rebuy_done")):
                 # v2: 算出 vol-target 应有仓位，与当前差额就是 rebuy 量
-                target_size_usd = _position_size_usd(ticker, conf=conf, action=action)
+                target_size_usd = size_usd
                 target_qty = int(target_size_usd // cur_price)
                 current_qty = _position_qty(ticker)
                 rebuy_qty = max(0, target_qty - current_qty)
@@ -1019,9 +1082,15 @@ def execute(ticker: str, decision: dict, mkt: dict, window: str | None,
                         fill_outside_rth=win_cfg.get("fill_outside_rth", False),
                     )
                     if rb_oid:
-                        tstate["rebuy_done"] = True
-                        tstate["last_action"] = "REBUY"
-                        tstate["last_time_utc"] = datetime.now(timezone.utc).isoformat()
+                        tstate.update({
+                            "rebuy_done": True,
+                            "last_action": "REBUY",
+                            "last_qty": rebuy_qty,
+                            "last_price": cur_price,
+                            "last_time_utc": datetime.now(timezone.utc).isoformat(),
+                            "last_window_key": window_key,
+                            "last_order_id": None if rb_oid == "DRY" else rb_oid,
+                        })
                         state[ticker] = tstate
                         _state_save(state)
                         return
@@ -1035,7 +1104,7 @@ def execute(ticker: str, decision: dict, mkt: dict, window: str | None,
     if action in BUY_ACTIONS:
         if pos_qty > 0:
             # #1 Pyramid 加仓: 已持仓时若 conf 比入场 conf 高 ≥1 → 加 50% 原仓
-            entry_conf = int(tstate.get("entry_conf") or 6)
+            entry_conf = _entry_conf_on_scale(tstate, scale, conf_min)
             layer = int(tstate.get("pyramid_layer") or 1)
             if (conf >= entry_conf + 1
                     and layer < PYRAMID_MAX_LAYERS
@@ -1049,6 +1118,7 @@ def execute(ticker: str, decision: dict, mkt: dict, window: str | None,
                     if oid:
                         tstate["pyramid_layer"] = layer + 1
                         tstate["entry_conf"]    = conf   # 新 layer 用新 conf
+                        tstate["entry_conf_scale"] = scale
                         tstate.update({"last_action":"PYRAMID","last_qty":add_qty,
                                        "last_price":float(price),
                                        "last_time_utc": datetime.now(timezone.utc).isoformat(),
@@ -1157,18 +1227,22 @@ def execute(ticker: str, decision: dict, mkt: dict, window: str | None,
         tstate["entry_high"]     = float(price)
         tstate["entry_qty"]      = qty
         tstate["entry_conf"]     = conf
+        tstate["entry_conf_scale"] = scale
         tstate["pyramid_layer"]  = 1
         tstate["tp_levels_hit"]  = []
     if side == TrdSide.SELL and pos_qty == qty:
         # 清仓后清掉所有 entry 元数据
         for k in ("first_entry_utc","entry_price","entry_high","entry_qty",
-                  "entry_conf","pyramid_layer","tp_levels_hit"):
+                  "entry_conf","entry_conf_scale","pyramid_layer","tp_levels_hit"):
             tstate.pop(k, None)
     # 每次新动作清掉 rebuy_done 标记 (允许下次 REDUCE 后再 rebuy)
     if action == "REDUCE":
         tstate.pop("rebuy_done", None)
     state[ticker] = tstate
     _state_save(state)
+
+    if side == TrdSide.SELL and oid != "DRY":
+        _apply_loss_streak_pause_after_sell()
 
     if side == TrdSide.BUY and stop and stop > 0:
         _place_stop_loss(ticker, qty, float(stop))
@@ -1245,6 +1319,7 @@ def apply_universe(picks_result: dict) -> dict:
         projected_total -= 1   # 踢一个腾一个位
 
     # 踢出 = 立即 SELL 全平（不等 SELL 信号触发，因为这是强制周转规则）
+    live_kickout_sell = False
     for code in kicked:
         info = held[code]
         qty = int(info["qty"])
@@ -1254,6 +1329,7 @@ def apply_universe(picks_result: dict) -> dict:
         oid = _place(code, TrdSide.SELL, qty, price,
                      tag=f"[kickout 不在新 picks 内 + 超出 MAX_SATELLITE]")
         if oid:
+            live_kickout_sell = live_kickout_sell or oid != "DRY"
             ts = state.setdefault(code, {})
             ts.update({
                 "last_action":     "KICKOUT",
@@ -1265,6 +1341,8 @@ def apply_universe(picks_result: dict) -> dict:
             })
             ts.pop("first_entry_utc", None)
     _state_save(state)
+    if live_kickout_sell:
+        _apply_loss_streak_pause_after_sell()
 
     # 踢出后真正留下来的卫星持仓 = (现持仓 - 被踢的) + 新开
     survivors = [tk for tk in held if tk not in kicked]

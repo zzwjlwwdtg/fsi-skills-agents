@@ -26,6 +26,7 @@ from typing import Optional
 from zoneinfo import ZoneInfo
 
 from notifier import logger
+from atomic_io import atomic_write_json
 
 
 REGIME_STATE_PATH = Path(__file__).parent / "regime_state.json"
@@ -198,10 +199,7 @@ def detect_and_save_regime() -> dict:
         "ts_et":  now_utc.astimezone(ET).isoformat(),
         "inputs": inputs,
     }
-    REGIME_STATE_PATH.write_text(
-        json.dumps(info, indent=2, ensure_ascii=False),
-        encoding="utf-8",
-    )
+    atomic_write_json(REGIME_STATE_PATH, info)
     return info
 
 

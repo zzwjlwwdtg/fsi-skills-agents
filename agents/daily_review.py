@@ -19,12 +19,22 @@ import yfinance as yf
 
 from config import SIGNALS_DIR
 from i18n import t
+from atomic_io import atomic_write_json
+from trading_contracts import (
+    BEARISH_SIGNAL_ACTIONS,
+    BULLISH_SIGNAL_ACTIONS,
+    BUY_ACTIONS,
+    REDUCE_ACTIONS,
+    SELL_ACTIONS,
+)
 
 _HISTORY_PATH  = Path(SIGNALS_DIR) / "signal_history.json"
 _BACKTEST_DIR  = Path(SIGNALS_DIR)
 
 # 每个动作的默认持仓天数（日历日）
-_HOLD_DAYS = {"BUY": 5, "WATCH_BUY": 5, "SELL": 3, "REDUCE": 3, "CAUTION": 3}
+_HOLD_DAYS = {action: 5 for action in BULLISH_SIGNAL_ACTIONS}
+_HOLD_DAYS.update({action: 3 for action in BEARISH_SIGNAL_ACTIONS})
+_EXECUTING_BEARISH_ACTIONS = SELL_ACTIONS | REDUCE_ACTIONS
 
 # trump-code 学习参数
 _ROLLING_WINDOW = 30
@@ -53,9 +63,7 @@ def _load_history() -> list:
 
 
 def _save_history(history: list) -> None:
-    _HISTORY_PATH.write_text(
-        json.dumps(history, ensure_ascii=False, indent=2), encoding="utf-8"
-    )
+    atomic_write_json(_HISTORY_PATH, history)
 
 
 def append_signal(ticker: str, action: str, price: float,
@@ -121,7 +129,7 @@ def review_pending_signals() -> tuple[int, int]:
             continue
 
         ret = (price - entry["entry_price"]) / entry["entry_price"] * 100
-        is_bull = entry["action"] in ("BUY", "WATCH_BUY")
+        is_bull = entry["action"] in BULLISH_SIGNAL_ACTIONS
         entry.update({
             "exit_price": round(price, 2),
             "actual_ret": round(ret, 2),
@@ -209,14 +217,14 @@ def synthesize_strategy(ticker: str) -> dict:
 
     # 实盘胜率（此ticker，最近30笔）
     live = {k: v for k, v in stats.items() if v["ticker"] == ticker and v["recent_n"] >= 3}
-    live_bull = sorted([v for v in live.values() if v["action"] in ("WATCH_BUY", "BUY")],
+    live_bull = sorted([v for v in live.values() if v["action"] in BUY_ACTIONS],
                        key=lambda x: x["win_rate"] * x["weight"], reverse=True)
-    live_bear = sorted([v for v in live.values() if v["action"] in ("REDUCE", "SELL")],
+    live_bear = sorted([v for v in live.values() if v["action"] in _EXECUTING_BEARISH_ACTIONS],
                        key=lambda x: x["win_rate"] * x["weight"], reverse=True)
 
     # 回测最优（按测试胜率）
-    bt_bull = next((r for r in bt if r["action"] in ("WATCH_BUY", "BUY")), None)
-    bt_bear = next((r for r in bt if r["action"] in ("REDUCE", "SELL")), None)
+    bt_bull = next((r for r in bt if r["action"] in BUY_ACTIONS), None)
+    bt_bear = next((r for r in bt if r["action"] in _EXECUTING_BEARISH_ACTIONS), None)
 
     # 综合建议
     rec = "HOLD"

@@ -1,13 +1,15 @@
 """
-Orchestrator — 日K交易者模式，每天3个时间窗口。
+Orchestrator — 日K交易者模式，每天5个时间窗口。
 
 架构:
+  08:30 ET  盘前扫描   — 隔夜风险 + 日K主信号
   09:20 ET  开盘前扫描 — 日K主信号 + 策略回测 + 规则进化
+  10:00 ET  开盘后确认 — 开盘价格确认 + 日K主信号
   12:00 ET  午盘跟踪   — 日K主信号，确认方向是否有变
   15:45 ET  收盘前确认 — 日K主信号 + 60分钟K入场辅助
   16:00 ET  收盘总结   — 每日复盘
 
-可操作信号（WATCH_BUY/REDUCE）时附加60分钟K入场参考。
+可执行动作信号时附加60分钟K入场参考。
 
 Run:  python orchestrator.py
 Stop: Ctrl-C
@@ -33,6 +35,7 @@ from notifier import emit, logger, _toast
 from i18n import t
 from paper_trader import execute as trade_execute, refresh_nav_peak
 from claude_gate import apply_claude_gate
+from trading_contracts import ORDER_ACTIONS
 
 ET = ZoneInfo("America/New_York")
 
@@ -96,8 +99,10 @@ _last_window_run: dict[str, str | None] = {w[2]: None for w in DAILY_WINDOWS_ET}
 
 def _in_daily_window() -> str | None:
     """
-    返回当前所处的日K交易窗口名称（pre-open/midday/pre-close），
-    每个窗口每天只触发一次；不在窗口内返回 None。
+    返回当前尚未完成的日K交易窗口名称；不在窗口内返回 None。
+
+    此函数只检查资格，不提交完成状态。完成状态必须在整个窗口任务成功
+    返回后由 _mark_window_complete() 写入，失败时下一次 5 分钟 tick 可重试。
     """
     now = datetime.now(ET)
     if now.weekday() >= 5:
@@ -106,9 +111,14 @@ def _in_daily_window() -> str | None:
     today = now.date().isoformat()
     for start, end, name in DAILY_WINDOWS_ET:
         if start <= t <= end and _last_window_run[name] != today:
-            _last_window_run[name] = today
             return name
     return None
+
+
+def _mark_window_complete(window: str) -> None:
+    """Commit a window only after all of its scheduled work has returned."""
+    if window in _last_window_run:
+        _last_window_run[window] = datetime.now(ET).date().isoformat()
 
 
 def _session() -> str:
@@ -542,7 +552,7 @@ def _etf_cycle(events_signal: dict, macro: dict, window: str | None = None,
             decision["confluence"] = confl
 
             # 60分钟K：可操作信号时附加入场参考
-            if decision.get("action") in ("WATCH_BUY", "BUY", "REDUCE", "SELL"):
+            if decision.get("action") in ORDER_ACTIONS:
                 ctx = get_intraday_context(ticker)
                 if ctx:
                     decision["h1_context"] = ctx["h1_note"]
@@ -813,7 +823,7 @@ def run_cycle(window: str | None = None) -> None:
 
 
 def _tick() -> None:
-    """每30分钟检查一次是否进入日K交易窗口。"""
+    """每5分钟检查一次是否进入日K交易窗口。"""
     window = _in_daily_window()
     if not window:
         return
@@ -827,20 +837,25 @@ def _tick() -> None:
         f"[{window_disp.get(window, window)}] 开始运行...",
         f"[{window_disp.get(window, window)}] 実行開始...",
     ))
-    run_cycle(window=window)
-    # 开盘报告：pre-open 触发；如果 pre-open 被 skip（机器休眠/进程重启），
-    # post-open 也会 catch-up 生成一次，避免整天没有 AI 分析
-    today = datetime.now(ET).date().isoformat()
-    if window == "pre-open":
-        _run_report("open")
-        _last_report_session["open"] = today
-    elif window == "post-open" and _last_report_session.get("open") != today:
-        logger.info(t(
-            "[补漏] pre-open 未触发 open 报告，post-open 补跑一次",
-            "[補完] pre-open が open レポートを未生成、post-open で補完実行",
-        ))
-        _run_report("open")
-        _last_report_session["open"] = today
+    try:
+        run_cycle(window=window)
+        # 开盘报告：pre-open 触发；如果 pre-open 被 skip（机器休眠/进程重启），
+        # post-open 也会 catch-up 生成一次，避免整天没有 AI 分析
+        today = datetime.now(ET).date().isoformat()
+        if window == "pre-open":
+            _run_report("open")
+            _last_report_session["open"] = today
+        elif window == "post-open" and _last_report_session.get("open") != today:
+            logger.info(t(
+                "[补漏] pre-open 未触发 open 报告，post-open 补跑一次",
+                "[補完] pre-open が open レポートを未生成、post-open で補完実行",
+            ))
+            _run_report("open")
+            _last_report_session["open"] = today
+    except Exception as exc:
+        logger.exception(f"[scheduler] {window} 窗口执行失败，保留为未完成并等待重试: {exc}")
+        return
+    _mark_window_complete(window)
 
 
 def main() -> None:
@@ -879,6 +894,7 @@ def main() -> None:
         run_cycle(window=startup_window)
         if startup_window == "pre-open":
             _run_report("open")
+        _mark_window_complete(startup_window)
     else:
         logger.info(t("启动扫描：非交易窗口，仅刷新信号，不生成开盘/收盘报告。",
                       "起動スキャン：取引ウィンドウ外のため、シグナル更新のみ。"))

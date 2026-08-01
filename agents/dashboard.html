@@ -47,7 +47,7 @@
   .badge.info { background: rgba(88,166,255,0.15); color: var(--blue); }
   .side.BUY { color: var(--green); font-weight: 600; }
   .side.SELL { color: var(--red); font-weight: 600; }
-  .action-BUY, .action-WATCH_BUY, .action-关注买入, .action-买入 { color: var(--green); font-weight: 600; }
+  .action-BUY, .action-WATCH_BUY, .action-WATCH_BUY_PROBE, .action-关注买入, .action-买入 { color: var(--green); font-weight: 600; }
   .action-SELL, .action-卖出 { color: var(--red); font-weight: 600; }
   .action-REDUCE, .action-减仓 { color: var(--yellow); font-weight: 600; }
   .action-CAUTION, .action-警示 { color: var(--yellow); font-weight: 600; }
@@ -130,8 +130,8 @@
 <dt>Confidence (置信度) X/5</dt>
 <dd>系统对信号的把握程度。5 分制（TECHNICAL_ONLY 模式）。<span class="eg">1/5=弱 · 3/5=中 · 5/5=强</span></dd>
 
-<dt>WATCH_BUY / BUY / REDUCE / SELL / CAUTION / HOLD</dt>
-<dd>建议动作：<span class="eg">WATCH_BUY 关注买入 · BUY 买入 · REDUCE 减仓 · SELL 卖出 · CAUTION 警示不加仓 · HOLD 观望</span></dd>
+<dt>WATCH_BUY / WATCH_BUY_PROBE / BUY / REDUCE / SELL / CAUTION / HOLD</dt>
+<dd>建议动作：<span class="eg">WATCH_BUY 关注买入 · WATCH_BUY_PROBE 危机反弹试探仓 · BUY 买入 · REDUCE 减仓 · SELL 卖出 · CAUTION 警示不加仓 · HOLD 观望</span></dd>
 
 <dt>Pyramid Layer (加仓层)</dt>
 <dd>金字塔加仓的第几层。L1=初始，L2=第一次加，L3=第二次加。最多 3 层。</dd>
@@ -253,7 +253,7 @@
 const $ = id => document.getElementById(id);
 const fmt = n => n === null || n === undefined ? '-' : (typeof n === 'number' ? n.toLocaleString('en-US', {maximumFractionDigits: 2}) : n);
 const sideCls = a => {
-  if (['BUY','WATCH_BUY','关注买入','买入'].includes(a)) return 'ok';
+  if (['BUY','WATCH_BUY','WATCH_BUY_PROBE','关注买入','买入'].includes(a)) return 'ok';
   if (['SELL','卖出'].includes(a)) return 'bad';
   if (['REDUCE','减仓','CAUTION','警示'].includes(a)) return 'warn';
   return '';

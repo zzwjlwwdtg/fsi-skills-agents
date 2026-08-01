@@ -8,6 +8,7 @@ import logging
 from datetime import datetime
 from pathlib import Path
 
+from atomic_io import atomic_write_json
 from config import SIGNALS_DIR, get_today_log_path
 
 os.makedirs(SIGNALS_DIR, exist_ok=True)
@@ -89,6 +90,7 @@ _ICONS = pick({
     "REDUCE":    ("⚠️ 减仓",      "⚠️ ポジション縮小"),
     "CAUTION":   ("🔶 警示",      "🔶 警戒"),
     "WATCH_BUY": ("🟡 关注买入",   "🟡 押し目買い検討"),
+    "WATCH_BUY_PROBE": ("🟠 危机反弹试探仓", "🟠 危機反発の試し買い"),
     "WATCH_BUY_LONG_HOLD": ("🟠 V反弹长持仓提示(系统不下单)",
                             "🟠 V字反発・長期保有候補(自動執行なし)"),
     "HOLD":      ("⬜ 持仓观望",   "⬜ 様子見"),
@@ -345,14 +347,11 @@ def emit(market: dict, events: dict, decision: dict) -> None:
     logger.info("")   # 空行分隔
 
     # ── 写 JSON ───────────────────────────────────────────────────────────────
-    signal_path = os.path.join(SIGNALS_DIR, f"{ticker}_latest.json")
-    Path(signal_path).write_text(
-        json.dumps(
-            {"ts": datetime.now().isoformat(), "market": market,
-             "events": events, "decision": decision},
-            ensure_ascii=False, indent=2
-        ),
-        encoding="utf-8",
+    signal_path = Path(SIGNALS_DIR) / f"{ticker}_latest.json"
+    atomic_write_json(
+        signal_path,
+        {"ts": datetime.now().isoformat(), "market": market,
+         "events": events, "decision": decision},
     )
 
     # ── 追加信号历史（供每日复盘使用）──────────────────────────────────────────

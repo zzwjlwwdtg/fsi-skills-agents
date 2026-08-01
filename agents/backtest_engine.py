@@ -23,6 +23,13 @@ import numpy as np
 import pandas as pd
 
 from config import SIGNALS_DIR
+from trading_contracts import (
+    BUY_ACTIONS,
+    CRISIS_PROBE_TARGET_VOL,
+    PROBE_ONLY_ACTIONS,
+    confidence_min,
+    confidence_multiplier,
+)
 
 
 # ── 配置 ────────────────────────────────────────────────────────────────────
@@ -264,7 +271,7 @@ def run_lite(tickers=None, days=BACKTEST_DAYS) -> dict:
                 ret = (price_n - price0) / price0 * 100
                 fwd[n] = round(ret, 2)
                 # 判定胜负
-                if action in ("BUY", "WATCH_BUY"):
+                if action in BUY_ACTIONS:
                     win[n] = ret > 0
                 elif action in ("SELL", "REDUCE"):
                     win[n] = ret < 0
@@ -346,13 +353,14 @@ class SimAccount:
 
 def run_mid(tickers=None, days=BACKTEST_DAYS, use_quant=True) -> dict:
     """完整模拟：每天对每个 ticker 算决策，按 trader 逻辑模拟下单。"""
-    from decision_agent import get_decision
+    from decision_agent import _conf_scale, get_decision
     tickers = tickers or TICKERS
     fake_events = {"breaking_news": False, "days_to_event": 99,
                    "risk_level": "moderate", "gold_bias": "neutral",
                    "trump_signal": {"fallback": True}}  # 历史不能 retro-fit trump 推文
     fake_macro = {"vix": 18, "fg_score": 55, "t10y2y": 0.4}
-    CONF_MIN = 6
+    conf_scale = _conf_scale()
+    conf_min = confidence_min("post-open", conf_scale)
     # 与 paper_trader 同步: vol-target sizing
     TARGET_PORT_VOL = {
         "bull_extended":  0.30, "bull_pulling":  0.25,
@@ -376,6 +384,32 @@ def run_mid(tickers=None, days=BACKTEST_DAYS, use_quant=True) -> dict:
         if v < 28: return 0.4
         if v < 35: return 0.1
         return 0.0
+
+    def _position_fraction(full: str, regime: str, confidence: float,
+                           power: float, action: str) -> float:
+        """Shared sizing path for initial BUY, re-BUY, and Pyramid."""
+        target_v = TARGET_PORT_VOL.get(regime, 0.12)
+        is_probe = action in PROBE_ONLY_ACTIONS
+        if target_v <= 0 and is_probe:
+            target_v = CRISIS_PROBE_TARGET_VOL
+        if target_v <= 0:
+            return 0.0
+        raw = target_v / ASSET_VOL.get(full, 0.40)
+        drawdown = (power - INITIAL_CASH) / INITIAL_CASH if power < INITIAL_CASH else 0.0
+        if drawdown <= -0.20:
+            dd_mult = 0.0
+        elif drawdown <= -0.15:
+            dd_mult = 0.2
+        elif drawdown <= -0.10:
+            dd_mult = 0.4
+        elif drawdown <= -0.05:
+            dd_mult = 0.7
+        else:
+            dd_mult = 1.0
+        conf_mult = confidence_multiplier(
+            confidence, conf_scale, probe=is_probe
+        )
+        return min(raw * _vix_mult(18) * dd_mult * conf_mult, POSITION_MAX)
 
     # 准备所有 ticker 的历史数据 (对齐到共同日期范围)
     histories = {}
@@ -433,7 +467,7 @@ def run_mid(tickers=None, days=BACKTEST_DAYS, use_quant=True) -> dict:
                 continue
             action = dec.get("action", "HOLD")
             conf = dec.get("confidence", 0) or 0
-            if conf < CONF_MIN:
+            if conf < conf_min:
                 continue
             price = float(row["close"])
             pos = account.positions.get(full, {"qty":0,"cost":0})
@@ -470,15 +504,13 @@ def run_mid(tickers=None, days=BACKTEST_DAYS, use_quant=True) -> dict:
 
             # auto re-BUY check v2: 平回到 vol-target 目标仓位
             last = account.last_action_meta.get(full)
-            if last and last["action"] == "REDUCE":
+            if last and last["action"] == "REDUCE" and action in BUY_ACTIONS:
                 hours_since = (d - last["date"]).total_seconds() / 3600
                 bounce = (price - last["price"]) / last["price"]
                 if hours_since < 24*7 and bounce >= 0.03 * _lev_sqrt(full) and not last.get("rebuy_done"):
-                    # 算 vol-target 目标仓位
-                    target_v = TARGET_PORT_VOL.get(regime_today, 0.12)
-                    if target_v > 0:
-                        raw = target_v / ASSET_VOL.get(full, 0.40)
-                        frac = min(raw * _vix_mult(18) * (1.0 + max(0,conf-6)*0.1), POSITION_MAX)
+                    # 算 vol-target 目标仓位（与首次 BUY / Pyramid 共用尺度与 probe 规则）
+                    frac = _position_fraction(full, regime_today, conf, power_today, action)
+                    if frac > 0:
                         target_qty = int(power_today * frac // price)
                         current_qty = pos["qty"]
                         rebuy_qty = max(0, target_qty - current_qty)
@@ -486,39 +518,23 @@ def run_mid(tickers=None, days=BACKTEST_DAYS, use_quant=True) -> dict:
                             last["rebuy_done"] = True
                             continue
             # Pyramid: 已持仓 + conf 高于入场 → 加 50% 原仓
-            if action in ("BUY", "WATCH_BUY") and pos["qty"] > 0:
+            if action in BUY_ACTIONS and pos["qty"] > 0:
                 meta = account.last_action_meta.get(full, {})
-                entry_conf = meta.get("entry_conf", 6)
+                entry_conf = meta.get("entry_conf", conf_min)
                 layer = meta.get("layer", 1)
                 if conf >= entry_conf + 1 and layer < 3:
-                    target_v = TARGET_PORT_VOL.get(regime_today, 0.12)
-                    if target_v > 0:
-                        raw = target_v / ASSET_VOL.get(full, 0.40)
-                        frac = min(raw * _vix_mult(18) * (1.0 + max(0,conf-6)*0.1), POSITION_MAX)
+                    frac = _position_fraction(full, regime_today, conf, power_today, action)
+                    if frac > 0:
                         add_qty = int(power_today * frac * 0.5 // price)
                         if add_qty > 0 and account.buy(d.strftime("%Y-%m-%d"), full, add_qty, price, f"PYRAMID L{layer+1} (conf {entry_conf}→{conf})"):
                             meta["layer"] = layer + 1
                             meta["entry_conf"] = conf
                             account.last_action_meta[full] = meta
                 continue
-            if action in ("BUY", "WATCH_BUY") and pos["qty"] == 0:
-                # vol-target sizing
-                target_v = TARGET_PORT_VOL.get(regime_today, 0.12)
-                if target_v > 0:
-                    raw = target_v / ASSET_VOL.get(full, 0.40)
-                    # 用固定 VIX 18 假设 (回测里没真 VIX 时序就用 baseline)
-                    vmult = _vix_mult(18)
-                    # drawdown floor
-                    dd = 0
-                    if power_today < INITIAL_CASH:
-                        dd = (power_today - INITIAL_CASH) / INITIAL_CASH
-                    dd_mult = 1.0
-                    if dd <= -0.20: dd_mult = 0.0
-                    elif dd <= -0.15: dd_mult = 0.2
-                    elif dd <= -0.10: dd_mult = 0.4
-                    elif dd <= -0.05: dd_mult = 0.7
-                    conf_mult = 1.0 + max(0, conf - 6) * 0.10
-                    frac = min(raw * vmult * dd_mult * conf_mult, POSITION_MAX)
+            if action in BUY_ACTIONS and pos["qty"] == 0:
+                # vol-target sizing（与 re-BUY / Pyramid 共用同一实现）
+                frac = _position_fraction(full, regime_today, conf, power_today, action)
+                if frac > 0:
                     size = power_today * frac
                     qty = int(size // price)
                     if qty > 0:

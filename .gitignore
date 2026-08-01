@@ -21,6 +21,7 @@ Thumbs.db
 *.lock
 .orchestrator.lock
 .snapshot_today.lock
+agents/**/.*.tmp
 
 # WebUI 后台缓存 (yfinance / Claude 结果，可重生)
 agents/.webui_cache/

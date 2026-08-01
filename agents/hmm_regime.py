@@ -24,6 +24,7 @@ import pandas as pd
 
 from config import SIGNALS_DIR
 from notifier import logger
+from atomic_io import atomic_write_json
 
 
 N_STATES        = 4         # 4 个隐状态
@@ -125,10 +126,7 @@ def train_and_detect() -> dict:
 def save(info: dict) -> None:
     try:
         HMM_STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
-        HMM_STATE_PATH.write_text(
-            json.dumps(info, indent=2, ensure_ascii=False),
-            encoding="utf-8",
-        )
+        atomic_write_json(HMM_STATE_PATH, info)
     except Exception as e:
         logger.warning(f"[hmm] save 失败: {e}")
 

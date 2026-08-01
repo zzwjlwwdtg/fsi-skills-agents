@@ -16,17 +16,10 @@ from typing import Any
 
 from config import SIGNALS_DIR
 from notifier import logger
+from trading_contracts import ORDER_ACTIONS, TRADE_WINDOWS, confidence_min
 
 
-TRADE_WINDOWS = {"pre-market", "post-open", "midday", "pre-close"}
-ORDER_ACTIONS = {"BUY", "WATCH_BUY", "SELL", "REDUCE"}
 ALLOWED_VERDICTS = {"APPROVE", "HOLD", "CAUTION"}
-WINDOW_CONF_MIN = {
-    "pre-market": 7,
-    "post-open": 6,
-    "midday": 6,
-    "pre-close": 6,
-}
 
 
 def _enabled() -> bool:
@@ -46,6 +39,14 @@ def _fail_closed() -> bool:
 
 def _fallback_codex() -> bool:
     return os.environ.get("CLAUDE_DECISION_FALLBACK_CODEX", "0") == "1"
+
+
+def _current_conf_scale() -> int:
+    try:
+        from decision_agent import _conf_scale
+        return _conf_scale()
+    except Exception:
+        return 10
 
 
 def _clip_text(value: str, limit: int = 600) -> str:
@@ -212,7 +213,7 @@ def apply_claude_gate(
         conf = int((decision or {}).get("confidence") or 0)
     except (TypeError, ValueError):
         conf = 0
-    if conf < WINDOW_CONF_MIN.get(str(window), 6):
+    if conf < confidence_min(window, _current_conf_scale()):
         return decision
 
     out_dir = Path(SIGNALS_DIR)

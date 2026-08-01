@@ -96,7 +96,7 @@ git config core.hooksPath .githooks
 :: 4. 启动 moomoo OpenD（一直开着）
 
 :: 5. 选择运行模式
-run.bat        :: 长跑（orchestrator，15min 循环 + 5 个 ET 窗口）
+run.bat        :: 长跑（orchestrator，每 5min 检查 + 5 个 ET 窗口）
 snap.bat       :: 一键当日快照（regime + Trump + 信号 + 期权 + Claude 解读）
 tools.bat      :: 工具菜单（trader status / regime / picks / flatten 等）
 backtest.bat   :: 回测菜单（regime / news / trump / modules / V-bounce）
@@ -144,6 +144,8 @@ weekly.bat     :: 周末跑一次模块准确率回测，刷 signals/module_accu
    │ (含 V 反弹 / Trump override / 事件分级)│
    └──────────────────────────────────────┘
                         ↓
+   claude_gate.py（下单前二审；run.bat 默认失败关闭）
+                        ↓
    ┌──────────────────────────────────────┐
    │ paper_trader.execute() 7 层下单链：    │
    │  ① 窗口门槛 → ② 纪律性管理 → ③ 去重    │
@@ -153,7 +155,7 @@ weekly.bat     :: 周末跑一次模块准确率回测，刷 signals/module_accu
                         ↓
                   moomoo SIMULATE 账户
 
-   ＊ Claude CLI 解读层（不在下单链）：
+   ＊ Claude CLI 报告解读层（不在下单链，与上面的二审 gate 分开）：
      run_cycle 完成后调 Claude CLI 综合 11 个 block
      输出 700-1000 字人话报告 + 结构化 JSON 目标价
      paper_trader 下一个 cycle 会读 JSON 调整限价/止损
@@ -197,6 +199,8 @@ weekly.bat     :: 周末跑一次模块准确率回测，刷 signals/module_accu
 | [`_backtest_v_bounce.py`](agents/_backtest_v_bounce.py) | V 反转追买（杠杆 ETF 5d/10d/20d） |
 | [`_backtest_gold_macro.py`](agents/_backtest_gold_macro.py) | 黄金宏观信号注入回测 |
 | [`backtest_engine.py`](agents/backtest_engine.py) | Lite / Mid / Heavy 三档全系统回测 |
+
+回归测试（在 `agents/` 目录运行）：`python -m unittest discover -s tests -v`
 
 输出报告：[`agents/signals/module_accuracy.md`](agents/signals/) （注：实际文件被 gitignore 排除）
 

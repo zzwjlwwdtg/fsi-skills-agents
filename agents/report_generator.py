@@ -35,6 +35,7 @@ def _signal_icon(action: str) -> str:
         "REDUCE":    t("⚠️减仓",  "⚠️ポジション縮小"),
         "CAUTION":   t("🔶警示",  "🔶警戒"),
         "WATCH_BUY": t("🟡关注",  "🟡注目"),
+        "WATCH_BUY_PROBE": t("🟠试探仓", "🟠試し買い"),
         "HOLD":      t("⬜观望",  "⬜様子見"),
     }
     return icons.get(action, action)

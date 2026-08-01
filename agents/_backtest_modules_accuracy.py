@@ -30,6 +30,7 @@ from backtest_engine import (
 )
 from config import SIGNALS_DIR
 from decision_agent import get_decision
+from trading_contracts import BULLISH_SIGNAL_ACTIONS, BEARISH_SIGNAL_ACTIONS
 
 DAYS = 250
 PERIODS = [1, 5, 10, 20]
@@ -44,9 +45,9 @@ REPORT_PATH = Path(SIGNALS_DIR) / "module_accuracy.md"
 # ── 模块判定（信号 → 期望方向） ─────────────────────────────────────────────
 def _action_to_direction(action: str) -> str:
     """decision_agent.action → 期望方向"""
-    if action in ("WATCH_BUY", "BUY", "WATCH_BUY_LONG_HOLD"):
+    if action in BULLISH_SIGNAL_ACTIONS:
         return "bullish"
-    if action in ("REDUCE", "SELL", "CAUTION"):
+    if action in BEARISH_SIGNAL_ACTIONS:
         return "bearish"
     return "skip"
 
