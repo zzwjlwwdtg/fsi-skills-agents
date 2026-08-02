@@ -2100,7 +2100,23 @@ def _compute_ticker_options() -> dict:
                 if not expiries:
                     out["tickers"][tk] = {"underlying": underlying, "error": "no_option_chain"}
                     continue
-                exp = expiries[0]
+                # 跳过 ≤5 天内到期的合约（0DTE/1DTE OI 极小，视觉图像意义不大）
+                # 优先选：≥5 天且 ≤40 天的第一个（覆盖 weekly + monthly 有意义窗口）
+                from datetime import date as _date, datetime as _dt
+                today = _date.today()
+                good_expiries = []
+                for e in expiries:
+                    try:
+                        d_obj = _dt.strptime(e, "%Y-%m-%d").date()
+                        days = (d_obj - today).days
+                        if 5 <= days <= 40:
+                            good_expiries.append((e, days))
+                    except Exception:
+                        continue
+                if good_expiries:
+                    exp = good_expiries[0][0]   # 第一个有意义的
+                else:
+                    exp = expiries[0]           # fallback 最近
                 ch = t.option_chain(exp)
                 calls, puts = ch.calls.copy(), ch.puts.copy()
             try:

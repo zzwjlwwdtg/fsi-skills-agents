@@ -135,7 +135,9 @@ def get_option_chain_via_openD(ticker: str, expiry: str | None = None) -> Option
         if exp_df.empty:
             return None
         if expiry is None:
-            expiry = exp_df["strike_time"].iloc[0]  # 最近
+            # 优先选 ≥5 天到期的（跳过 0DTE/1DTE 低 OI 合约，图像意义大）
+            good = exp_df[exp_df["_days"] >= 5]
+            expiry = good["strike_time"].iloc[0] if not good.empty else exp_df["strike_time"].iloc[0]
 
         # 2) 拉这个到期日的完整链
         ret_c, chain = ctx.get_option_chain(
