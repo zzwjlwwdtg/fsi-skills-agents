@@ -919,6 +919,11 @@ async function loadSignals() {
     $('macro-signals').innerHTML = empty;
     return;
   }
+  // 若 log 是 fallback（非今日），准备 stale banner，稍后 prepend 到渲染结果
+  const staleBanner = (s.log_stale && s.log_note)
+    ? `<div style="grid-column: 1/-1; padding:6px 10px; background:rgba(210,153,34,0.12); border-left:3px solid var(--warn); font-size:11px; margin-bottom:8px; color:var(--fg)">
+      ⚠ <b>信号数据非实时</b> — ${s.log_note}（美股周末不开盘，orchestrator 不 scan）
+    </div>` : '';
   const context = {
     optMap: (tOpts && tOpts.tickers) || {},
     aiMap:  (tAI && tAI.tickers) || {},
@@ -930,9 +935,9 @@ async function loadSignals() {
   const items = Object.values(s.tickers).sort((a,b) => a.ticker.localeCompare(b.ticker));
   const macroItems = items.filter(t => (t.display_profile || {}).card_group === 'macro');
   const mainItems = items.filter(t => (t.display_profile || {}).card_group !== 'macro');
-  $('signals').innerHTML = mainItems.length
+  $('signals').innerHTML = staleBanner + (mainItems.length
     ? mainItems.map(t => renderSignalCard(t, context)).join('')
-    : '<div style="grid-column: span 3"><small>暂无股票或股票 ETF 信号</small></div>';
+    : '<div style="grid-column: span 3"><small>暂无股票或股票 ETF 信号</small></div>');
   $('macro-signals').innerHTML = macroItems.length
     ? macroItems.map(t => renderSignalCard(t, context)).join('')
     : '<div style="grid-column: span 3"><small>暂无大宗商品或债券信号</small></div>';

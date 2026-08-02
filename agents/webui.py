@@ -396,16 +396,25 @@ def api_hmm() -> dict:
 
 
 def api_signals() -> dict:
-    """从今日 log 解析最新每标的信号（action / conf / regime / 共振多空数 / 价格）。"""
+    """从今日 log 解析最新每标的信号（action / conf / regime / 共振多空数 / 价格）。
+
+    周末/假期/宕机: 今日无 log → fallback 到最近一次 log 文件（保留信号可见性）。
+    """
     import re
     path = _today_log_path()
+    log_stale = False
     if not path.exists():
-        return {"tickers": {}}
+        # fallback: 找最新 log 文件（避免周末美股信号全空）
+        logs = sorted(LOGS_DIR.glob("run_*.log"), key=lambda p: p.stat().st_mtime, reverse=True)
+        if not logs:
+            return {"tickers": {}, "log_stale": True, "log_note": "no log files found"}
+        path = logs[0]
+        log_stale = True
     try:
         with open(path, encoding="utf-8", errors="replace") as f:
             lines = f.readlines()
     except Exception:
-        return {"tickers": {}}
+        return {"tickers": {}, "log_stale": True, "log_note": "read error"}
 
     # 倒序扫，抓每个 ticker 最新一次的完整信号块
     #   【TICKER】价格:X.XX  RSI:X.X  量比:X.X  趋势:up/down
@@ -450,7 +459,12 @@ def api_signals() -> dict:
                 info["bull_count"] = int(rm.group(1))
                 info["bear_count"] = int(rm.group(2))
         tickers[tk] = info
-    return {"tickers": tickers}
+    return {
+        "tickers":   tickers,
+        "log_path":  path.name,
+        "log_stale": log_stale,
+        "log_note":  f"信号来自 {path.stem[4:]}（今日无 log，可能是周末/假期）" if log_stale else None,
+    }
 
 
 def api_banners() -> dict:
