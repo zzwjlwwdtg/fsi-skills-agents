@@ -1934,12 +1934,67 @@ TICKER_TO_OPTION_SOURCE = {
 }
 
 
+def _find_wall_bands(dist: list, side: str, spot: float,
+                      min_strike_notional: float = 50e6,
+                      max_gap_pct: float = 2.5) -> list:
+    """把相邻的强 OI strike 合并成 wall band（例 AAPL $300+$295 双墙）。
+
+    ⚠ 关键: 只在有效方向合并（put→spot 下方；call→spot 上方），
+       避免把 ITM 保护性 put/call 误合入支撑/阻力带。
+
+    Args:
+        dist: distribution list (每项含 strike, call_oi, put_oi)
+        side: 'call' 或 'put'
+        spot: 现价（用来判定方向 + 算 gap）
+        min_strike_notional: 单 strike 视为"强"的名义敞口下限（默认 $50M）
+        max_gap_pct: 两个相邻 strong strike 距离 ≤ 现价 X% 视为同一 band
+                     (默认 2.5% 即约 3 个连续 strike step)
+
+    Returns list of bands:
+        [{low_strike, high_strike, strikes: [...], combined_oi, combined_notional, count}]
+    """
+    oi_key = f"{side}_oi"
+    # put 只看 spot 下方 (含 ATM)；call 只看 spot 上方 (含 ATM)
+    # 避免 ITM 保护性 put/call 污染
+    if side == "put":
+        candidates = [d for d in dist if d["strike"] <= spot]
+    else:
+        candidates = [d for d in dist if d["strike"] >= spot]
+    strong = [d for d in candidates if d[oi_key] * 100 * d["strike"] >= min_strike_notional]
+    if not strong:
+        return []
+    strong.sort(key=lambda x: x["strike"])
+
+    bands: list[list] = []
+    current: list = [strong[0]]
+    for d in strong[1:]:
+        prev_strike = current[-1]["strike"]
+        gap_pct = (d["strike"] - prev_strike) / spot * 100
+        if gap_pct <= max_gap_pct:
+            current.append(d)
+        else:
+            bands.append(current)
+            current = [d]
+    bands.append(current)
+
+    return [{
+        "low_strike":         min(x["strike"] for x in b),
+        "high_strike":        max(x["strike"] for x in b),
+        "strikes":            sorted([x["strike"] for x in b]),
+        "combined_oi":        sum(x[oi_key] for x in b),
+        "combined_notional":  int(sum(x[oi_key] * 100 * x["strike"] for x in b)),
+        "count":              len(b),
+    } for b in bands]
+
+
 def _analyze_walls(spot, call_wall, put_wall, max_pain,
                    cw_vol, pw_vol, total_c, total_p,
-                   cw_oi=0, pw_oi=0, cw_prem=None, pw_prem=None) -> dict:
+                   cw_oi=0, pw_oi=0, cw_prem=None, pw_prem=None,
+                   put_bands_below=None, call_bands_above=None) -> dict:
     """从 walls + spot 推导 攻/防位、C/P 情绪、挤压风险。
 
     OI-based walls 优先（有实际持仓才有对冲压力）；vol-based 作 fallback。
+    band 支持: 若相邻多 strike 联合 notional 强 → 触发 band_break/gamma_band 挤压。
     """
     r: dict = {}
     # 用 OI 做强度（若无则退回 vol）
@@ -1995,11 +2050,34 @@ def _analyze_walls(spot, call_wall, put_wall, max_pain,
         oi_s = f" · OI {pw_oi:,} ({_fmt_notional(pw_oi*100*put_wall)} 名义)" if pw_oi else ""
         risk = {"type": "put_break", "urgency": "high",
                 "detail": f"Put wall ${put_wall} 距现价仅 {pct:.1f}%{oi_s}{prem_s}。跌破 = 关键支撑丢失，止损盘 + 做市商反手对冲 → 加速下跌"}
-    elif max_pain is not None and abs(spot - max_pain) / spot * 100 >= 3:
-        pull = "下拉" if spot > max_pain else "上拉"
-        pct = abs(spot - max_pain) / spot * 100
-        risk = {"type": "max_pain_gravity", "urgency": "medium",
-                "detail": f"Max Pain ${max_pain}（距现价 {pct:.1f}%）。到期日临近，期权卖方倾向将价格{pull}至此"}
+    else:
+        # 联合 wall band 检测（例 AAPL $300+$295 = $285M 双墙即使距 spot > 1.5% 也需警示）
+        strong_put_band = next((b for b in (put_bands_below or [])
+                                if b["combined_notional"] >= 200e6 and b["count"] >= 2
+                                and 0 <= (spot - b["high_strike"]) / spot * 100 <= 3.5), None)
+        strong_call_band = next((b for b in (call_bands_above or [])
+                                 if b["combined_notional"] >= 200e6 and b["count"] >= 2
+                                 and 0 <= (b["low_strike"] - spot) / spot * 100 <= 3.5), None)
+        if strong_call_band:
+            b = strong_call_band
+            pct = (b["low_strike"] - spot) / spot * 100
+            risk = {"type": "gamma_band_up", "urgency": "medium",
+                    "detail": (f"Call 联合带 ${b['low_strike']}-${b['high_strike']} "
+                               f"({b['count']} strike, 合计 {_fmt_notional(b['combined_notional'])}) "
+                               f"距 spot {pct:.1f}%。价格触及带下沿会分阶段释放对冲压力 → 突破全带需强量")}
+        elif strong_put_band:
+            b = strong_put_band
+            pct = (spot - b["high_strike"]) / spot * 100
+            risk = {"type": "put_band_break", "urgency": "medium",
+                    "detail": (f"Put 联合带 ${b['low_strike']}-${b['high_strike']} "
+                               f"({b['count']} strike, 合计 {_fmt_notional(b['combined_notional'])}) "
+                               f"距 spot -{pct:.1f}%。首层 ${b['high_strike']} 触及触发首轮对冲卖压，"
+                               f"跌破全带 ${b['low_strike']} = 无缓冲加速下跌")}
+        elif max_pain is not None and abs(spot - max_pain) / spot * 100 >= 3:
+            pull = "下拉" if spot > max_pain else "上拉"
+            pct = abs(spot - max_pain) / spot * 100
+            risk = {"type": "max_pain_gravity", "urgency": "medium",
+                    "detail": f"Max Pain ${max_pain}（距现价 {pct:.1f}%）。到期日临近，期权卖方倾向将价格{pull}至此"}
     r["squeeze_risk"] = risk
     # C/P 情绪 —— 带小白详细解读
     if total_p > 0:
@@ -2183,6 +2261,12 @@ def _compute_ticker_options() -> dict:
                             else (max(dist, key=lambda x: x["call_oi"]) if any(d["call_oi"] > 0 for d in dist) else None))
             put_wall_oi  = (max(put_below,  key=lambda x: x["put_oi"])  if put_below
                             else (max(dist, key=lambda x: x["put_oi"])  if any(d["put_oi"] > 0 for d in dist) else None))
+            # Wall bands: 相邻强 OI strike 合并（例 AAPL $300+$295 = $285M 联合防御）
+            put_bands  = _find_wall_bands(dist, "put",  spot)
+            call_bands = _find_wall_bands(dist, "call", spot)
+            # 只保留 spot 附近方向的 band（下方 put / 上方 call）
+            put_bands_below  = [b for b in put_bands  if b["high_strike"] <= spot * 1.02]
+            call_bands_above = [b for b in call_bands if b["low_strike"]  >= spot * 0.98]
             total_c = sum(d["call_vol"] for d in dist)
             total_p = sum(d["put_vol"] for d in dist)
             # Max pain
@@ -2219,6 +2303,8 @@ def _compute_ticker_options() -> dict:
                 cw_oi=an_call["call_oi"],    pw_oi=an_put["put_oi"],
                 cw_prem=an_call["call_prem"], pw_prem=an_put["put_prem"],
                 total_c=total_c, total_p=total_p,
+                put_bands_below=put_bands_below,
+                call_bands_above=call_bands_above,
             )
 
             def _wall_meta(w, side):
@@ -2285,6 +2371,9 @@ def _compute_ticker_options() -> dict:
                 # OI-based walls（分析用；若与 vol wall 同一 strike 则相同）
                 "call_wall_oi_strike": call_wall_oi["strike"] if call_wall_oi else None,
                 "put_wall_oi_strike":  put_wall_oi["strike"]  if put_wall_oi  else None,
+                # 联合 wall bands（相邻强 OI strike 合并 → 隐性双墙识别）
+                "put_bands_below":  put_bands_below,   # spot 下方 put 联合防御
+                "call_bands_above": call_bands_above,  # spot 上方 call 联合阻力
                 "max_pain":         best_s,
                 "source":           source_used,   # openD or yfinance
                 **analysis,

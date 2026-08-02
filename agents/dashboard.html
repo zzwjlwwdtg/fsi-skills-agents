@@ -760,7 +760,10 @@ function renderOptAnalysis(opt) {
   const oCls = strCls[o.strength] || '';
   const urgCls = { high:'bad', medium:'warn', low:'muted' }[r.urgency] || '';
   const urgIcon = r.urgency === 'high' ? '🚨' : (r.urgency === 'medium' ? '⚠' : '·');
-  const RISK_ZH = { gamma_up:'Gamma 挤压↑', put_break:'跌破风险', max_pain_gravity:'Max Pain 引力', none:'无明显挤压' };
+  const RISK_ZH = { gamma_up:'Gamma 挤压↑', put_break:'跌破风险',
+                     gamma_band_up:'Call 联合带阻力',
+                     put_band_break:'Put 联合带 (双墙+)',
+                     max_pain_gravity:'Max Pain 引力', none:'无明显挤压' };
   const cpCls = (sm.cp_ratio >= 1.8 || sm.cp_ratio <= 0.5) ? 'warn' : 'muted';
   // 大单标记：wall 本身 OI ≥ 5K 或 notional ≥ $30M → 🔥
   const bigThresh = w => (w.oi >= 5000) || (w.notional >= 30_000_000);
