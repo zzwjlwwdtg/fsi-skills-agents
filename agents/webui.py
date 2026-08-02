@@ -2174,8 +2174,15 @@ def _compute_ticker_options() -> dict:
             call_wall = max(dist, key=lambda x: x["call_vol"])
             put_wall  = max(dist, key=lambda x: x["put_vol"])
             # OI-based walls（分析用的是 OI，反映实际押注/持仓）
-            call_wall_oi = max(dist, key=lambda x: x["call_oi"]) if any(d["call_oi"] > 0 for d in dist) else None
-            put_wall_oi  = max(dist, key=lambda x: x["put_oi"])  if any(d["put_oi"] > 0 for d in dist) else None
+            # ⚠ 关键：offense = spot 上方的 call 墙 / defense = spot 下方的 put 墙
+            # 否则 ITM 保护性 put OI 会污染 defense 位（如 AAPL spot $308 有 $325 put OI 16K
+            # 是机构在 $325 保护股票，不是"下方支撑"）
+            call_above = [d for d in dist if d["strike"] >= spot and d["call_oi"] > 0]
+            put_below  = [d for d in dist if d["strike"] <= spot and d["put_oi"]  > 0]
+            call_wall_oi = (max(call_above, key=lambda x: x["call_oi"]) if call_above
+                            else (max(dist, key=lambda x: x["call_oi"]) if any(d["call_oi"] > 0 for d in dist) else None))
+            put_wall_oi  = (max(put_below,  key=lambda x: x["put_oi"])  if put_below
+                            else (max(dist, key=lambda x: x["put_oi"])  if any(d["put_oi"] > 0 for d in dist) else None))
             total_c = sum(d["call_vol"] for d in dist)
             total_p = sum(d["put_vol"] for d in dist)
             # Max pain
