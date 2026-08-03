@@ -1313,14 +1313,16 @@ def _compute_jp_watch() -> dict:
             h = None
             source_used = "yfinance"
             if openD_jp_ok and get_kline_via_openD:
-                h = get_kline_via_openD(entry["symbol"], days=180)
+                # 拉 250 天让 span_b 52 天热身 + 90 天显示都有真值（原 180 前一半 null）
+                h = get_kline_via_openD(entry["symbol"], days=250)
                 if h is not None and not h.empty and len(h) >= 78:
                     source_used = "openD"
                 else:
                     h = None
             if h is None:
                 t = yf.Ticker(entry["symbol"])
-                h = t.history(period="6mo", auto_adjust=True)
+                # 1y (~250 交易日): span_b 52 rolling → 198 天真值 > 90 天显示，全 fill
+                h = t.history(period="1y", auto_adjust=True)
             if h.empty or len(h) < 78:
                 out["tickers"].append({**entry, "error": f"insufficient bars ({len(h)})"})
                 continue
