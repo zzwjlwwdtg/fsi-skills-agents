@@ -1173,6 +1173,7 @@ TICKER_TO_FUNDAMENTAL_STOCK = {
     "MURATA":   "6981.T",   # 村田製作所 — MLCC 全球龙头，Apple/NVDA 直接供应
     "TEKSCEND": "429A.T",   # TEKSCEND PHOTOMASK — 光罩制造，TSMC 关键工艺供应
     "ARE":      "5857.T",   # ARE Holdings (旧 Asahi Holdings) — 贵金属回收（金/银/铂），半导体/urban mining 概念
+    "MUFG":     "8306.T",   # 三菱 UFJ 金融集团 — 日本最大银行，日本加息受益股
 }
 
 # 日股关注列表（不参与 orchestrator scan，只在 dashboard 单独展示）
@@ -1189,6 +1190,8 @@ JP_WATCH_LIST = [
      "thesis": "半导体光罩制造 · TSMC/Samsung 关键工艺供应 · 光刻上游（ASML 之外的国产替代）"},
     {"ticker": "ARE",      "symbol": "5857.T", "name_zh": "ARE 控股", "name_en": "ARE Holdings",
      "thesis": "贵金属回收（金/银/铂）· 半导体电子废弃物 urban mining · AI 芯片需求带动金/铂回收溢价"},
+    {"ticker": "MUFG",     "symbol": "8306.T", "name_zh": "三菱 UFJ", "name_en": "Mitsubishi UFJ Financial",
+     "thesis": "日本最大银行（4000+ 兆日元资产）· 日本加息 NIM 扩张受益 · 巴菲特 5 大商社之外的日本 core holding"},
 ]
 
 
