@@ -31,6 +31,16 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
+from jp_watch_contracts import (
+    Q3_MACRO_THESIS,
+    classify_ichimoku_position as _classify_ichimoku_position,
+    compute_ichimoku_series as _compute_ichimoku_series,
+    jp_earnings_event_state as _jp_earnings_event_state,
+    jp_thesis_fit as _jp_thesis_fit,
+    official_bank_fundamentals as _official_bank_fundamentals,
+    official_jp_guidance as _official_jp_guidance,
+)
+
 SCRIPT_DIR = Path(__file__).parent
 SIGNALS_DIR = SCRIPT_DIR / "signals"
 LOGS_DIR    = SCRIPT_DIR / "logs"
@@ -118,6 +128,7 @@ _DEFAULT_TICKER_DISPLAY_PROFILE = {
     "show_fundamentals": True,
     "show_ai_analysis": True,
     "show_supply_chain": True,
+    "fundamental_profile": "industrial",
 }
 
 TICKER_DISPLAY_PROFILES = {
@@ -147,6 +158,16 @@ TICKER_DISPLAY_PROFILES = {
         "show_fundamentals": False,
         "show_ai_analysis": False,
         "show_supply_chain": False,
+    },
+    "MUFG": {
+        "card_group": "jp",
+        "asset_class": "bank",
+        "asset_label_zh": "日本银行",
+        "show_options": False,
+        "show_fundamentals": True,
+        "show_ai_analysis": False,
+        "show_supply_chain": False,
+        "fundamental_profile": "bank",
     },
 }
 
@@ -1191,7 +1212,9 @@ JP_WATCH_LIST = [
     {"ticker": "ARE",      "symbol": "5857.T", "name_zh": "ARE 控股", "name_en": "ARE Holdings",
      "thesis": "贵金属回收（金/银/铂）· 半导体电子废弃物 urban mining · AI 芯片需求带动金/铂回收溢价"},
     {"ticker": "MUFG",     "symbol": "8306.T", "name_zh": "三菱 UFJ", "name_en": "Mitsubishi UFJ Financial",
-     "thesis": "日本最大银行（4000+ 兆日元资产）· 日本加息 NIM 扩张受益 · 巴菲特 5 大商社之外的日本 core holding"},
+     "thesis": "日本最大银行（总资产约 400+ 兆日元）· 日元利率上升带来 NII 增益 · 全球业务分散",
+     "fundamental_profile": "bank", "show_supply_chain": False,
+     "thesis_fit": _jp_thesis_fit("MUFG")},
 ]
 
 
@@ -1201,7 +1224,18 @@ def api_jp_watch() -> dict:
     同时检查 JP catalyst 触发条件（RSI<35 + 業績予想上修），触发则推送 Discord/TG。
     dedup 24h 防止刷屏。
     """
-    result = _cached("jp_watch", ttl_sec=300, compute_fn=_compute_jp_watch)
+    # Versioned key prevents pre-fix, unshifted Ichimoku values from surviving a
+    # deployment.  Dynamic metadata is re-attached so a midnight JST boundary
+    # cannot leave an event labelled "tomorrow" for the full cache TTL.
+    result = _cached("jp_watch_v2", ttl_sec=300, compute_fn=_compute_jp_watch)
+    entries = {entry["ticker"]: entry for entry in JP_WATCH_LIST}
+    for row in (result or {}).get("tickers", []):
+        entry = entries.get(row.get("ticker"), {})
+        if entry:
+            row.update({key: value for key, value in entry.items() if key not in {"price", "source"}})
+        guidance = _official_jp_guidance(row.get("ticker", ""))
+        if guidance:
+            row["earnings_event"] = guidance["earnings_event"]
     # 检查 catalyst 触发（不阻断响应，静默 fire-and-forget）
     try:
         threading.Thread(target=_check_jp_catalyst_triggers, args=(result,), daemon=True).start()
@@ -1213,7 +1247,7 @@ def api_jp_watch() -> dict:
 def _check_jp_catalyst_triggers(jp_watch_data: dict) -> None:
     """检查每只 JP 股是否 满足 catalyst 条件 → 触发 Discord/TG 推送。
 
-    条件（AND）：RSI < 35 且 guidance.direction = '上修'
+    条件（AND）：RSI < 35 且官方来源已核验、revision_type = raised。
     dedup: 每 24h 每 ticker 只推一次
     """
     dedup_dir = _WEBUI_CACHE_DIR / "jp_catalyst_sent"
@@ -1225,15 +1259,16 @@ def _check_jp_catalyst_triggers(jp_watch_data: dict) -> None:
         tk  = t.get("ticker", "")
         if rsi >= 35 or not tk:
             continue
-        # 读 guidance cache
-        gd_cache = _WEBUI_CACHE_DIR / f"jp_guidance_{tk}.json"
-        if not gd_cache.exists():
+        # Read the same deterministic official contract as the API.  Guidance
+        # caches are not authoritative and must never become trade alerts.
+        gd = _official_jp_guidance(tk)
+        if not gd:
             continue
-        try:
-            gd = json.loads(gd_cache.read_text(encoding="utf-8"))
-        except Exception:
+        # Fail closed when the source is historical but a newer earnings
+        # release is awaiting verification.
+        if not gd.get("source_verified") or gd.get("revision_type") != "raised":
             continue
-        if gd.get("direction") != "上修":
+        if not gd.get("current_verified"):
             continue
         # dedup: 24h per ticker
         dedup_file = dedup_dir / f"{tk}.txt"
@@ -1279,14 +1314,14 @@ def _compute_jp_watch() -> dict:
             source_used = "yfinance"
             if openD_jp_ok and get_kline_via_openD:
                 h = get_kline_via_openD(entry["symbol"], days=180)
-                if h is not None and not h.empty and len(h) >= 55:
+                if h is not None and not h.empty and len(h) >= 78:
                     source_used = "openD"
                 else:
                     h = None
             if h is None:
                 t = yf.Ticker(entry["symbol"])
                 h = t.history(period="6mo", auto_adjust=True)
-            if h.empty or len(h) < 55:
+            if h.empty or len(h) < 78:
                 out["tickers"].append({**entry, "error": f"insufficient bars ({len(h)})"})
                 continue
             close = h["Close"].astype(float)
@@ -1352,22 +1387,19 @@ def _compute_jp_watch() -> dict:
 
             # ── 一目均衡表 Ichimoku ──
             # 転換線 Tenkan(9), 基準線 Kijun(26), Senkou A/B(52), 遅行 = 当前价 推 26 天前
-            tenkan_series   = (high.rolling(9).max() + low.rolling(9).min()) / 2
-            kijun_series    = (high.rolling(26).max() + low.rolling(26).min()) / 2
-            senkou_a_series = (tenkan_series + kijun_series) / 2
-            senkou_b_series = (high.rolling(52).max() + low.rolling(52).min()) / 2
+            ichimoku_series = _compute_ichimoku_series(high, low, close)
+            tenkan_series   = ichimoku_series["tenkan"]
+            kijun_series    = ichimoku_series["kijun"]
+            # The cloud visible at today's x-coordinate was calculated 26
+            # sessions earlier.  Comparing against unshifted spans caused the
+            # MUFG card to say 云中 when the standard cloud said 云上.
+            senkou_a_series = ichimoku_series["senkou_a"]
+            senkou_b_series = ichimoku_series["senkou_b"]
             tenkan   = float(tenkan_series.iloc[-1])
             kijun    = float(kijun_series.iloc[-1])
             senkou_a = float(senkou_a_series.iloc[-1])
             senkou_b = float(senkou_b_series.iloc[-1])
-            cloud_top = max(senkou_a, senkou_b)
-            cloud_bot = min(senkou_a, senkou_b)
-            if price > cloud_top:
-                ichi_pos, ichi_dir = "云上", "bullish"
-            elif price < cloud_bot:
-                ichi_pos, ichi_dir = "云下", "bearish"
-            else:
-                ichi_pos, ichi_dir = "云中", "neutral"
+            ichi_pos, ichi_dir = _classify_ichimoku_position(price, senkou_a, senkou_b)
             cloud_color = "bullish" if senkou_a > senkou_b else "bearish"
             tk_cross = "金叉" if tenkan > kijun else "死叉"
 
@@ -1466,6 +1498,9 @@ def api_fundamentals(ticker: str, period: str = 'year') -> dict:
     """
     tk = (ticker or "").upper().strip()
     period = 'quarter' if period == 'quarter' else 'year'
+    bank_payload = _official_bank_fundamentals(tk)
+    if bank_payload is not None:
+        return bank_payload
     if not ticker_display_profile(tk)["show_fundamentals"]:
         return {"ticker": tk, "error": "no_fundamentals_for_this_type"}
     stock = TICKER_TO_FUNDAMENTAL_STOCK.get(tk, tk)
@@ -1674,60 +1709,42 @@ def _compute_fundamentals(tk: str, stock: str, period: str = 'year') -> dict:
 
 
 def api_jp_guidance(ticker: str) -> dict:
-    """業績予想 (JP guidance) 状态。仅日股用。Claude 生成，7 天缓存。
+    """業績予想状态。官方结构化事实优先，未接入时明确返回未核验。
 
     返 {ticker, direction: 上修/下修/据え置き/不明, magnitude: 小/中/大,
         last_update, ref: 关键理由, next_earnings, confidence}
     """
     tk = (ticker or "").upper().strip()
+    verified = _official_jp_guidance(tk)
+    if verified is not None:
+        # Deliberately bypass _cached: a legacy Claude cache must never
+        # override issuer IR facts or today's JST event state.
+        return verified
     # 只 JP 有意义
     stock = TICKER_TO_FUNDAMENTAL_STOCK.get(tk, tk)
     if not (stock and (stock.endswith(".T") or tk in ["TDK", "KIOXIA", "FUJIKURA"])):
         return {"ticker": tk, "error": "not_jp_stock"}
-    return _cached(f"jp_guidance_{tk}", ttl_sec=7 * 24 * 3600,
+    return _cached(f"jp_guidance_v2_{tk}", ttl_sec=24 * 3600,
                     compute_fn=lambda: _compute_jp_guidance(tk, stock))
 
 
 def _compute_jp_guidance(tk: str, stock: str) -> dict:
-    try:
-        from ai_prompt import query_claude_cli
-    except Exception as e:
-        return {"ticker": tk, "error": f"ai_prompt: {e}"}
-    prompt = (
-        f"你是日本股票业绩予想分析师。对下面标的输出严格 JSON（无 markdown 围栏）。\n"
-        f"Ticker: {tk}\n"
-        f"东证 code: {stock}\n\n"
-        "输出格式（英文 key，中文 value）:\n"
-        "{\n"
-        '  "direction":    "上修 | 下修 | 据え置き | 不明",\n'
-        '  "magnitude":    "大 | 中 | 小 | 无",\n'
-        '  "last_update":  "YYYY-MM-DD (最近一次予想公布/修正日)",\n'
-        '  "next_earnings":"YYYY-MM-DD (下次预定财报日)",\n'
-        '  "guidance_note":"1 句核心指引内容 (营收/营业利益/纯利 YoY 目标)",\n'
-        '  "revision_reason":"1 句 revision 理由（如有）",\n'
-        '  "market_reaction":"高 | 中 | 低 (发布后股价反应强度)",\n'
-        '  "confidence":   "high | medium | low"\n'
-        "}\n\n"
-        "参考：JP 上市公司必须发全年业绩予想（yosou）+ 季度予想。\n"
-        "上修 = 予想 revised upward, 下修 = revised downward, 据え置き = 维持不变\n"
-        "严格只输出 JSON，不要 preamble。\n"
-    )
-    out, status = query_claude_cli(prompt, timeout=60)
-    if not out:
-        return {"ticker": tk, "error": f"claude {status}"}
-    import re
-    txt = out.strip()
-    txt = re.sub(r"^```(?:json)?\s*", "", txt)
-    txt = re.sub(r"\s*```\s*$", "", txt)
-    try:
-        data = json.loads(txt)
-    except Exception as e:
-        return {"ticker": tk, "error": f"json parse: {e}", "raw": out[:300]}
+    """Safe placeholder until an issuer's IR facts are deterministically onboarded."""
     return {
-        "ticker":         tk,
-        "source_stock":   stock,
-        "generated_at":   datetime.now(timezone.utc).isoformat(),
-        **data,
+        "ticker": tk,
+        "source_stock": stock,
+        "direction": "待核验",
+        "revision_type": "unverified",
+        "magnitude": "不明",
+        "last_update": None,
+        "next_earnings": None,
+        "guidance_note": "尚未接入该公司的官方 IR 结构化数据；已停用无来源模型数字。",
+        "revision_reason": None,
+        "market_reaction": "不明",
+        "confidence": "unverified",
+        "source_verified": False,
+        "source_status": "not_onboarded",
+        "generated_at": datetime.now(timezone.utc).isoformat(),
     }
 
 

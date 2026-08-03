@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "thesis_id": "2026-Q3",
+  "as_of": "2026-07-31",
+  "rates": {
+    "pivot": "Fed 鹰派重定价见顶",
+    "preferred_tenors": ["2Y", "5Y"],
+    "avoid_tenors": ["10Y+"],
+    "expression": "做多美国 2 年与 5 年国债；避免把长端利率下行当作必要前提",
+    "invalidation": "2026 年 8 月发布的美国核心 PCE 月环比高于 0.25%",
+    "invalidation_window": "2026-08 release"
+  },
+  "cloud": {
+    "pivot": "云消费兑现相对半导体产能建设占优",
+    "preferred_expressions": ["GOOG", "NBIS"],
+    "ticker_aliases": {"GOOG": ["GOOGL"]},
+    "avoid_expression": "不以做空半导体作为核心表达",
+    "invalidation": [
+      "GOOG 或 AMZN 的 Q3 capex 指引继续上升",
+      "MSFT capex 收窄被证实只是孤立事件"
+    ]
+  }
+}

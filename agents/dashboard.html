@@ -304,7 +304,7 @@ const EVENT_HINT = {
   'PPI Release':    '生产者物价指数 · 上游通胀先行指标',
   'NFP Release':    '非农就业 · Fed 就业目标 + 经济强弱',
   'Retail Sales':   '零售销售 · 消费者信心 + 经济动能',
-  'PCE Release':    '🔥 核心 PCE · Fed 首选通胀指标 · thesis invalidation: >0.25% m/m = 平 SHY/IEI 债券多仓',
+  'PCE Release':    '🔥 核心 PCE · Fed 首选通胀指标 · thesis invalidation（2026 年 8 月发布窗口）: >0.25% m/m = 平 SHY/IEI 债券多仓',
   'NVDA Earnings':  'NVDA 财报 · 半导体链条领头（SOXL/DRAM/MULL 都会跟）',
   'GOOG Q3':        '🔥 GOOG Q3 · thesis check: capex 若继续上调 → AI 价值链 shift 判断错，平 GOOG 多仓',
   'AMZN Q3':        '🔥 AMZN Q3 · thesis check: capex 若继续上调 → 云端 shift 未确认',
@@ -381,6 +381,47 @@ function renderIchimoku(t, W = 260, H = 90) {
   </svg>`;
 }
 
+function renderJPEarningsBadge(event) {
+  if (!event || !event.date) return '';
+  if (!event.source_verified) {
+    return '<span class="badge warn" style="font-size:8px; margin-left:5px">⚠ 财报日期待核验</span>';
+  }
+  const labels = {
+    today: '🔴 今日财报（官方）',
+    upcoming: `⏳ T-${Math.max(0, event.days)} 财报（官方）`,
+    released: '✓ 财报日已过',
+  };
+  const cls = event.state === 'today' ? 'bad' : (event.state === 'upcoming' && event.days <= 1 ? 'warn' : 'muted');
+  const badge = `<span class="badge ${cls}" style="font-size:8px; margin-left:5px" title="东京日历日：${event.date}；${event.source_label || '官方 IR'}">${labels[event.state] || event.date}</span>`;
+  return event.source_url
+    ? `<a href="${event.source_url}" target="_blank" rel="noopener" style="text-decoration:none">${badge}</a>`
+    : badge;
+}
+
+function renderJPThesisFit(fit) {
+  if (!fit) return '';
+  const alignment = { positive:'+', mixed:'±', negative:'−' };
+  const alignmentCls = { positive:'ok', mixed:'warn', negative:'bad' };
+  const drivers = (fit.drivers || []).map(d =>
+    `<span title="${d.note || ''}" style="white-space:nowrap"><b class="${alignmentCls[d.alignment] || 'muted'}">${alignment[d.alignment] || '·'}</b> ${d.factor}<small style="opacity:.7">/${d.weight}${d.evidence_type === 'inference_unquantified' ? '/推断' : ''}</small></span>`
+  ).join(' · ');
+  const source = fit.source_url
+    ? `<a href="${fit.source_url}" target="_blank" rel="noopener" style="color:var(--blue); font-size:8px">公司 IR 依据 ↗</a>`
+    : '';
+  return `<div style="font-size:9px; line-height:1.45; margin-top:5px; padding:5px 6px; border:1px solid rgba(210,153,34,.45); border-radius:4px; background:rgba(210,153,34,.05)">
+    <div style="display:flex; align-items:center; gap:5px; flex-wrap:wrap">
+      <b style="color:var(--warn)">🧭 ${fit.thesis_id || 'Macro'} 兼容度</b>
+      <span class="badge warn">${fit.label_zh || fit.compatibility}</span>
+      ${fit.is_core_expression === false ? '<span class="badge muted">非核心表达</span>' : ''}
+      ${fit.manual_review ? '<span class="badge muted">需手工判断</span>' : ''}
+      ${source}
+    </div>
+    <div style="color:var(--muted); margin-top:3px">${fit.summary || ''}</div>
+    ${drivers ? `<div style="margin-top:3px">${drivers}</div>` : ''}
+    ${fit.upgrade_gate ? `<div style="margin-top:3px; color:var(--muted)"><b style="color:#58a6ff">确认条件：</b>${fit.upgrade_gate}</div>` : ''}
+  </div>`;
+}
+
 async function loadJPWatch() {
   const r = await fetchJson('/api/jp_watch');
   const el = $('jp-watch');
@@ -402,7 +443,7 @@ async function loadJPWatch() {
     return `
     <div class="signal-card">
       <div class="top-row">
-        <span class="ticker-name">${t.ticker} <small style="color:var(--muted); font-size:9px">${t.symbol}</small></span>
+        <span class="ticker-name">${t.ticker} <small style="color:var(--muted); font-size:9px">${t.symbol}</small>${renderJPEarningsBadge(t.earnings_event)}</span>
         <span class="price">¥${t.price}</span>
       </div>
       <div style="font-size:11px; margin:3px 0"><b>${t.name_zh}</b> <small style="color:var(--muted)">${t.name_en}</small></div>
@@ -433,16 +474,18 @@ async function loadJPWatch() {
       </div>
       ${renderIchimoku(t)}
       <div style="font-size:9px; color:var(--muted); line-height:1.4; margin-top:4px; border-top:1px dashed var(--border); padding-top:4px">${t.thesis}</div>
+      ${renderJPThesisFit(t.thesis_fit)}
+      ${t.show_supply_chain === false ? '' : `
       <details data-details-key="jpsc-${t.ticker}" style="border-top:1px dashed var(--border); margin-top:5px; padding-top:4px" ontoggle="rememberDetailsState(this); if(this.open) loadSupplyChainOnDemand('${t.ticker}', 'jpsc-body-${t.ticker}')">
         <summary style="cursor:pointer; list-style:none; font-size:10px; color:var(--muted)">🔗 <b style="color:#58a6ff">供应链</b> <small style="font-size:9px">▼</small></summary>
         <div id="jpsc-body-${t.ticker}"></div>
-      </details>
+      </details>`}
       <details data-details-key="jpfd-${t.ticker}" open style="border-top:1px dashed var(--border); margin-top:5px; padding-top:4px" ontoggle="rememberDetailsState(this); if(this.open) loadFundamentalsOnDemand('${t.ticker}', 'jpfd-body-${t.ticker}')">
-        <summary style="cursor:pointer; list-style:none; font-size:10px; color:var(--muted)">📊 <b style="color:#58a6ff">基本面</b> <small style="font-size:9px">▲</small></summary>
+        <summary style="cursor:pointer; list-style:none; font-size:10px; color:var(--muted)">${t.fundamental_profile === 'bank' ? '🏦' : '📊'} <b style="color:#58a6ff">${t.fundamental_profile === 'bank' ? '银行基本面' : '基本面'}</b> <small style="font-size:9px">▲</small></summary>
         <div id="jpfd-body-${t.ticker}"></div>
       </details>
       <details data-details-key="jpgd-${t.ticker}" open style="border-top:1px dashed var(--border); margin-top:5px; padding-top:4px" ontoggle="rememberDetailsState(this); if(this.open) loadJPGuidanceOnDemand('${t.ticker}', 'jpgd-body-${t.ticker}')">
-        <summary style="cursor:pointer; list-style:none; font-size:10px; color:var(--muted)">📢 <b style="color:#58a6ff">業績予想</b> <small style="font-size:9px">▲ (Claude 生成，7 天缓存)</small></summary>
+        <summary style="cursor:pointer; list-style:none; font-size:10px; color:var(--muted)">📢 <b style="color:#58a6ff">業績予想</b> <small style="font-size:9px">▲（官方 IR 优先；未接入则不生成数字）</small></summary>
         <div id="jpgd-body-${t.ticker}"></div>
       </details>
     </div>`;
@@ -457,37 +500,52 @@ async function loadJPGuidanceOnDemand(ticker, containerId) {
   const el = document.getElementById(containerId);
   if (!el || el.dataset.loaded === 'true' || el.dataset.loading === 'true') return;
   el.dataset.loading = 'true';
-  el.innerHTML = '<small style="color:var(--muted); padding:6px; display:block">🔄 Claude 生成中… (首次 30-60s)</small>';
+  el.innerHTML = '<small style="color:var(--muted); padding:6px; display:block">🔄 读取业绩指引…</small>';
   const r = await fetchJson(`/api/jp_guidance?ticker=${encodeURIComponent(ticker)}`);
   el.dataset.loading = 'false';
   if (!r || r.error) {
     el.innerHTML = `<small class="muted">生成失败：${(r && r.error) || 'no data'}</small>`;
     return;
   }
-  const DIR_CLS = { '上修':'ok', '据え置き':'muted', '下修':'bad' };
-  const DIR_ICON= { '上修':'📈', '据え置き':'📊', '下修':'📉' };
-  const MAG_CLS = { '大':'bad', '中':'warn', '小':'muted', '无':'muted' };
-  const REACT_CLS = { '高':'bad', '中':'warn', '低':'muted' };
-  const CONF_LABEL = { high:'高', medium:'中', low:'低（AI 训练数据估算，非实时 IR）' };
+  const DIR_CLS = { '新指引':'ok', '上修':'ok', '据え置き':'muted', '下修':'bad', '待核验':'warn' };
+  const DIR_ICON= { '新指引':'🎯', '上修':'📈', '据え置き':'📊', '下修':'📉', '待核验':'⚠' };
+  const MAG_CLS = { '大':'bad', '中':'warn', '小':'muted', '无':'muted', '不适用':'muted', '不明':'muted' };
+  const REACT_CLS = { '高':'bad', '中':'warn', '低':'muted', '待核验':'muted', '不明':'muted' };
+  const CONF_LABEL = { verified:'官方已核验', high:'高', medium:'中', low:'低', unverified:'未核验' };
   const dCls = DIR_CLS[r.direction] || 'muted';
   const dIcon = DIR_ICON[r.direction] || '❓';
-  return el.innerHTML = `
+  const confidenceLabel = r.source_verified && r.current_verified === false
+    ? '历史来源已核验，当前待更新'
+    : (CONF_LABEL[r.confidence] || r.confidence || '-');
+  const sourceBadge = r.source_verified && r.current_verified === false
+    ? `<a href="${r.source_url}" target="_blank" rel="noopener" class="badge warn" style="font-size:8px; text-decoration:none">历史官方数据 · 待更新 ↗</a>`
+    : (r.source_verified
+      ? `<a href="${r.source_url}" target="_blank" rel="noopener" class="badge ok" style="font-size:8px; text-decoration:none">官方 IR ✓ ↗</a>`
+      : '<span class="badge warn" style="font-size:8px">未接入官方数据</span>');
+  const ev = r.earnings_event || {};
+  const eventLabel = ev.state === 'today' ? `今日财报 ${ev.date}`
+    : (ev.state === 'upcoming' ? `下次财报 ${ev.date}（T-${ev.days}）`
+      : (ev.state === 'released' ? `财报日 ${ev.date} 已过` : '财报日待核验'));
+  const reasonLabel = r.revision_type === 'initial' ? '核心驱动' : '修正理由';
+  el.innerHTML = `
     <div style="font-size:10px; padding:5px 0">
       <div style="display:flex; align-items:center; gap:6px; margin-bottom:5px">
         <span style="font-size:14px">${dIcon}</span>
         <b class="${dCls}" style="font-size:13px">${r.direction || '-'}</b>
         <span class="badge ${MAG_CLS[r.magnitude] || ''}" style="font-size:9px">幅度 ${r.magnitude || '-'}</span>
         <span class="badge ${REACT_CLS[r.market_reaction] || ''}" style="font-size:9px" title="发布后股价反应强度">市場反応 ${r.market_reaction || '-'}</span>
+        ${sourceBadge}
       </div>
       ${r.guidance_note ? `<div style="border-left:2px solid var(--blue); padding:3px 6px; margin-bottom:4px; background:rgba(88,166,255,0.05); font-size:10px; line-height:1.4">
         <b style="color:#58a6ff">全年指引</b>: ${r.guidance_note}
       </div>` : ''}
       ${r.revision_reason ? `<div style="border-left:2px solid var(--warn); padding:3px 6px; margin-bottom:4px; background:rgba(210,153,34,0.05); font-size:10px; line-height:1.4">
-        <b style="color:var(--warn)">修正理由</b>: ${r.revision_reason}
+        <b style="color:var(--warn)">${reasonLabel}</b>: ${r.revision_reason}
       </div>` : ''}
+      ${r.data_note ? `<div style="font-size:9px; color:var(--muted); margin:4px 0">${r.data_note}</div>` : ''}
       <div style="display:flex; justify-content:space-between; font-size:9px; color:var(--muted); margin-top:5px">
-        <span>更新: ${r.last_update || '-'} · 下次财报: ${r.next_earnings || '-'}</span>
-        <span title="Claude 说明这是训练数据 vs 实时 IR，用户应交叉验证">信頼度 ${CONF_LABEL[r.confidence] || r.confidence || '-'}</span>
+        <span>指引生效: ${r.guidance_effective_date || r.last_update || '-'} · 来源材料: ${r.source_published_at || '-'} · ${eventLabel}</span>
+        <span>信頼度 ${confidenceLabel}</span>
       </div>
     </div>
   `;
@@ -1100,6 +1158,19 @@ function _sparkline(vals, w = 60, h = 20, color = '#58a6ff') {
 function renderFundamentals(fd, ticker, period) {
   if (!fd) return '<small style="color:var(--muted)">🔄 加载中…</small>';
   if (fd.error) return `<small class="muted">${fd.error === 'no_fundamentals_for_this_type' ? '此类型无基本面（ETF/大宗商品）' : '数据不可用: ' + fd.error.slice(0,80)}</small>`;
+  if (fd.fundamental_profile === 'bank') {
+    const metrics = (fd.metrics || []).map(m => `<div style="border:1px solid var(--border); border-radius:4px; padding:5px 6px; background:rgba(88,166,255,.03)">
+      <div style="font-size:8px; color:var(--muted)">${m.label}</div>
+      <b style="font-size:12px">${m.value}</b>
+      <div style="font-size:8px; color:var(--muted)">${m.context || ''}</div>
+    </div>`).join('');
+    const source = fd.source_url ? `<a href="${fd.source_url}" target="_blank" rel="noopener" style="color:var(--blue)">${fd.source_label || '官方 IR'} ↗</a>` : '';
+    return `<div style="padding:5px 0">
+      <div style="display:flex; justify-content:space-between; font-size:9px; color:var(--muted); margin-bottom:5px"><span>🏦 银行专用口径</span><span>${source}</span></div>
+      <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:4px">${metrics}</div>
+      <div style="font-size:9px; color:var(--muted); margin-top:5px">${fd.note || ''}</div>
+    </div>`;
+  }
   const years = fd.years || [];
   period = period || fd.period || 'year';
   const src = fd.source_stock && fd.source_stock !== ticker ? `<small style="color:var(--muted); font-size:9px" title="ETF 用代表单股做基本面代理">← ${fd.source_stock} 财报</small>` : '';
