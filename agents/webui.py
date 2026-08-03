@@ -22,6 +22,7 @@ from __future__ import annotations
 import ctypes
 import json
 import os
+import re
 import sys
 import threading
 import time
@@ -465,6 +466,100 @@ def api_signals() -> dict:
         "log_stale": log_stale,
         "log_note":  f"信号来自 {path.stem[4:]}（今日无 log，可能是周末/假期）" if log_stale else None,
     }
+
+
+def api_trump_verify(text: str) -> dict:
+    """核实一句 Trump 引言是否真身发过（Truth Social + X Nitter）。
+
+    用途: 用户看到 X/媒体上的 "Trump 说 xxx"，快速验证真伪。
+    匹配逻辑:
+      1) 完全 substring 命中 → is_authentic=True high
+      2) SequenceMatcher ratio ≥ 0.85 → True high
+      3) 0.50 ≤ ratio < 0.85 → 中间地带 (可能复述/断章) → None medium
+      4) < 0.50 → False + 触发 Discord/TG 高仿警告
+    """
+    from difflib import SequenceMatcher
+    text = (text or "").strip()
+    if len(text) < 10:
+        return {"is_authentic": None, "confidence": "low",
+                "reason": "查询文本过短（<10 字符），无法比对"}
+
+    query = re.sub(r"\s+", " ", text.lower())[:400]
+
+    try:
+        from trump_signal import fetch_recent_posts
+        posts, source_label = fetch_recent_posts(hours=168)  # 7 天窗口
+    except Exception as e:
+        return {"is_authentic": None, "confidence": "low",
+                "reason": f"数据源不可用: {e}"}
+
+    if not posts:
+        return {"is_authentic": None, "confidence": "low",
+                "reason": "近 7 天无真身 Trump 推文数据可比对"}
+
+    best_ratio = 0.0
+    best_post = None
+    for p in posts:
+        content = re.sub(r"\s+", " ", (p.get("content") or "").lower().strip())
+        if not content:
+            continue
+        # 短语完全命中优先
+        if query in content or content in query:
+            return {
+                "is_authentic":  True,
+                "confidence":    "high",
+                "matched_post":  {"created_at": p.get("created_at"),
+                                   "source": p.get("source", "?"),
+                                   "content_excerpt": (p.get("content") or "")[:200]},
+                "similarity":    1.0,
+                "checked_count": len(posts),
+                "reason":        f"✓ 完全匹配真身推文（源 {p.get('source','?')}, {p.get('created_at','')[:16].replace('T',' ')}）",
+            }
+        ratio = SequenceMatcher(None, query, content).ratio()
+        if ratio > best_ratio:
+            best_ratio = ratio
+            best_post = p
+
+    best_summary = {"created_at": best_post.get("created_at"),
+                    "source": best_post.get("source", "?"),
+                    "content_excerpt": (best_post.get("content") or "")[:200]} if best_post else None
+
+    if best_ratio >= 0.85:
+        return {"is_authentic": True, "confidence": "high",
+                "matched_post": best_summary, "similarity": round(best_ratio, 3),
+                "checked_count": len(posts),
+                "reason": f"✓ 高度匹配真身推文（similarity {best_ratio*100:.0f}%）"}
+    if best_ratio >= 0.50:
+        return {"is_authentic": None, "confidence": "medium",
+                "matched_post": best_summary, "similarity": round(best_ratio, 3),
+                "checked_count": len(posts),
+                "reason": f"⚠ 部分匹配（{best_ratio*100:.0f}%）— 可能是复述/翻译/截取，无法确定真伪"}
+
+    # 明确未匹配 → 触发高仿警报（后台 fire-and-forget）
+    def _alert():
+        try:
+            from notifications import send_alert
+            send_alert(
+                f"**🚨 Trump 高仿伪造警告**\n"
+                f"查询文本: {text[:200]}\n"
+                f"真身近 7 天 {len(posts)} 条推文中最接近的相似度仅 **{best_ratio*100:.0f}%**\n"
+                f"最接近真身推文: {(best_summary or {}).get('content_excerpt','')[:150]}\n"
+                f"→ 疑似 commentary 账号 / AI 伪造 / 断章取义\n"
+                f"验证源: {source_label} · {len(posts)} 条真身推文",
+                level="trump_fake",
+            )
+        except Exception:
+            pass
+    threading.Thread(target=_alert, daemon=True).start()
+
+    return {"is_authentic": False,
+            "confidence": "high" if best_ratio < 0.30 else "medium",
+            "matched_post": best_summary,
+            "similarity": round(best_ratio, 3),
+            "checked_count": len(posts),
+            "reason": (f"❌ 未匹配真身推文（best similarity {best_ratio*100:.0f}%）。"
+                       f"疑似高仿 / commentary 账号 / AI 伪造 / 断章取义。"
+                       f"已推送高仿警告到 Discord/TG。")}
 
 
 def api_banners() -> dict:
@@ -2519,6 +2614,9 @@ class Handler(BaseHTTPRequestHandler):
                 self._json(api_signals())
             elif path == "/api/banners":
                 self._json(api_banners())
+            elif path == "/api/trump_verify":
+                text = qs.get("text", [""])[0]
+                self._json(api_trump_verify(text))
             elif path == "/api/ai_analysis":
                 self._json(api_ai_analysis())
             elif path == "/api/sectors":

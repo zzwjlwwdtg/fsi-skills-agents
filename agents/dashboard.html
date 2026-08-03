@@ -196,6 +196,14 @@
   <div class="card">
     <h2 title="Trump Truth Social 24h 推文 CLI 解析。TECHNICAL_ONLY 模式下仅参考，不进决策">Trump Signal <small>[参考]</small></h2>
     <div id="trump-banner"></div>
+    <details style="margin-top:6px; padding-top:5px; border-top:1px dashed var(--border)">
+      <summary style="cursor:pointer; list-style:none; font-size:10px; color:var(--muted)">🔍 <b style="color:#58a6ff">高仿核实</b> <small>粘贴 X 上看到的推文验证真伪</small></summary>
+      <div style="margin-top:5px">
+        <textarea id="trump-verify-input" placeholder="粘贴疑似 Trump 推文原文…" style="width:100%; box-sizing:border-box; padding:4px 6px; background:rgba(13,17,23,0.6); border:1px solid var(--border); color:var(--fg); font-size:11px; font-family:inherit; resize:vertical; min-height:50px"></textarea>
+        <button onclick="verifyTrumpText()" style="margin-top:4px; padding:3px 10px; background:transparent; border:1px solid var(--blue); color:var(--blue); font-size:10px; cursor:pointer; border-radius:3px">核实真伪</button>
+        <div id="trump-verify-result" style="margin-top:5px; font-size:10.5px"></div>
+      </div>
+    </details>
   </div>
   <div class="card">
     <h2 title="实际利率+美元+Fed 扩表+原油 4 因子。bullish 看涨黄金 / bearish 看跌">Gold Macro <small>黄金宏观</small></h2>
@@ -587,6 +595,36 @@ async function loadHmm() {
 const DIR_LABELS = {bullish: '偏多', bearish: '偏空', neutral: '中性', mixed: '分化'};
 const MAG_LABELS = {small: '小', medium: '中', large: '大', extreme: '极端'};
 const LEVEL_LABELS = {low: '低', medium: '中', high: '高'};
+
+async function verifyTrumpText() {
+  const el = document.getElementById('trump-verify-input');
+  const out = document.getElementById('trump-verify-result');
+  const text = (el && el.value || '').trim();
+  if (text.length < 10) {
+    out.innerHTML = '<small class="warn">请粘贴至少 10 字符</small>'; return;
+  }
+  out.innerHTML = '<small style="color:var(--muted)">🔄 比对真身近 7 天推文…</small>';
+  const r = await fetchJson(`/api/trump_verify?text=${encodeURIComponent(text)}`);
+  if (!r) { out.innerHTML = '<small class="bad">请求失败</small>'; return; }
+  const cls = r.is_authentic === true  ? 'ok'
+            : r.is_authentic === false ? 'bad'
+            : 'warn';
+  const icon = r.is_authentic === true  ? '✓'
+             : r.is_authentic === false ? '❌ 高仿'
+             : '⚠';
+  const match = r.matched_post || {};
+  const matchLine = match.content_excerpt
+    ? `<div style="margin-top:4px; padding:4px 6px; background:rgba(88,166,255,0.08); border-left:2px solid var(--muted); font-size:10px; line-height:1.4">
+         最接近真身: <small style="color:var(--muted)">[${match.source||'?'} · ${(match.created_at||'').slice(0,16).replace('T',' ')}]</small><br>
+         "${match.content_excerpt.replace(/</g,'&lt;')}"
+       </div>` : '';
+  out.innerHTML = `
+    <div class="${cls}" style="font-size:11px"><b>${icon}</b> similarity ${((r.similarity||0)*100).toFixed(0)}% · 校对 ${r.checked_count||0} 条真身推文</div>
+    <div style="color:var(--muted); font-size:10px; margin-top:3px">${r.reason||''}</div>
+    ${matchLine}
+    ${r.is_authentic === false ? '<div style="margin-top:4px; padding:3px 6px; background:rgba(248,81,73,0.1); border:1px dashed var(--bad); font-size:10px; color:var(--bad)">🚨 已推送 Discord/TG 高仿警告</div>' : ''}
+  `;
+}
 
 async function loadBanners() {
   const b = await fetchJson('/api/banners');
