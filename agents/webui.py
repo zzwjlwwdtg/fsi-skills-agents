@@ -1172,6 +1172,7 @@ TICKER_TO_FUNDAMENTAL_STOCK = {
     "FUJIKURA": "5803.T",   # 藤倉 — 光纤/海底电缆/AI 数据中心互联概念
     "MURATA":   "6981.T",   # 村田製作所 — MLCC 全球龙头，Apple/NVDA 直接供应
     "TEKSCEND": "429A.T",   # TEKSCEND PHOTOMASK — 光罩制造，TSMC 关键工艺供应
+    "ARE":      "5857.T",   # ARE Holdings (旧 Asahi Holdings) — 贵金属回收（金/银/铂），半导体/urban mining 概念
 }
 
 # 日股关注列表（不参与 orchestrator scan，只在 dashboard 单独展示）
@@ -1186,6 +1187,8 @@ JP_WATCH_LIST = [
      "thesis": "MLCC 全球龙头（市占 40%+）· Apple/NVDA/Tesla 直接供应 · AI 服务器 + EV 高价值 MLCC 需求"},
     {"ticker": "TEKSCEND", "symbol": "429A.T", "name_zh": "TEKSCEND", "name_en": "Tekscend Photomask",
      "thesis": "半导体光罩制造 · TSMC/Samsung 关键工艺供应 · 光刻上游（ASML 之外的国产替代）"},
+    {"ticker": "ARE",      "symbol": "5857.T", "name_zh": "ARE 控股", "name_en": "ARE Holdings",
+     "thesis": "贵金属回收（金/银/铂）· 半导体电子废弃物 urban mining · AI 芯片需求带动金/铂回收溢价"},
 ]
 
 
@@ -1508,13 +1511,22 @@ def _compute_fundamentals(tk: str, stock: str, period: str = 'year') -> dict:
 
         # yfinance 返 columns=日期（最近在左），rows=科目。倒序让最老在左
         def _get(df, keys, default=0):
-            """按候选 key 列表查行，取所有列返 list（老 → 新）。空 df 返 [default]*n_periods。"""
+            """按候选 key 列表查行，取所有列返 list（老 → 新）。
+            始终对齐 n_periods 长度（不够的 pad default，超出的截断）。
+            解决 JP 股 cf/bal/inc 列数不一致（如 ARE inc=5 bal=5 cf=4）导致的 list index 越界。
+            """
             if df.empty:
                 return [default] * n_periods
             for k in keys:
                 if k in df.index:
                     vals = list(reversed(df.loc[k].tolist()))
-                    return [float(v) if v == v else 0 for v in vals]
+                    vals = [float(v) if v == v else 0 for v in vals]
+                    # 对齐 n_periods：不足前补 default，超出截取后 n_periods 个
+                    if len(vals) < n_periods:
+                        vals = [default] * (n_periods - len(vals)) + vals
+                    elif len(vals) > n_periods:
+                        vals = vals[-n_periods:]
+                    return vals
             return [default] * n_periods
 
         # Period 标签: year → "2025" / quarter → "Q3'25"
