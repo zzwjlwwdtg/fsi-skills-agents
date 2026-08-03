@@ -27,7 +27,7 @@ import sys
 import threading
 import time
 from datetime import datetime, timezone
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
@@ -56,9 +56,13 @@ _refresh_flag: dict[str, bool] = {}
 _refresh_locks: dict[str, threading.Lock] = {}
 
 
-def _cached(name: str, ttl_sec: int, compute_fn):
+def _cached(name: str, ttl_sec: int, compute_fn, first_call_async: bool = False,
+            first_call_placeholder: dict | None = None):
     """返回缓存 JSON + 元数据 (cached_at / age_sec / stale / refreshing)。
     过期时后台线程刷新，本次请求仍返回旧值（首次无缓存时同步计算）。
+
+    first_call_async=True: 首次无缓存也走后台线程，本次返回 first_call_placeholder
+    （避免 Claude CLI 等慢查询把 HTTP handler 阻塞几十秒）。
     """
     cache_path = _WEBUI_CACHE_DIR / f"{name}.json"
     now = time.time()
@@ -72,8 +76,9 @@ def _cached(name: str, ttl_sec: int, compute_fn):
             data = None
     stale = (data is None) or (age_sec is not None and age_sec > ttl_sec)
 
-    # 后台刷新 ONLY 当有旧缓存可用时（无缓存走同步计算路径，避免重复跑）
-    if stale and data is not None and not _refresh_flag.get(name):
+    def _spawn_refresh():
+        if _refresh_flag.get(name):
+            return
         lock = _refresh_locks.setdefault(name, threading.Lock())
 
         def _bg_refresh():
@@ -93,8 +98,23 @@ def _cached(name: str, ttl_sec: int, compute_fn):
 
         threading.Thread(target=_bg_refresh, daemon=True).start()
 
+    # 后台刷新：有旧缓存过期 → 直接后台；或 first_call_async 允许首次也后台
+    if stale and (data is not None or first_call_async):
+        _spawn_refresh()
+
     if data is None:
-        # 首次请求：同步计算，不然客户端会拿空 dict
+        if first_call_async:
+            # 首次无缓存 + 异步模式：返 placeholder，让浏览器下次刷新拿真值
+            placeholder = dict(first_call_placeholder or {})
+            placeholder["_meta"] = {
+                "cached_at":  None,
+                "age_sec":    0,
+                "stale":      True,
+                "refreshing": True,
+                "first_call": True,
+            }
+            return placeholder
+        # 首次请求同步计算（默认路径）
         try:
             data = compute_fn()
             cache_path.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
@@ -1730,8 +1750,20 @@ def api_jp_guidance(ticker: str) -> dict:
     # 只 JP 有意义
     if not (stock and (stock.endswith(".T") or tk in ["TDK", "KIOXIA", "FUJIKURA"])):
         return {"ticker": tk, "error": "not_jp_stock"}
+    placeholder = {
+        "ticker": tk,
+        "direction": "查询中",
+        "revision_type": "computing",
+        "magnitude": "-",
+        "guidance_note": "Claude 正在联网查询业绩预想，30-90 秒后刷新可见（首次冷启动）",
+        "confidence": "computing",
+        "source_verified": False,
+        "source_status": "computing",
+    }
     return _cached(f"jp_guidance_v2_{tk}", ttl_sec=24 * 3600,
-                    compute_fn=lambda: _compute_jp_guidance(tk, stock))
+                    compute_fn=lambda: _compute_jp_guidance(tk, stock),
+                    first_call_async=True,
+                    first_call_placeholder=placeholder)
 
 
 def _fetch_analyst_consensus(stock: str) -> dict | None:
@@ -1790,8 +1822,129 @@ def _fetch_analyst_consensus(stock: str) -> dict | None:
         return {"error": str(e)[:120]}
 
 
+_TRUSTED_JP_GUIDANCE_DOMAINS = (
+    # JPX 官方 & 上市公司自有域
+    "jpx.co.jp", "release.tdnet.info", ".co.jp", ".com/investor", ".com/ir",
+    # 主流财经媒体
+    "nikkei.com", "reuters.com", "bloomberg.com", "ft.com", "wsj.com",
+    "jiji.com", "kyodonews.jp", "asahi.com", "yomiuri.co.jp",
+    # 证券分析平台
+    "kabuyoho.jp", "shikiho.jp", "traders.co.jp", "morningstar.jp",
+    "kabutan.jp", "minkabu.jp", "diamond.jp",
+)
+
+
+def _validate_guidance_sources(sources: list) -> list:
+    """Only keep URLs pointing at trusted Japanese IR/news domains."""
+    out = []
+    for s in sources or []:
+        if not isinstance(s, dict):
+            continue
+        url = str(s.get("url", "")).strip().lower()
+        if not (url.startswith("http://") or url.startswith("https://")):
+            continue
+        if any(dom in url for dom in _TRUSTED_JP_GUIDANCE_DOMAINS):
+            out.append({
+                "url":   s.get("url"),
+                "type":  s.get("type") or "unknown",
+                "title": (s.get("title") or "")[:180],
+            })
+    return out
+
+
+def _fetch_jp_guidance_via_claude(tk: str, stock: str, name_zh: str, name_en: str) -> dict | None:
+    """Claude CLI + WebSearch 查最新業績予想；每数字必须带可信 URL 出处。
+
+    找不到 or URL 全部不可信 → 返 None（调用方保留 待核验 占位）。
+    """
+    try:
+        from ai_prompt import query_claude_cli, query_codex_cli, _is_claude_quota_status
+    except Exception:
+        return None
+
+    stock_code = stock.replace(".T", "") if stock.endswith(".T") else stock
+    prompt = f"""你是日本股权分析师。任务：查找并核验下列公司最近 90 天内官方发布的通期業績予想（full-year earnings guidance）。
+
+Target:
+  Ticker:  {tk}
+  日语正式名/中文名: {name_zh}
+  英文名:  {name_en}
+  证券コード: {stock_code} (TSE)
+
+严格要求：
+1. 必须使用 WebSearch 查真实公开来源（快！最多 2 次搜索，不要多次迭代）：
+   · 优先 release.tdnet.info（TDnet 決算短信）/ 公司 IR 官网（domain 含 investor 或 ir）
+   · 次选 nikkei.com / reuters.com / bloomberg.com
+2. 每个关键数字（EPS/売上/営業利益/純利益）必须能在你返回的 sources URL 里找到原文
+3. 拒绝任何无来源的数字。找不到最新公告就返 direction="待核验"、confidence="low"
+4. revision_reason 必须包含具体数值变化（如 "純利予想 2,800 → 3,200 億円 +14%"）
+5. last_update 是公告发布日；next_earnings 是下次财报日
+6. sources 1-3 条即可（不需要多），每条 URL 必须真实可打开
+7. 时间预算：请在 3 分钟内完成，不要试图穷举所有来源
+
+输出严格 JSON 对象（无 markdown 围栏、无解释文字）：
+{{
+  "direction":       "上修" | "下修" | "据え置き" | "新指引" | "待核验",
+  "revision_type":   "upward" | "downward" | "maintained" | "initial" | "unverified",
+  "magnitude":       "大" | "中" | "小" | "不明",
+  "last_update":     "YYYY-MM-DD",
+  "next_earnings":   "YYYY-MM-DD",
+  "guidance_note":   "1-2 句核心指引数字（含单位，例：通期純利 3,200 億円 +8% YoY）",
+  "revision_reason": "1-2 句修正原因（必含具体数据变化）",
+  "market_reaction": "高" | "中" | "低" | "不明",
+  "sources": [
+    {{"url": "https://...", "type": "IR" | "TDnet" | "news", "title": "..."}}
+  ],
+  "confidence": "high" | "medium" | "low"
+}}
+"""
+    to = int(os.environ.get("JP_GUIDANCE_TIMEOUT", "240"))
+    provider = "claude"
+    out, status = query_claude_cli(prompt, timeout=to)
+    # Claude quota 用尽 → 回退 Codex CLI（Codex 无 WebSearch，Prompt 里的 URL 要求会导致返 待核验；但至少不阻塞）
+    if not out and _is_claude_quota_status(status):
+        provider = "codex"
+        out, status = query_codex_cli(prompt, timeout=to)
+    if not out:
+        return {"_error": f"{provider}_{status[:120]}"}
+    import re as _re
+    txt = out.strip()
+    txt = _re.sub(r"^```(?:json)?\s*", "", txt)
+    txt = _re.sub(r"\s*```\s*$", "", txt)
+    m = _re.search(r"\{.*\}", txt, _re.S)
+    if m:
+        txt = m.group(0)
+    try:
+        data = json.loads(txt)
+    except Exception as e:
+        return {"_error": f"parse_{str(e)[:80]}"}
+    if not isinstance(data, dict):
+        return {"_error": "not_dict"}
+
+    verified_sources = _validate_guidance_sources(data.get("sources"))
+    direction = str(data.get("direction", "")).strip() or "待核验"
+    # 硬门槛：direction 非"待核验" → 必须至少 1 条可信 URL
+    if direction != "待核验" and not verified_sources:
+        return {"_error": "no_trusted_source", "raw_direction": direction}
+    reason = (data.get("revision_reason") or "").strip() or None
+    note   = (data.get("guidance_note") or "").strip() or None
+    return {
+        "direction":       direction,
+        "revision_type":   data.get("revision_type") or "unverified",
+        "magnitude":       data.get("magnitude") or "不明",
+        "last_update":     data.get("last_update"),
+        "next_earnings":   data.get("next_earnings"),
+        "guidance_note":   note,
+        "revision_reason": reason,
+        "market_reaction": data.get("market_reaction") or "不明",
+        "confidence":      data.get("confidence") or "low",
+        "sources":         verified_sources,
+        "source_via":      f"{provider}_cli_websearch",
+    }
+
+
 def _compute_jp_guidance(tk: str, stock: str) -> dict:
-    """業績予想 (公司官方指引) 待 IR 接入，先补 yfinance 分析师共识（可核验）。"""
+    """業績予想：Claude CLI+WebSearch 优先（每数字带 URL），失败回落 unverified；始终附 yfinance 共识。"""
     result = {
         "ticker": tk,
         "source_stock": stock,
@@ -1808,11 +1961,46 @@ def _compute_jp_guidance(tk: str, stock: str) -> dict:
         "source_status": "not_onboarded",
         "generated_at": datetime.now(timezone.utc).isoformat(),
     }
+    # 找 name_zh/name_en (from JP_WATCH_LIST) for prompt context
+    name_zh = tk
+    name_en = tk
+    for entry in JP_WATCH_LIST:
+        if entry.get("ticker") == tk:
+            name_zh = entry.get("name_zh", tk)
+            name_en = entry.get("name_en", tk)
+            break
+    # Claude CLI 查带 URL 出处的业绩预想
+    if os.environ.get("JP_GUIDANCE_CLAUDE", "1") != "0":
+        cg = _fetch_jp_guidance_via_claude(tk, stock, name_zh, name_en)
+        if cg and not cg.get("_error"):
+            result.update({
+                "direction":        cg["direction"],
+                "revision_type":    cg["revision_type"],
+                "magnitude":        cg["magnitude"],
+                "last_update":      cg["last_update"],
+                "next_earnings":    cg["next_earnings"],
+                "guidance_note":    cg["guidance_note"] or result["guidance_note"],
+                "revision_reason":  cg["revision_reason"],
+                "market_reaction":  cg["market_reaction"],
+                "confidence":       cg["confidence"],
+                "sources":          cg["sources"],
+                "source_via":       cg["source_via"],
+                "source_verified":  bool(cg["sources"]),
+                "source_status":    "claude_websearch",
+            })
+        elif cg and cg.get("_error"):
+            result["claude_error"] = cg["_error"]
+            if cg.get("raw_direction"):
+                # Claude 说了方向但没给可信 URL → 降级但标注
+                result["direction"] = "待核验"
+                result["guidance_note"] = f"Claude 返回 {cg['raw_direction']} 但未附可核验来源，已拒收"
+    # yfinance 分析师共识（独立于官方指引，无论 Claude 成败都附上）
     ac = _fetch_analyst_consensus(stock)
     if ac and not ac.get("error"):
         result["analyst_consensus"] = ac
-        result["source_verified"] = True
-        result["source_status"] = "analyst_only"
+        if not result["source_verified"]:
+            result["source_verified"] = True
+            result["source_status"] = "analyst_only"
         if ac.get("next_earnings") and not result["next_earnings"]:
             result["next_earnings"] = ac["next_earnings"]
     elif ac and ac.get("error"):
@@ -2760,7 +2948,7 @@ class Handler(BaseHTTPRequestHandler):
 def main():
     print(f"WebUI 启动于 http://{HOST}:{PORT}")
     print(f"仅本机可访问（HOST=127.0.0.1）。Ctrl+C 停止。")
-    server = HTTPServer((HOST, PORT), Handler)
+    server = ThreadingHTTPServer((HOST, PORT), Handler)
     try:
         server.serve_forever()
     except KeyboardInterrupt:

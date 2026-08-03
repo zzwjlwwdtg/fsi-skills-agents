@@ -519,8 +519,8 @@ async function loadJPGuidanceOnDemand(ticker, containerId) {
     el.innerHTML = `<small class="muted">生成失败：${(r && r.error) || 'no data'}</small>`;
     return;
   }
-  const DIR_CLS = { '新指引':'ok', '上修':'ok', '据え置き':'muted', '下修':'bad', '待核验':'warn' };
-  const DIR_ICON= { '新指引':'🎯', '上修':'📈', '据え置き':'📊', '下修':'📉', '待核验':'⚠' };
+  const DIR_CLS = { '新指引':'ok', '上修':'ok', '据え置き':'muted', '下修':'bad', '待核验':'warn', '查询中':'muted' };
+  const DIR_ICON= { '新指引':'🎯', '上修':'📈', '据え置き':'📊', '下修':'📉', '待核验':'⚠', '查询中':'⏳' };
   const MAG_CLS = { '大':'bad', '中':'warn', '小':'muted', '无':'muted', '不适用':'muted', '不明':'muted' };
   const REACT_CLS = { '高':'bad', '中':'warn', '低':'muted', '待核验':'muted', '不明':'muted' };
   const CONF_LABEL = { verified:'官方已核验', high:'高', medium:'中', low:'低', unverified:'未核验' };
@@ -597,11 +597,15 @@ async function loadJPGuidanceOnDemand(ticker, containerId) {
       ${r.revision_reason ? `<div style="border-left:2px solid var(--warn); padding:3px 6px; margin-bottom:4px; background:rgba(210,153,34,0.05); font-size:10px; line-height:1.4">
         <b style="color:var(--warn)">${reasonLabel}</b>: ${r.revision_reason}
       </div>` : ''}
+      ${(r.sources && r.sources.length) ? `<div style="font-size:9px; color:var(--muted); margin:3px 0 4px 0; line-height:1.5">
+        <b style="color:#58a6ff">🔗 出处</b>: ${r.sources.slice(0,4).map(s => `<a href="${s.url}" target="_blank" rel="noopener" title="${(s.title||'').replace(/"/g,'&quot;')}" style="color:#79c0ff; text-decoration:none; margin-right:6px">[${s.type||'src'}] ↗</a>`).join('')}
+      </div>` : ''}
+      ${r.claude_error ? `<div style="font-size:9px; color:var(--warn); margin:2px 0" title="业绩预想 CLI 查询未成功；分析师共识仍可参考">⚠ CLI: ${r.claude_error.replace(/^(claude|codex)_/,'').slice(0,120)}</div>` : ''}
       ${analystHtml}
       ${r.data_note ? `<div style="font-size:9px; color:var(--muted); margin:4px 0">${r.data_note}</div>` : ''}
       <div style="display:flex; justify-content:space-between; font-size:9px; color:var(--muted); margin-top:5px">
         <span>指引生效: ${r.guidance_effective_date || r.last_update || '-'} · 来源材料: ${r.source_published_at || '-'} · ${eventLabel}</span>
-        <span>信頼度 ${confidenceLabel}</span>
+        <span>信頼度 ${confidenceLabel} ${r.source_via==='claude_cli_websearch'?'· 🤖 Claude+Web':(r.source_via==='codex_cli_websearch'?'· 🤖 Codex':'')}</span>
       </div>
     </div>
   `;
