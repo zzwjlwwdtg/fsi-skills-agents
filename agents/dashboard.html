@@ -344,24 +344,28 @@ function renderIchimoku(t, W = 260, H = 90) {
   }
   let cloudPath = '';
   if (cloudPts.length >= 2) {
-    // 分段染色：spanA > spanB → 绿云（多） / else 红云（空）
+    // Kumo 分段染色 + 拓扑修正:
+    // - spanA 数值 > spanB 数值 → 绿云 (bullish, 多头)
+    // - SVG y 是反的: yAt(spanA) < yAt(spanB) 表示 spanA 数值大
+    // - 关键: polygon top 用 min(p.a, p.b), bottom 用 max，否则 A 穿 B 时 polygon 自相交
     const buildSeg = (segPts, isBull) => {
-      const top = segPts.map(p => `${p.x.toFixed(1)},${p.a.toFixed(1)}`).join(' L');
-      const bot = [...segPts].reverse().map(p => `${p.x.toFixed(1)},${p.b.toFixed(1)}`).join(' L');
-      const fill = isBull ? 'rgba(63,185,80,0.22)' : 'rgba(248,81,73,0.22)';
+      // top 边（SVG 上方 = y 较小）= 两条线的较小 y
+      const top = segPts.map(p => `${p.x.toFixed(1)},${Math.min(p.a, p.b).toFixed(1)}`).join(' L');
+      const bot = [...segPts].reverse().map(p => `${p.x.toFixed(1)},${Math.max(p.a, p.b).toFixed(1)}`).join(' L');
+      const fill = isBull ? 'rgba(63,185,80,0.25)' : 'rgba(248,81,73,0.25)';
       return `<path d="M${top} L${bot} Z" fill="${fill}"/>`;
     };
     let cur = [], curBull = null;
     cloudPts.forEach(p => {
-      const isBull = p.a < p.b ? false : true;   // svg y 是反的：yAt(spanA) < yAt(spanB) 对应 spanA > spanB
-      // 修正判断：spanA_val > spanB_val → 绿
-      // p.a = yAt(spanA), p.b = yAt(spanB). 由于 y 轴反向，yAt(spanA) < yAt(spanB) 表示 spanA 数值大 → 绿
+      // spanA 数值大 → p.a (yAt(spanA)) 更小（更高在图上） → bull = p.a < p.b
       const bull = p.a < p.b;
       if (curBull === null || curBull === bull) {
         cur.push(p); curBull = bull;
       } else {
+        // 交界点：闭合上一段（含当前 p 让两段无缝相接）
+        cur.push(p);
         if (cur.length >= 2) cloudPath += buildSeg(cur, curBull);
-        cur = [cur.at(-1), p]; curBull = bull;
+        cur = [p]; curBull = bull;
       }
     });
     if (cur.length >= 2) cloudPath += buildSeg(cur, curBull);
@@ -373,12 +377,20 @@ function renderIchimoku(t, W = 260, H = 90) {
   };
   return `<svg width="100%" height="${H}" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="display:block; background:rgba(13,17,23,0.5); border-radius:3px">
     ${cloudPath}
-    ${linePath(spanA, 'rgba(63,185,80,0.5)', 0.8, '2,2')}
-    ${linePath(spanB, 'rgba(248,81,73,0.5)', 0.8, '2,2')}
-    ${linePath(kijun, '#d29922', 1.2)}
-    ${linePath(tenkan, '#58a6ff', 1.2)}
-    ${linePath(close, '#e6edf3', 1.5)}
-  </svg>`;
+    ${linePath(spanA, 'rgba(63,185,80,0.55)', 0.8, '2,2')}
+    ${linePath(spanB, 'rgba(248,81,73,0.55)', 0.8, '2,2')}
+    ${linePath(kijun,  '#58a6ff', 1.3)}
+    ${linePath(tenkan, '#f85149', 1.3)}
+    ${linePath(close,  '#e6edf3', 1.7)}
+  </svg>
+  <div style="font-size:9px; color:var(--muted); display:flex; gap:8px; margin-top:2px; flex-wrap:wrap">
+    <span><span style="color:#e6edf3">━</span> 价格</span>
+    <span><span style="color:#f85149">━</span> 転換線(9)</span>
+    <span><span style="color:#58a6ff">━</span> 基準線(26)</span>
+    <span><span style="color:rgba(63,185,80,0.8)">┈</span> 先行A</span>
+    <span><span style="color:rgba(248,81,73,0.8)">┈</span> 先行B</span>
+    <span title="spanA > spanB = 绿云(多), spanA < spanB = 红云(空)">🟢 多云 / 🔴 空云</span>
+  </div>`;
 }
 
 function renderJPEarningsBadge(event) {
