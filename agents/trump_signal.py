@@ -44,6 +44,7 @@ from __future__ import annotations
 
 import csv
 import hashlib
+import re
 import io
 import json
 import sys
@@ -127,12 +128,86 @@ def fetch_static_posts(hours: int = 24) -> list[dict]:
     return _filter_by_age(posts, hours)
 
 
+NITTER_MIRRORS = [
+    "https://nitter.net",       # 2026-08 主镜像，最稳定（19+ items 长期在线）
+    "https://xcancel.com",      # fallback，item 少但存活
+]
+
+
+def fetch_x_posts(hours: int = 24, timeout: int = 8) -> list[dict]:
+    """从 Nitter RSS 拉 @realDonaldTrump 最近 N 小时 X (Twitter) 推文。
+
+    多镜像 fallback，全挂或全空 → 返 []（不报错，让主流程降级到 Truth Social only）。
+    输出格式对齐 Truth Social：{id, content, created_at, source: "x"}
+    """
+    from xml.etree import ElementTree as ET
+    cutoff = datetime.now(timezone.utc) - timedelta(hours=hours)
+
+    for base in NITTER_MIRRORS:
+        url = f"{base}/realDonaldTrump/rss"
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+            with urllib.request.urlopen(req, timeout=timeout) as r:
+                xml_text = r.read().decode("utf-8", errors="replace")
+            root = ET.fromstring(xml_text)
+            posts = []
+            for item in root.iter("item"):
+                title = (item.findtext("title") or "").strip()
+                link  = (item.findtext("link")  or "").strip()
+                pub_s = (item.findtext("pubDate") or "").strip()
+                try:
+                    # RFC 822: "Sun, 03 Aug 2026 12:34:56 GMT"
+                    pub_dt = datetime.strptime(pub_s, "%a, %d %b %Y %H:%M:%S %Z")
+                    pub_dt = pub_dt.replace(tzinfo=timezone.utc)
+                except Exception:
+                    try:
+                        pub_dt = datetime.strptime(pub_s, "%a, %d %b %Y %H:%M:%S %z")
+                    except Exception:
+                        continue
+                if pub_dt < cutoff:
+                    continue
+                # 提 tweet id
+                m = re.search(r"/status/(\d+)", link)
+                post_id = m.group(1) if m else str(hash(title))[:12]
+                posts.append({
+                    "id":         f"x_{post_id}",
+                    "content":    title,
+                    "created_at": pub_dt.isoformat(),
+                    "url":        link,
+                    "source":     "x_nitter",
+                })
+            if posts:
+                return posts
+        except Exception:
+            continue
+    return []
+
+
+def _dedup_by_content(posts: list[dict]) -> list[dict]:
+    """按 content 前 200 字符 sha1 去重，保留最早出现的（通常 Truth Social 早于 X 转发）。"""
+    seen = set()
+    out = []
+    for p in sorted(posts, key=lambda x: x.get("created_at", "")):
+        content = (p.get("content") or "").strip()[:200]
+        if not content:
+            continue
+        h = hashlib.sha1(content.encode("utf-8", errors="replace")).hexdigest()
+        if h in seen:
+            continue
+        seen.add(h)
+        out.append(p)
+    return out
+
+
 def fetch_recent_posts(hours: int = 24) -> tuple[list[dict], str]:
-    """优先 live，失败 fallback 静态。返回 (posts, source_label)。"""
-    live = fetch_live_posts()
-    live_recent = _filter_by_age(live, hours)
-    if live_recent:
-        return live_recent, "cnn_live"
+    """优先 live Truth Social + X (Nitter) 合并去重，失败 fallback 静态。"""
+    truth = _filter_by_age(fetch_live_posts(), hours)
+    x_posts = fetch_x_posts(hours)   # 免费 Nitter，多镜像 fallback
+    if truth or x_posts:
+        merged = _dedup_by_content(truth + x_posts)
+        label = f"cnn_live+x_nitter" if x_posts else "cnn_live"
+        if not truth: label = "x_nitter_only"
+        return merged, label
     static = fetch_static_posts(hours)
     if static:
         return static, "trump-code/static"
