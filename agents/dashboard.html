@@ -539,14 +539,57 @@ async function loadJPGuidanceOnDemand(ticker, containerId) {
     : (ev.state === 'upcoming' ? `下次财报 ${ev.date}（T-${ev.days}）`
       : (ev.state === 'released' ? `财报日 ${ev.date} 已过` : '财报日待核验'));
   const reasonLabel = r.revision_type === 'initial' ? '核心驱动' : '修正理由';
+
+  // 分析师共识 section (yfinance aggregation) —— 独立于官方 IR 的可核验参考
+  const ac = r.analyst_consensus;
+  const REC_CLS = { strong_buy:'ok', buy:'ok', hold:'muted', sell:'bad', underperform:'bad', strong_sell:'bad', none:'warn' };
+  const REC_LABEL = { strong_buy:'强烈买入', buy:'买入', hold:'持有', sell:'卖出', underperform:'跑输', strong_sell:'强烈卖出', none:'—' };
+  let analystHtml = '';
+  let divergenceBadge = '';
+  if (ac) {
+    const recCls = REC_CLS[ac.recommendation] || 'muted';
+    const recLbl = REC_LABEL[ac.recommendation] || ac.recommendation || '-';
+    const fmtNum = (v, digits=1) => (v == null ? '-' : (typeof v === 'number' ? v.toFixed(digits) : v));
+    const fmtPct = (v) => (v == null ? '-' : (v >= 0 ? `+${v.toFixed(1)}%` : `${v.toFixed(1)}%`));
+    const pctCls = (v) => (v == null ? '' : (v > 0 ? 'ok' : (v < 0 ? 'bad' : 'muted')));
+    const upside = ac.target_upside_pct;
+    const upsideBadge = upside == null ? '' :
+      `<span class="badge ${pctCls(upside)}" style="font-size:9px" title="距分析师平均目标价">目标 ${fmtPct(upside)}</span>`;
+    // divergence: Claude 官方指引方向 vs 分析师 rec (仅在两边都有意义时提示)
+    const claudeBull = ['上修','新指引'].includes(r.direction);
+    const claudeBear = r.direction === '下修';
+    const anaBull = ['strong_buy','buy'].includes(ac.recommendation);
+    const anaBear = ['sell','underperform','strong_sell'].includes(ac.recommendation);
+    if (claudeBull && anaBear) divergenceBadge = '<span class="badge bad" style="font-size:9px" title="Claude 上修但分析师看空">⚠ 背离</span>';
+    else if (claudeBear && anaBull) divergenceBadge = '<span class="badge bad" style="font-size:9px" title="Claude 下修但分析师看多">⚠ 背离</span>';
+    else if ((claudeBull && anaBull) || (claudeBear && anaBear)) divergenceBadge = '<span class="badge ok" style="font-size:9px" title="Claude 方向与分析师一致">✓ 一致</span>';
+    analystHtml = `
+    <div style="border-left:2px solid #8b5cf6; padding:4px 6px; margin-top:5px; background:rgba(139,92,246,0.06); font-size:10px; line-height:1.5">
+      <div style="display:flex; align-items:center; gap:5px; margin-bottom:3px">
+        <b style="color:#a78bfa">🎯 分析师共识</b>
+        <span class="badge ${recCls}" style="font-size:9px">${recLbl}</span>
+        <span style="color:var(--muted); font-size:9px">${ac.n_analysts || '-'} 家覆盖</span>
+        ${upsideBadge}
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:2px 10px; font-size:10px; color:var(--fg)">
+        <span>前瞻 EPS: <b>${fmtNum(ac.forward_eps, 2)}</b> ${ac.eps_growth_pct != null ? `<span class="${pctCls(ac.eps_growth_pct)}" style="font-size:9px">${fmtPct(ac.eps_growth_pct)}</span>` : ''}</span>
+        <span>前瞻 P/E: <b>${fmtNum(ac.forward_pe, 1)}x</b> ${ac.trailing_pe != null ? `<small class="muted" style="font-size:8px">TTM ${fmtNum(ac.trailing_pe, 1)}x</small>` : ''}</span>
+        <span>目标价: <b>${fmtNum(ac.target_mean, 0)}</b> <small class="muted" style="font-size:8px">[${fmtNum(ac.target_low, 0)}–${fmtNum(ac.target_high, 0)}]</small></span>
+        <span>成长: 收入 <span class="${pctCls(ac.revenue_growth_pct)}">${fmtPct(ac.revenue_growth_pct)}</span> · 利润 <span class="${pctCls(ac.earnings_growth_pct)}">${fmtPct(ac.earnings_growth_pct)}</span></span>
+      </div>
+      <div style="font-size:8px; color:var(--muted); margin-top:2px">来源: ${ac.source}</div>
+    </div>`;
+  }
+
   el.innerHTML = `
     <div style="font-size:10px; padding:5px 0">
-      <div style="display:flex; align-items:center; gap:6px; margin-bottom:5px">
+      <div style="display:flex; align-items:center; gap:6px; margin-bottom:5px; flex-wrap:wrap">
         <span style="font-size:14px">${dIcon}</span>
         <b class="${dCls}" style="font-size:13px">${r.direction || '-'}</b>
         <span class="badge ${MAG_CLS[r.magnitude] || ''}" style="font-size:9px">幅度 ${r.magnitude || '-'}</span>
         <span class="badge ${REACT_CLS[r.market_reaction] || ''}" style="font-size:9px" title="发布后股价反应强度">市場反応 ${r.market_reaction || '-'}</span>
         ${sourceBadge}
+        ${divergenceBadge}
       </div>
       ${r.guidance_note ? `<div style="border-left:2px solid var(--blue); padding:3px 6px; margin-bottom:4px; background:rgba(88,166,255,0.05); font-size:10px; line-height:1.4">
         <b style="color:#58a6ff">全年指引</b>: ${r.guidance_note}
@@ -554,6 +597,7 @@ async function loadJPGuidanceOnDemand(ticker, containerId) {
       ${r.revision_reason ? `<div style="border-left:2px solid var(--warn); padding:3px 6px; margin-bottom:4px; background:rgba(210,153,34,0.05); font-size:10px; line-height:1.4">
         <b style="color:var(--warn)">${reasonLabel}</b>: ${r.revision_reason}
       </div>` : ''}
+      ${analystHtml}
       ${r.data_note ? `<div style="font-size:9px; color:var(--muted); margin:4px 0">${r.data_note}</div>` : ''}
       <div style="display:flex; justify-content:space-between; font-size:9px; color:var(--muted); margin-top:5px">
         <span>指引生效: ${r.guidance_effective_date || r.last_update || '-'} · 来源材料: ${r.source_published_at || '-'} · ${eventLabel}</span>

@@ -1717,22 +1717,82 @@ def api_jp_guidance(ticker: str) -> dict:
         last_update, ref: 关键理由, next_earnings, confidence}
     """
     tk = (ticker or "").upper().strip()
+    stock = TICKER_TO_FUNDAMENTAL_STOCK.get(tk, tk)
     verified = _official_jp_guidance(tk)
     if verified is not None:
-        # Deliberately bypass _cached: a legacy Claude cache must never
-        # override issuer IR facts or today's JST event state.
+        # 官方 IR 事实优先；同时补上分析师共识供交叉核验（可能与官方指引背离，用户想看到）
+        if stock and stock.endswith(".T"):
+            ac = _cached(f"analyst_consensus_{tk}", ttl_sec=6 * 3600,
+                         compute_fn=lambda: _fetch_analyst_consensus(stock))
+            if ac and not ac.get("error"):
+                verified["analyst_consensus"] = ac
         return verified
     # 只 JP 有意义
-    stock = TICKER_TO_FUNDAMENTAL_STOCK.get(tk, tk)
     if not (stock and (stock.endswith(".T") or tk in ["TDK", "KIOXIA", "FUJIKURA"])):
         return {"ticker": tk, "error": "not_jp_stock"}
     return _cached(f"jp_guidance_v2_{tk}", ttl_sec=24 * 3600,
                     compute_fn=lambda: _compute_jp_guidance(tk, stock))
 
 
+def _fetch_analyst_consensus(stock: str) -> dict | None:
+    """yfinance 分析师聚合 → 归一化字段。失败返 {'error': ...}，无覆盖返 None。"""
+    try:
+        import yfinance as yf
+        t = yf.Ticker(stock)
+        info = t.info or {}
+        n_analysts   = info.get("numberOfAnalystOpinions")
+        rec_key      = info.get("recommendationKey")
+        target_mean  = info.get("targetMeanPrice")
+        target_high  = info.get("targetHighPrice")
+        target_low   = info.get("targetLowPrice")
+        forward_eps  = info.get("forwardEps")
+        trailing_eps = info.get("trailingEps")
+        forward_pe   = info.get("forwardPE")
+        trailing_pe  = info.get("trailingPE")
+        earnings_growth = info.get("earningsGrowth")
+        revenue_growth  = info.get("revenueGrowth")
+        current_price   = info.get("currentPrice") or info.get("regularMarketPrice")
+        next_earn = None
+        try:
+            cal = t.calendar
+            if hasattr(cal, "get"):
+                dates = cal.get("Earnings Date")
+                if dates and len(dates) > 0:
+                    next_earn = str(dates[0])
+        except Exception:
+            pass
+        if not (n_analysts or forward_eps or target_mean):
+            return None
+        eps_growth_pct = None
+        if forward_eps is not None and trailing_eps and trailing_eps > 0:
+            eps_growth_pct = round((forward_eps / trailing_eps - 1) * 100, 1)
+        target_upside_pct = None
+        if target_mean and current_price and current_price > 0:
+            target_upside_pct = round((target_mean / current_price - 1) * 100, 1)
+        return {
+            "n_analysts":         n_analysts,
+            "recommendation":     rec_key,
+            "forward_eps":        round(forward_eps, 2) if forward_eps else None,
+            "trailing_eps":       round(trailing_eps, 2) if trailing_eps else None,
+            "eps_growth_pct":     eps_growth_pct,
+            "forward_pe":         round(forward_pe, 2) if forward_pe else None,
+            "trailing_pe":        round(trailing_pe, 2) if trailing_pe else None,
+            "target_mean":        round(target_mean, 2) if target_mean else None,
+            "target_high":        round(target_high, 2) if target_high else None,
+            "target_low":         round(target_low, 2) if target_low else None,
+            "target_upside_pct":  target_upside_pct,
+            "revenue_growth_pct": round(revenue_growth * 100, 1) if revenue_growth is not None else None,
+            "earnings_growth_pct": round(earnings_growth * 100, 1) if earnings_growth is not None else None,
+            "next_earnings":      next_earn,
+            "source":             "yfinance analyst aggregation",
+        }
+    except Exception as e:
+        return {"error": str(e)[:120]}
+
+
 def _compute_jp_guidance(tk: str, stock: str) -> dict:
-    """Safe placeholder until an issuer's IR facts are deterministically onboarded."""
-    return {
+    """業績予想 (公司官方指引) 待 IR 接入，先补 yfinance 分析师共识（可核验）。"""
+    result = {
         "ticker": tk,
         "source_stock": stock,
         "direction": "待核验",
@@ -1748,6 +1808,16 @@ def _compute_jp_guidance(tk: str, stock: str) -> dict:
         "source_status": "not_onboarded",
         "generated_at": datetime.now(timezone.utc).isoformat(),
     }
+    ac = _fetch_analyst_consensus(stock)
+    if ac and not ac.get("error"):
+        result["analyst_consensus"] = ac
+        result["source_verified"] = True
+        result["source_status"] = "analyst_only"
+        if ac.get("next_earnings") and not result["next_earnings"]:
+            result["next_earnings"] = ac["next_earnings"]
+    elif ac and ac.get("error"):
+        result["analyst_consensus_error"] = ac["error"]
+    return result
 
 
 def api_events(days_ahead: int = 45) -> dict:
