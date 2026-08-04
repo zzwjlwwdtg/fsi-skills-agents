@@ -92,6 +92,65 @@ def _release_lock() -> None:
     except OSError:
         pass
 
+
+# ── 源码变更自愈：任一关键文件 mtime 前进 → 退出让 watchdog 拉起新进程 ─────────
+# 场景：修 bug commit 后，忘记重启 orchestrator，老 bytecode 常驻内存继续跑坏逻辑
+# （2026-08-01 execute() UnboundLocalError 就是这么被隐藏 15 天没触发买单）
+_CRITICAL_SOURCE_FILES = (
+    "orchestrator.py", "paper_trader.py", "decision_agent.py",
+    "trading_contracts.py", "claude_gate.py",
+)
+_STARTUP_MTIMES: dict[str, float] = {}
+
+
+def _record_startup_mtimes() -> None:
+    base = Path(__file__).parent
+    for name in _CRITICAL_SOURCE_FILES:
+        try:
+            _STARTUP_MTIMES[name] = (base / name).stat().st_mtime
+        except OSError:
+            continue
+    logger.info(
+        f"[self-restart] 监控 {len(_STARTUP_MTIMES)} 个源文件的 mtime "
+        f"(修改后 ≤30s 自动重启): {', '.join(sorted(_STARTUP_MTIMES.keys()))}"
+    )
+
+
+def _detect_code_change() -> str | None:
+    """任一关键源文件 mtime 前进 ≥5s → 返回文件名（提示需要重启）。"""
+    base = Path(__file__).parent
+    for name, orig_mt in list(_STARTUP_MTIMES.items()):
+        try:
+            cur_mt = (base / name).stat().st_mtime
+        except OSError:
+            continue
+        if cur_mt > orig_mt + 5.0:
+            return name
+    return None
+
+
+def _exit_for_code_change(changed: str) -> None:
+    """打 log + 通知 + os._exit(0)。watchdog 下一 cycle 会拉起新进程（自带新代码）。
+
+    用 os._exit() 而非 sys.exit()：moomoo OpenD 连接是非 daemon 线程，
+    sys.exit 会被它 hang 住不死；os._exit 无条件杀进程，绕过 atexit
+    （lock 由 watchdog 的 stale-PID 检测清理，OK）。
+    """
+    logger.warning(f"[self-restart] 源文件 {changed} 已更新 → 主动退出以加载新代码")
+    try:
+        from notifications import send_alert
+        send_alert(f"🔄 orchestrator 自愈重启：{changed} 源码更新，watchdog 将拉起新进程",
+                   level="info")
+    except Exception:
+        pass
+    # 手动清 lock（os._exit 绕过 atexit）
+    try:
+        if _LOCK_PATH.exists() and _LOCK_PATH.read_text().strip() == str(os.getpid()):
+            _LOCK_PATH.unlink()
+    except OSError:
+        pass
+    os._exit(0)
+
 # 防止同一窗口重复触发
 _last_report_session = {"open": None, "close": None}
 _last_window_run: dict[str, str | None] = {w[2]: None for w in DAILY_WINDOWS_ET}
@@ -860,6 +919,7 @@ def _tick() -> None:
 
 def main() -> None:
     _check_lock_or_exit()   # 单实例保护
+    _record_startup_mtimes()   # 源码自愈：记录关键文件 mtime，运行时对比检测
     logger.info("=" * 64)
     logger.info(t("Trading Agents 启动（日K交易者模式）",
                   "Trading Agents 起動（日足トレーダーモード）"))
@@ -905,6 +965,9 @@ def main() -> None:
 
     try:
         while True:
+            changed = _detect_code_change()
+            if changed:
+                _exit_for_code_change(changed)
             schedule.run_pending()
             time.sleep(30)
     except KeyboardInterrupt:
