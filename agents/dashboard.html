@@ -664,25 +664,38 @@ async function loadCapitalFlowOnDemand(ticker, containerId) {
         · 占总成交 ${((flow.smart_pct || 0)*100).toFixed(1)}%
       </div>`;
   }
-  // JP 分支：peak bars 表
+  // JP 分支：peak bars 表 + 方向 + 买卖 bias 汇总
   else if (r.source === 'yfinance_intraday') {
     const peaks = anom.peak_bars || [];
     const dayRatio = anom.day_ratio;
+    const dirIcon = { buy: '📈', sell: '📉', flat: '➡' };
+    const dirCls  = { buy: 'ok',  sell: 'bad', flat: 'muted' };
+    // 汇总 badge：买卖 bias（≥2:1 才判定方向）
+    const bias = anom.net_bias;
+    const biasBadge = bias === 'buy'
+      ? `<span class="badge ok" style="font-size:9px">📈 净买入主导 ${anom.buy_value_oku}億 vs ${anom.sell_value_oku}億</span>`
+      : (bias === 'sell'
+        ? `<span class="badge bad" style="font-size:9px">📉 净卖出主导 ${anom.sell_value_oku}億 vs ${anom.buy_value_oku}億</span>`
+        : (peaks.length ? `<span class="badge muted" style="font-size:9px">⚖ 买卖平衡 买${anom.buy_value_oku}億 卖${anom.sell_value_oku}億</span>` : ''));
+
     if (peaks.length) {
       bodyHtml = `
-        <div style="font-size:10px; margin:3px 0">
-          <b>异常量能 bar</b> (${peaks.length} 个 ≥3× 20 日同时段均):
+        <div style="font-size:10px; margin:3px 0; display:flex; align-items:center; gap:5px; flex-wrap:wrap">
+          <b>异常 bar</b> ${peaks.length} 个 (≥3× 均量)
+          ${biasBadge}
         </div>
-        <div style="display:grid; grid-template-columns:auto auto auto auto; gap:2px 8px; font-size:10px; line-height:1.4">
+        <div style="display:grid; grid-template-columns:auto auto auto auto auto; gap:2px 8px; font-size:10px; line-height:1.4">
           <span style="color:var(--muted); font-size:9px">时间</span>
-          <span style="color:var(--muted); font-size:9px; text-align:right">成交量</span>
           <span style="color:var(--muted); font-size:9px; text-align:right">倍数</span>
-          <span style="color:var(--muted); font-size:9px; text-align:right">价格</span>
-          ${peaks.map(p => `
+          <span style="color:var(--muted); font-size:9px; text-align:right">涨跌</span>
+          <span style="color:var(--muted); font-size:9px; text-align:right">金额</span>
+          <span style="color:var(--muted); font-size:9px">方向</span>
+          ${peaks.slice(0, 6).map(p => `
             <span><b>${p.time}</b></span>
-            <span style="text-align:right">${(p.vol/1000).toFixed(0)}K</span>
-            <span style="text-align:right" class="${p.ratio >= 5 ? 'bad' : 'warn'}"><b>${p.ratio.toFixed(1)}×</b></span>
-            <span style="text-align:right">¥${p.price}</span>
+            <span style="text-align:right" class="${p.ratio >= 8 ? 'bad' : (p.ratio >= 5 ? 'warn' : 'muted')}"><b>${p.ratio.toFixed(1)}×</b></span>
+            <span style="text-align:right" class="${p.chg_pct > 0 ? 'ok' : (p.chg_pct < 0 ? 'bad' : 'muted')}">${p.chg_pct >= 0 ? '+' : ''}${p.chg_pct}%</span>
+            <span style="text-align:right"><b>¥${p.value_oku}億</b></span>
+            <span class="${dirCls[p.direction]}" title="close-open 判定：>0.1% 主动买 · <-0.1% 主动卖">${dirIcon[p.direction]}</span>
           `).join('')}
         </div>
       `;

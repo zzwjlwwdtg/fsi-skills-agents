@@ -143,13 +143,40 @@ def _fetch_jp_flow(ticker: str) -> Optional[dict]:
     ].sort_values("vol_ratio", ascending=False)
 
     peak_bars = []
-    for ts, row in anomaly_bars.head(6).iterrows():
+    for ts, row in anomaly_bars.head(8).iterrows():
+        o = float(row["Open"])
+        c = float(row["Close"])
+        chg_pct = (c - o) / o * 100 if o > 0 else 0
+        # 方向：主动买 = close>open 拉升，主动卖 = close<open 压价
+        if chg_pct > 0.10:
+            direction = "buy"
+        elif chg_pct < -0.10:
+            direction = "sell"
+        else:
+            direction = "flat"
+        vol = int(row["Volume"])
+        value_yen = vol * c
         peak_bars.append({
-            "time":  ts.strftime("%H:%M"),
-            "vol":   int(row["Volume"]),
-            "ratio": round(float(row["vol_ratio"]), 2),
-            "price": round(float(row["Close"]), 2),
+            "time":      ts.strftime("%H:%M"),
+            "vol":       vol,
+            "ratio":     round(float(row["vol_ratio"]), 2),
+            "open":      round(o, 2),
+            "price":     round(c, 2),  # keep 'price'=close for backward compat
+            "chg_pct":   round(chg_pct, 2),
+            "direction": direction,
+            "value_oku": round(value_yen / 1e8, 2),   # 億円 (JP notional unit)
         })
+
+    # 汇总：按方向拆分股数 → 买/卖比
+    buy_shares  = sum(b["vol"] for b in peak_bars if b["direction"] == "buy")
+    sell_shares = sum(b["vol"] for b in peak_bars if b["direction"] == "sell")
+    buy_value_oku  = round(sum(b["value_oku"] for b in peak_bars if b["direction"] == "buy"), 2)
+    sell_value_oku = round(sum(b["value_oku"] for b in peak_bars if b["direction"] == "sell"), 2)
+    net_bias = "neutral"
+    if buy_shares >= sell_shares * 2 and buy_shares >= 20_000:
+        net_bias = "buy"
+    elif sell_shares >= buy_shares * 2 and sell_shares >= 20_000:
+        net_bias = "sell"
 
     # 今日 total volume vs 20 日日均
     daily_total_today = float(today["Volume"].sum())
@@ -160,7 +187,8 @@ def _fetch_jp_flow(ticker: str) -> Optional[dict]:
     reason = ""
     if peak_bars:
         top = peak_bars[0]
-        reason = f"{top['time']} 5min bar {top['ratio']}× 20 日同时段均值（@¥{top['price']}）"
+        dir_zh = {"buy": "主动买", "sell": "主动卖", "flat": "换手"}[top["direction"]]
+        reason = f"{top['time']} {top['ratio']}× 均值 · {dir_zh} ¥{top['value_oku']}億 (@¥{top['price']})"
     elif day_ratio >= 1.8:
         reason = f"当日总量 {day_ratio:.2f}× 20 日日均"
 
@@ -172,6 +200,11 @@ def _fetch_jp_flow(ticker: str) -> Optional[dict]:
             "score":     float(min((max(day_ratio - 1, 0) + len(peak_bars) * 0.2), 1.0)),
             "peak_bars": peak_bars,
             "day_ratio": float(round(day_ratio, 2)),
+            "net_bias":       net_bias,
+            "buy_shares":     buy_shares,
+            "sell_shares":    sell_shares,
+            "buy_value_oku":  buy_value_oku,
+            "sell_value_oku": sell_value_oku,
         },
         "asof":   df.index.max().strftime("%Y-%m-%d %H:%M %Z"),
         "source": "yfinance_intraday",
