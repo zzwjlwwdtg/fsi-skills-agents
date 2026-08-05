@@ -136,6 +136,8 @@ def _fetch_jp_flow(ticker: str) -> Optional[dict]:
         # 若非交易日/盘外时段，用最近有数据的一天
         latest_date = df["date"].max()
         today = df[df["date"] == latest_date].copy()
+    # 交易日（异常 bar 全部来自这一天，UI 需明确显示）
+    trading_date = today["date"].iloc[0] if not today.empty else today_jp
 
     # 异常 bar：ratio ≥ 3 且成交量 ≥ 10 * 1000（避免小盘噪音）
     anomaly_bars = today[
@@ -184,25 +186,33 @@ def _fetch_jp_flow(ticker: str) -> Optional[dict]:
     day_ratio = daily_total_today / daily_avg if daily_avg > 0 else 0
 
     detected = bool(len(peak_bars) >= 1 or day_ratio >= 1.8)
+    # 日期 short form for UI badge, e.g. "8/5"
+    try:
+        d = datetime.strptime(trading_date, "%Y-%m-%d")
+        date_short = f"{d.month}/{d.day}"
+    except Exception:
+        date_short = trading_date
     reason = ""
     if peak_bars:
         top = peak_bars[0]
         dir_zh = {"buy": "主动买", "sell": "主动卖", "flat": "换手"}[top["direction"]]
-        reason = f"{top['time']} {top['ratio']}× 均值 · {dir_zh} ¥{top['value_oku']}億 (@¥{top['price']})"
+        reason = f"{date_short} {top['time']} {top['ratio']}× 均值 · {dir_zh} ¥{top['value_oku']}億 (@¥{top['price']})"
     elif day_ratio >= 1.8:
-        reason = f"当日总量 {day_ratio:.2f}× 20 日日均"
+        reason = f"{date_short} 当日总量 {day_ratio:.2f}× 20 日日均"
 
     return {
         "flow": None,   # yfinance 无 broker 分类，无法拆 super/big/mid/small
         "anomaly": {
-            "detected":  detected,
-            "reason":    reason,
-            "score":     float(min((max(day_ratio - 1, 0) + len(peak_bars) * 0.2), 1.0)),
-            "peak_bars": peak_bars,
-            "day_ratio": float(round(day_ratio, 2)),
-            "net_bias":       net_bias,
-            "buy_shares":     buy_shares,
-            "sell_shares":    sell_shares,
+            "detected":     detected,
+            "reason":       reason,
+            "score":        float(min((max(day_ratio - 1, 0) + len(peak_bars) * 0.2), 1.0)),
+            "peak_bars":    peak_bars,
+            "day_ratio":    float(round(day_ratio, 2)),
+            "trading_date": trading_date,   # YYYY-MM-DD, UI 前端明确显示
+            "date_short":   date_short,     # MM/DD 短标签
+            "net_bias":     net_bias,
+            "buy_shares":   buy_shares,
+            "sell_shares":  sell_shares,
             "buy_value_oku":  buy_value_oku,
             "sell_value_oku": sell_value_oku,
         },

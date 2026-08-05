@@ -678,20 +678,23 @@ async function loadCapitalFlowOnDemand(ticker, containerId) {
         ? `<span class="badge bad" style="font-size:9px">📉 净卖出主导 ${anom.sell_value_oku}億 vs ${anom.buy_value_oku}億</span>`
         : (peaks.length ? `<span class="badge muted" style="font-size:9px">⚖ 买卖平衡 买${anom.buy_value_oku}億 卖${anom.sell_value_oku}億</span>` : ''));
 
+    const tradingDate = anom.trading_date || '';
+    const dateShort   = anom.date_short   || (tradingDate ? tradingDate.slice(5).replace('-','/') : '');
     if (peaks.length) {
       bodyHtml = `
         <div style="font-size:10px; margin:3px 0; display:flex; align-items:center; gap:5px; flex-wrap:wrap">
+          <span class="badge info" style="font-size:9px" title="所有异常 bar 均来自此交易日（JP timezone）">📅 交易日 ${tradingDate}</span>
           <b>异常 bar</b> ${peaks.length} 个 (≥3× 均量)
           ${biasBadge}
         </div>
         <div style="display:grid; grid-template-columns:auto auto auto auto auto; gap:2px 8px; font-size:10px; line-height:1.4">
-          <span style="color:var(--muted); font-size:9px">时间</span>
+          <span style="color:var(--muted); font-size:9px">时刻</span>
           <span style="color:var(--muted); font-size:9px; text-align:right">倍数</span>
           <span style="color:var(--muted); font-size:9px; text-align:right">涨跌</span>
           <span style="color:var(--muted); font-size:9px; text-align:right">金额</span>
           <span style="color:var(--muted); font-size:9px">方向</span>
           ${peaks.slice(0, 6).map(p => `
-            <span><b>${p.time}</b></span>
+            <span title="${tradingDate} ${p.time}"><b>${dateShort} ${p.time}</b></span>
             <span style="text-align:right" class="${p.ratio >= 8 ? 'bad' : (p.ratio >= 5 ? 'warn' : 'muted')}"><b>${p.ratio.toFixed(1)}×</b></span>
             <span style="text-align:right" class="${p.chg_pct > 0 ? 'ok' : (p.chg_pct < 0 ? 'bad' : 'muted')}">${p.chg_pct >= 0 ? '+' : ''}${p.chg_pct}%</span>
             <span style="text-align:right"><b>¥${p.value_oku}億</b></span>
@@ -700,7 +703,7 @@ async function loadCapitalFlowOnDemand(ticker, containerId) {
         </div>
       `;
     } else {
-      bodyHtml = `<div style="font-size:10px; color:var(--muted); margin:3px 0">今日无 ≥3× 均量的 5min bar</div>`;
+      bodyHtml = `<div style="font-size:10px; color:var(--muted); margin:3px 0">${tradingDate || '今日'}无 ≥3× 均量的 5min bar</div>`;
     }
     bodyHtml += `<div style="border-top:1px solid var(--border); padding-top:3px; font-size:10px; margin-top:4px">
       当日总量: <b class="${dayRatio >= 1.5 ? 'ok' : (dayRatio < 0.8 ? 'bad' : 'muted')}">${dayRatio}×</b> 20 日日均
