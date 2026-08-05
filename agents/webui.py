@@ -2008,6 +2008,45 @@ def _compute_jp_guidance(tk: str, stock: str) -> dict:
     return result
 
 
+def api_tostnet_hits(ticker: str, days: int = 10) -> dict:
+    """JPX ToSTNeT ≥50 亿円 block trade 命中：某 JP ticker 最近 N 日是否有大宗成交。
+
+    T+1 官方免费数据源，用于印证 moomoo/yfinance capital flow anomaly 是否落地为 block trade。
+    缓存 6h（ToSTNeT 每日 15:00-16:00 JST 后发布，一天最多刷一次）。
+    """
+    tk = (ticker or "").strip()
+    if not tk:
+        return {"error": "no_ticker"}
+    def _compute():
+        try:
+            from jp_tostnet import check_ticker_hits
+            hits = check_ticker_hits(tk, n_days=days)
+            return {"ticker": tk, "days": days, "hits": hits, "count": len(hits)}
+        except Exception as e:
+            return {"ticker": tk, "days": days, "hits": [], "error": str(e)[:200]}
+    return _cached(f"tostnet_{tk}_{days}", ttl_sec=6*3600, compute_fn=_compute)
+
+
+def api_capital_flow(ticker: str) -> dict:
+    """大单/散户资金流向。US → moomoo super/big/mid/small；JP → yfinance 5min 量能异常代理。
+
+    缓存 5 min（intraday 数据更新频繁，5 min 兼顾新鲜度和 API 频率）。
+    """
+    tk = (ticker or "").upper().strip()
+    if not tk:
+        return {"error": "no_ticker"}
+    def _compute():
+        try:
+            from capital_flow import get_capital_flow
+            return get_capital_flow(tk)
+        except Exception as e:
+            return {"ticker": tk, "source": "unavailable",
+                    "error": str(e)[:200],
+                    "flow": None,
+                    "anomaly": {"detected": False, "reason": "", "score": 0}}
+    return _cached(f"capital_flow_{tk}", ttl_sec=300, compute_fn=_compute)
+
+
 def api_events(days_ahead: int = 45) -> dict:
     """未来 N 天内的宏观 + 财报事件（CPI/PPI/NFP/FOMC/NVDA earnings 等）。
 
@@ -2939,6 +2978,13 @@ class Handler(BaseHTTPRequestHandler):
             elif path == "/api/jp_guidance":
                 tk = qs.get("ticker", [""])[0]
                 self._json(api_jp_guidance(tk))
+            elif path == "/api/capital_flow":
+                tk = qs.get("ticker", [""])[0]
+                self._json(api_capital_flow(tk))
+            elif path == "/api/tostnet_hits":
+                tk = qs.get("ticker", [""])[0]
+                d  = int(qs.get("days", ["10"])[0])
+                self._json(api_tostnet_hits(tk, days=d))
             else:
                 self.send_error(404, f"route not found: {path}")
         except Exception as e:

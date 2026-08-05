@@ -104,6 +104,50 @@ def get_snapshot_via_openD(ticker: str) -> Optional[dict]:
         return None
 
 
+def get_capital_distribution_via_openD(ticker: str) -> Optional[dict]:
+    """个股当日资金分布（super/big/mid/small 净流入）。moomoo 内部按成交额相对月均分档。
+
+    返 { code, super_net, big_net, mid_net, small_net,  # 净流入（in - out），美元
+         super_in, super_out, ..., update_time }
+    JP 市场需付费订阅；无权限时 API 返 -1 → 本函数返 None。
+    """
+    code = to_openD_code(ticker)
+    if not code:
+        return None
+    try:
+        from moomoo_pool import get_quote_ctx
+        from moomoo import RET_OK
+        ctx = get_quote_ctx()
+        ret, data = ctx.get_capital_distribution(code)
+        if ret != RET_OK or data is None or (hasattr(data, "empty") and data.empty):
+            return None
+        row = data.iloc[0].to_dict()
+        def _f(k): return float(row.get(k) or 0)
+        super_net = _f("capital_in_super") - _f("capital_out_super")
+        big_net   = _f("capital_in_big")   - _f("capital_out_big")
+        mid_net   = _f("capital_in_mid")   - _f("capital_out_mid")
+        small_net = _f("capital_in_small") - _f("capital_out_small")
+        total_in  = _f("capital_in_super") + _f("capital_in_big") + _f("capital_in_mid") + _f("capital_in_small")
+        total_out = _f("capital_out_super") + _f("capital_out_big") + _f("capital_out_mid") + _f("capital_out_small")
+        return {
+            "code":        code,
+            "super_net":   super_net,
+            "big_net":     big_net,
+            "mid_net":     mid_net,
+            "small_net":   small_net,
+            "super_in":    _f("capital_in_super"),
+            "super_out":   _f("capital_out_super"),
+            "big_in":      _f("capital_in_big"),
+            "big_out":     _f("capital_out_big"),
+            "total_in":    total_in,
+            "total_out":   total_out,
+            "net_total":   total_in - total_out,
+            "update_time": row.get("update_time"),
+        }
+    except Exception:
+        return None
+
+
 def get_option_chain_via_openD(ticker: str, expiry: str | None = None) -> Optional[dict]:
     """从 openD 拉期权链。返回:
       { "expiry": "YYYY-MM-DD",

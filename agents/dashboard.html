@@ -500,6 +500,10 @@ async function loadJPWatch() {
         <summary style="cursor:pointer; list-style:none; font-size:10px; color:var(--muted)">📢 <b style="color:#58a6ff">業績予想</b> <small style="font-size:9px">▲（官方 IR 优先；未接入则不生成数字）</small></summary>
         <div id="jpgd-body-${t.ticker}"></div>
       </details>
+      <details data-details-key="jpcf-${t.ticker}" open style="border-top:1px dashed var(--border); margin-top:5px; padding-top:4px" ontoggle="rememberDetailsState(this); if(this.open) loadCapitalFlowOnDemand('${t.symbol || t.ticker + '.T'}', 'jpcf-body-${t.ticker}')">
+        <summary style="cursor:pointer; list-style:none; font-size:10px; color:var(--muted)">💰 <b style="color:#58a6ff">主力资金</b> <small style="font-size:9px">▲（yfinance 5min 量能异常代理 · T+1 ToSTNeT 印证）</small></summary>
+        <div id="jpcf-body-${t.ticker}"></div>
+      </details>
     </div>`;
   }).join('');
   restoreDetailsState();
@@ -610,6 +614,137 @@ async function loadJPGuidanceOnDemand(ticker, containerId) {
     </div>
   `;
   el.dataset.loaded = 'true';
+}
+
+// 主力资金流向。US → moomoo super/big/mid/small；JP → yfinance 5min 量能异常代理
+async function loadCapitalFlowOnDemand(ticker, containerId) {
+  const el = document.getElementById(containerId);
+  if (!el || el.dataset.loaded === 'true' || el.dataset.loading === 'true') return;
+  el.dataset.loading = 'true';
+  el.innerHTML = '<small style="color:var(--muted); padding:6px; display:block; font-size:10px">🔄 读取资金流…</small>';
+  const r = await fetchJson(`/api/capital_flow?ticker=${encodeURIComponent(ticker)}`);
+  el.dataset.loading = 'false';
+  if (!r || r.error || r.source === 'unavailable') {
+    el.innerHTML = `<small style="color:var(--muted); font-size:10px; padding:4px; display:block">
+      ${r && r.error ? `⚠ ${r.error.slice(0,100)}` : '数据不可用（JP 需 moomoo 订阅或 yfinance intraday 无数据）'}
+    </small>`;
+    return;
+  }
+  const anom = r.anomaly || {};
+  const flow = r.flow;
+  const anomBadge = anom.detected
+    ? `<span class="badge ${anom.score > 0.6 ? 'bad' : 'warn'}" style="font-size:9px" title="score=${(anom.score||0).toFixed(2)}">⚡ 异常</span>`
+    : '<span class="badge muted" style="font-size:9px">正常</span>';
+  const srcLabel = r.source === 'moomoo' ? '🔴 moomoo 实时' : (r.source === 'yfinance_intraday' ? '📊 yfinance 5min' : r.source);
+  const asof = r.asof ? `<small style="color:var(--muted); font-size:9px">${r.asof}</small>` : '';
+
+  // US 分支：4 层资金分解 (super/big/mid/small)
+  let bodyHtml = '';
+  if (r.source === 'moomoo' && flow) {
+    const fmtM = (v) => (Math.abs(v) >= 1e9 ? `${(v/1e9).toFixed(2)}B` : `${(v/1e6).toFixed(1)}M`);
+    const sign = (v) => v >= 0 ? '+' : '';
+    const cls  = (v) => v > 0 ? 'ok' : (v < 0 ? 'bad' : 'muted');
+    const rows = [
+      ['🐋 超大单', flow.super_net, '≥10× 月均成交额'],
+      ['🐟 大单',   flow.big_net,   '3-10× 月均'],
+      ['🐠 中单',   flow.mid_net,   '1-3× 月均'],
+      ['🦐 小单',   flow.small_net, '<1× 月均 (散户)'],
+    ];
+    const smart = flow.super_net + flow.big_net;
+    bodyHtml = `
+      <div style="display:grid; grid-template-columns:auto 1fr auto; gap:2px 10px; font-size:10px; line-height:1.5; margin:3px 0">
+        ${rows.map(([lbl, v, hint]) => `
+          <span title="${hint}">${lbl}</span>
+          <span class="${cls(v)}" style="text-align:right"><b>${sign(v)}$${fmtM(v)}</b></span>
+          <span></span>
+        `).join('')}
+      </div>
+      <div style="border-top:1px solid var(--border); padding-top:3px; font-size:10px">
+        <b>主力净流 (super+big)</b>: <span class="${cls(smart)}">${sign(smart)}$${fmtM(smart)}</span>
+        · 占总成交 ${((flow.smart_pct || 0)*100).toFixed(1)}%
+      </div>`;
+  }
+  // JP 分支：peak bars 表
+  else if (r.source === 'yfinance_intraday') {
+    const peaks = anom.peak_bars || [];
+    const dayRatio = anom.day_ratio;
+    if (peaks.length) {
+      bodyHtml = `
+        <div style="font-size:10px; margin:3px 0">
+          <b>异常量能 bar</b> (${peaks.length} 个 ≥3× 20 日同时段均):
+        </div>
+        <div style="display:grid; grid-template-columns:auto auto auto auto; gap:2px 8px; font-size:10px; line-height:1.4">
+          <span style="color:var(--muted); font-size:9px">时间</span>
+          <span style="color:var(--muted); font-size:9px; text-align:right">成交量</span>
+          <span style="color:var(--muted); font-size:9px; text-align:right">倍数</span>
+          <span style="color:var(--muted); font-size:9px; text-align:right">价格</span>
+          ${peaks.map(p => `
+            <span><b>${p.time}</b></span>
+            <span style="text-align:right">${(p.vol/1000).toFixed(0)}K</span>
+            <span style="text-align:right" class="${p.ratio >= 5 ? 'bad' : 'warn'}"><b>${p.ratio.toFixed(1)}×</b></span>
+            <span style="text-align:right">¥${p.price}</span>
+          `).join('')}
+        </div>
+      `;
+    } else {
+      bodyHtml = `<div style="font-size:10px; color:var(--muted); margin:3px 0">今日无 ≥3× 均量的 5min bar</div>`;
+    }
+    bodyHtml += `<div style="border-top:1px solid var(--border); padding-top:3px; font-size:10px; margin-top:4px">
+      当日总量: <b class="${dayRatio >= 1.5 ? 'ok' : (dayRatio < 0.8 ? 'bad' : 'muted')}">${dayRatio}×</b> 20 日日均
+    </div>
+    <div id="tostnet-${ticker.replace(/\./g,'_')}" style="font-size:10px; color:var(--muted); margin-top:3px">🔍 查 JPX ToSTNeT 印证…</div>`;
+  }
+
+  el.innerHTML = `
+    <div style="font-size:10px; padding:3px 0">
+      <div style="display:flex; align-items:center; gap:5px; margin-bottom:4px; flex-wrap:wrap">
+        ${anomBadge}
+        <span style="color:var(--muted); font-size:9px">${srcLabel}</span>
+        ${asof}
+      </div>
+      ${anom.reason ? `<div style="font-size:10px; color:var(--fg); margin-bottom:3px; line-height:1.4">
+        <b>${anom.detected ? '💡' : ''}</b> ${anom.reason}
+      </div>` : ''}
+      ${bodyHtml}
+    </div>
+  `;
+  el.dataset.loaded = 'true';
+
+  // JP：并行拉 ToSTNeT 印证（T+1 官方免费数据）
+  if (r.source === 'yfinance_intraday') {
+    const tosEl = document.getElementById(`tostnet-${ticker.replace(/\./g,'_')}`);
+    if (tosEl) {
+      try {
+        const t = await fetchJson(`/api/tostnet_hits?ticker=${encodeURIComponent(ticker)}&days=10`);
+        if (t && t.hits && t.hits.length) {
+          const rows = t.hits.slice(0,5).map(h => `
+            <span><b>${h.date.slice(4,6)}/${h.date.slice(6,8)}</b></span>
+            <span>${h.trade_time}</span>
+            <span style="text-align:right">${(h.volume/1000).toFixed(0)}K股</span>
+            <span style="text-align:right" class="ok"><b>${h.value_oku}億</b></span>
+          `).join('');
+          tosEl.innerHTML = `<div style="color:var(--fg); font-size:10px; margin-top:3px">
+            🎯 <b class="ok">ToSTNeT 印证</b>: 最近 ${t.days} 日 <b>${t.count}</b> 笔 ≥50億円 block trade
+            <div style="display:grid; grid-template-columns:auto auto 1fr 1fr; gap:2px 8px; margin-top:3px; font-size:9px">
+              <span style="color:var(--muted)">日期</span>
+              <span style="color:var(--muted)">时刻</span>
+              <span style="color:var(--muted); text-align:right">股数</span>
+              <span style="color:var(--muted); text-align:right">金额</span>
+              ${rows}
+            </div>
+          </div>`;
+        } else if (t && !t.error) {
+          tosEl.innerHTML = `<div style="color:var(--muted); font-size:10px">
+            🔍 ToSTNeT 最近 10 日无 ≥50億円 block trade 记录 · <a href="https://www.jpx.co.jp/markets/equities/tostnet/index.html" target="_blank" rel="noopener" style="color:#79c0ff">JPX 原页 ↗</a>
+          </div>`;
+        } else {
+          tosEl.innerHTML = `<div style="color:var(--warn); font-size:10px">⚠ ToSTNeT 查询失败: ${(t && t.error) || 'unknown'}</div>`;
+        }
+      } catch (e) {
+        tosEl.innerHTML = `<div style="color:var(--warn); font-size:10px">⚠ ToSTNeT 网络错误</div>`;
+      }
+    }
+  }
 }
 
 async function loadEvents() {
@@ -1050,6 +1185,10 @@ function renderSignalCard(t, context) {
     <summary style="cursor:pointer; list-style:none; font-size:10px; color:var(--muted); margin-bottom:4px">🔗 <b style="color:#58a6ff">上下游供应链</b> <small style="font-size:9px">▼展开加载 (Claude 生成，缓存 14 天)</small></summary>
     <div id="sc-${t.ticker}"></div>
   </details>` : '';
+  const capitalFlow = `<details data-details-key="cf-${t.ticker}" open style="border-top:1px dashed var(--border); margin-top:6px; padding-top:5px" ontoggle="rememberDetailsState(this); if(this.open) loadCapitalFlowOnDemand('${t.ticker}', 'cf-${t.ticker}')">
+    <summary style="cursor:pointer; list-style:none; font-size:10px; color:var(--muted); margin-bottom:4px">💰 <b style="color:#58a6ff">主力资金</b> <small style="font-size:9px">▲折叠 (US: moomoo 实时 · JP: yfinance 5min 量能代理)</small></summary>
+    <div id="cf-${t.ticker}"></div>
+  </details>`;
   const fundamentals = showFundamentals ? `<details data-details-key="fd-${t.ticker}" open style="border-top:1px dashed var(--border); margin-top:6px; padding-top:5px" ontoggle="rememberDetailsState(this); if(this.open) loadFundamentalsOnDemand('${t.ticker}', 'fd-${t.ticker}')">
     <summary style="cursor:pointer; list-style:none; font-size:10px; color:var(--muted); margin-bottom:4px">📊 <b style="color:#58a6ff">4 年基本面</b> <small style="font-size:9px">▲折叠 (yfinance，缓存 30 天)</small></summary>
     <div id="fd-${t.ticker}"></div>
@@ -1060,6 +1199,7 @@ function renderSignalCard(t, context) {
     ${showOptions ? renderMiniWall(opt) : ''}
     ${showOptions ? renderOptAnalysis(opt) : ''}
     ${showAI ? renderTickerAI(t, context) : ''}
+    ${capitalFlow}
     ${supplyChain}
     ${fundamentals}
   </div>`;
