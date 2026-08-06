@@ -1,0 +1,47 @@
+{
+  "ticker": "TDK",
+  "source_stock": "6762.T",
+  "direction": "待核验",
+  "revision_type": "unverified",
+  "magnitude": "不明",
+  "last_update": "2026-07-31",
+  "next_earnings": "2026-10-30",
+  "guidance_note": "Q1 FY2027（2026-07-31 発表）: 売上 7,410 億円 (+38.3% YoY)、営業利益 863 億円 (+53% YoY)、大幅な計画超過。通期予想の具体的な数値改定は本検索範囲では未確認",
+  "revision_reason": "AI/データセンター向け HDD 用サスペンション・二次電池需要が想定以上に拡大し Q1 大幅超過。通期予想改定の有無・幅は TDnet 原文未確認のため要一次確認",
+  "market_reaction": "高",
+  "confidence": "low",
+  "source_verified": true,
+  "source_status": "claude_websearch",
+  "generated_at": "2026-08-05T23:34:15.125371+00:00",
+  "sources": [
+    {
+      "url": "https://s.kabutan.jp/stocks/6762/finance/",
+      "type": "news",
+      "title": "TDK【6762】の最新決算発表、業績修正 - 株探"
+    }
+  ],
+  "source_via": "claude_cli_websearch",
+  "analyst_consensus": {
+    "n_analysts": 17,
+    "recommendation": "buy",
+    "forward_eps": 106.88,
+    "trailing_eps": 102.85,
+    "eps_growth_pct": 3.9,
+    "forward_pe": 29.47,
+    "trailing_pe": 30.63,
+    "target_mean": 4110.29,
+    "target_high": 5500.0,
+    "target_low": 2150.0,
+    "target_upside_pct": 30.5,
+    "revenue_growth_pct": 38.3,
+    "earnings_growth_pct": 94.3,
+    "next_earnings": "2026-10-30",
+    "source": "yfinance analyst aggregation"
+  },
+  "_meta": {
+    "cached_at": "2026-08-06T08:34:57.478528",
+    "age_sec": 9791,
+    "stale": false,
+    "refreshing": false
+  }
+}

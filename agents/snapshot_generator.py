@@ -102,25 +102,39 @@ def _save(url: str, data: dict) -> Path:
 
 
 def _watch_tickers() -> tuple[list[str], list[str]]:
-    """从 /api/signals 拿 US 主 ticker 集合；从 /api/jp_watch 拿 JP 集合。"""
+    """从 /api/signals 拿 US 主 ticker 集合；从 /api/jp_watch 拿 JP 集合。
+
+    JP 采用 **short name**（TDK/ARE/MUFG…）而非 .T symbol：dashboard.html JP watch
+    卡代码里用的是 `t.ticker` (short name)，webui 后端做 short→symbol 映射。
+    静态文件名必须与前端 URL 一致，否则 404。
+    """
     us_tickers: list[str] = []
-    jp_tickers: list[str] = []
+    jp_tickers_short: list[str] = []   # for fundamentals/jp_guidance (JP watch cards)
+    jp_tickers_sym:   list[str] = []   # for capital_flow/tostnet_hits (直接调 5857.T)
     sig = _fetch(f"{BASE_URL}/api/signals", timeout=15)
     if sig and isinstance(sig.get("tickers"), dict):
         for tk in sig["tickers"].keys():
-            # 保留 US.NVDA / NVDA 形式（signal 卡内部就用这种）
             us_tickers.append(tk)
     jpw = _fetch(f"{BASE_URL}/api/jp_watch", timeout=15)
     if jpw and isinstance(jpw.get("tickers"), list):
         for entry in jpw["tickers"]:
-            sym = entry.get("symbol") or (entry.get("ticker", "") + ".T")
-            jp_tickers.append(sym)
-    return us_tickers, jp_tickers
+            short = entry.get("ticker")
+            sym   = entry.get("symbol") or (short + ".T" if short else None)
+            if short:
+                jp_tickers_short.append(short)
+            if sym:
+                jp_tickers_sym.append(sym)
+    return us_tickers, jp_tickers_short, jp_tickers_sym
 
 
 def snapshot_all(only: str | None = None, skip_tickers: bool = False) -> dict:
     """执行全量快照。返回 stats dict."""
     DATA_DIR.mkdir(parents=True, exist_ok=True)
+    # Full refresh 时清 stale JSON（防止 ticker 改名后老文件留下来占位）
+    if not only and not skip_tickers:
+        for old in DATA_DIR.glob("*.json"):
+            try: old.unlink()
+            except OSError: pass
     started = time.time()
     ok, fail = 0, 0
     saved_files: list[str] = []
@@ -140,18 +154,29 @@ def snapshot_all(only: str | None = None, skip_tickers: bool = False) -> dict:
 
     # 2) Per-ticker endpoints
     if not skip_tickers:
-        us_tickers, jp_tickers = _watch_tickers()
-        print(f"[watch] US={len(us_tickers)} JP={len(jp_tickers)}")
+        us_tickers, jp_short, jp_sym = _watch_tickers()
+        print(f"[watch] US={len(us_tickers)} JP short={len(jp_short)} sym={len(jp_sym)}")
+
+        # JP-side per-endpoint ticker format (must match how dashboard.html calls fetchJson)
+        # capital_flow / tostnet_hits: dashboard 传 t.symbol (5857.T)
+        # fundamentals / jp_guidance / supply_chain: dashboard 传 t.ticker (ARE)
+        JP_TICKER_FORM = {
+            "/api/capital_flow": jp_sym,
+            "/api/tostnet_hits": jp_sym,
+            "/api/fundamentals": jp_short,
+            "/api/jp_guidance":  jp_short,
+            "/api/supply_chain": jp_short,
+        }
 
         for route, scope in PER_TICKER_ENDPOINTS.items():
             if only and only not in route:
                 continue
             targets = []
             if scope in ("all", "us"):
-                targets.extend([(tk, tk) for tk in us_tickers])
+                targets.extend(us_tickers)
             if scope in ("all", "jp"):
-                targets.extend([(tk, tk) for tk in jp_tickers])
-            for _, tk in targets:
+                targets.extend(JP_TICKER_FORM.get(route, jp_sym))
+            for tk in targets:
                 # 特殊 endpoint 需要额外 query 参数（与 dashboard.html fetchJson 调用签名对齐）
                 query_extra = ""
                 if route == "/api/tostnet_hits":

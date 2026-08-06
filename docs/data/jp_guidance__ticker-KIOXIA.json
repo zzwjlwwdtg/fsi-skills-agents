@@ -1,0 +1,52 @@
+{
+  "ticker": "KIOXIA",
+  "source_stock": "285A.T",
+  "direction": "新指引",
+  "revision_type": "initial",
+  "magnitude": "大",
+  "last_update": "2026-07-31",
+  "next_earnings": "2026-10-31",
+  "guidance_note": "上期(4-9月)連結最終利益予想 2兆1,121億円（前年同期比36倍、2期ぶりに上期最高益更新見通し）。通期は非開示継続。",
+  "revision_reason": "従来非開示だった上期業績予想を新規開示。Q1(4-6月)純利益 8,421億円が前年同期比46倍に急拡大し、AI向けNAND需要拡大・ASP上昇を背景に上期予想を初めて提示。",
+  "market_reaction": "高",
+  "confidence": "medium",
+  "source_verified": true,
+  "source_status": "claude_websearch",
+  "generated_at": "2026-08-05T23:55:45.135915+00:00",
+  "sources": [
+    {
+      "url": "https://kabutan.jp/news/?b=k202607310237",
+      "type": "news",
+      "title": "キオクシアホールディングス【285A】、非開示だった上期最終は36倍増で2期ぶり最高益更新へ"
+    },
+    {
+      "url": "https://www.nikkei.com/nkd/disclosure/tdnr/20260515537803/",
+      "type": "TDnet",
+      "title": "キオクシアホールディングス[285A]：2026年３月期 決算短信〔ＩＦＲＳ〕（連結）"
+    }
+  ],
+  "source_via": "claude_cli_websearch",
+  "analyst_consensus": {
+    "n_analysts": 16,
+    "recommendation": "buy",
+    "forward_eps": null,
+    "trailing_eps": 1007.78,
+    "eps_growth_pct": null,
+    "forward_pe": null,
+    "trailing_pe": 53.88,
+    "target_mean": 112993.75,
+    "target_high": 200000.0,
+    "target_low": 40000.0,
+    "target_upside_pct": 108.1,
+    "revenue_growth_pct": 415.5,
+    "earnings_growth_pct": 4418.8,
+    "next_earnings": "2026-10-30",
+    "source": "yfinance analyst aggregation"
+  },
+  "_meta": {
+    "cached_at": "2026-08-06T08:56:51.822949",
+    "age_sec": 8477,
+    "stale": false,
+    "refreshing": false
+  }
+}

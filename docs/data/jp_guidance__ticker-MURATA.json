@@ -1,0 +1,52 @@
+{
+  "ticker": "MURATA",
+  "source_stock": "6981.T",
+  "direction": "上修",
+  "revision_type": "upward",
+  "magnitude": "中",
+  "last_update": "2026-07-31",
+  "next_earnings": "2026-10-30",
+  "guidance_note": "通期(FY2027/3)売上収益 2兆1,100億円、営業利益 4,300億円、親会社所有者帰属当期利益 3,380億円、EPS 相当年配 70円（据置）。",
+  "revision_reason": "データセンター向け MLCC 需要拡大＋為替前提 1$=150円→155円に円安見直しで、売上 1兆9,600→2兆1,100億円 (+7.7%)、営業利益 3,800→4,300億円 (+13.2%)、純利益 2,930→3,380億円 (+15.4%) を上方修正。",
+  "market_reaction": "不明",
+  "confidence": "high",
+  "source_verified": true,
+  "source_status": "claude_websearch",
+  "generated_at": "2026-08-05T23:56:15.142222+00:00",
+  "sources": [
+    {
+      "url": "https://www.nikkei.com/nkd/disclosure/tdnr/20260730504039/",
+      "type": "TDnet",
+      "title": "村田製作所[6981]：2027年３月期 第１四半期決算短信〔ＩＦＲＳ〕（連結） 2026年7月31日"
+    },
+    {
+      "url": "https://www.nikkei.com/nkd/disclosure/tdnr/20260729501513/",
+      "type": "TDnet",
+      "title": "村田製作所[6981]：2027年３月期 第1四半期決算説明会資料 2026年7月31日"
+    }
+  ],
+  "source_via": "claude_cli_websearch",
+  "analyst_consensus": {
+    "n_analysts": 17,
+    "recommendation": "strong_buy",
+    "forward_eps": 237.27,
+    "trailing_eps": 127.47,
+    "eps_growth_pct": 86.1,
+    "forward_pe": 33.0,
+    "trailing_pe": 61.42,
+    "target_mean": 10797.06,
+    "target_high": 15750.0,
+    "target_low": 4200.0,
+    "target_upside_pct": 37.9,
+    "revenue_growth_pct": 20.7,
+    "earnings_growth_pct": 66.5,
+    "next_earnings": "2026-10-30",
+    "source": "yfinance analyst aggregation"
+  },
+  "_meta": {
+    "cached_at": "2026-08-06T08:56:53.842247",
+    "age_sec": 8475,
+    "stale": false,
+    "refreshing": false
+  }
+}

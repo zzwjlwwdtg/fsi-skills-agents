@@ -1,5 +1,5 @@
 {
-  "ticker": "285A.T",
+  "ticker": "KIOXIA",
   "source_stock": "285A.T",
   "period": "year",
   "years": [
@@ -30,9 +30,9 @@
   "piotroski_max": 9,
   "cf_available": true,
   "is_jp": true,
-  "pbr": 11.14,
-  "per": 48.48,
-  "roe_pct": 87.11,
+  "pbr": 15.42,
+  "per": 39.13,
+  "roe_pct": 51.9,
   "div_yield_pct": null,
   "equity_ratio": [
     61.6,
@@ -47,8 +47,8 @@
     "equity_ratio": 37.9
   },
   "_meta": {
-    "cached_at": "2026-08-06T11:05:20.674017",
-    "age_sec": 0,
+    "cached_at": "2026-07-30T16:25:22.726635",
+    "age_sec": 586366,
     "stale": false,
     "refreshing": false
   }

@@ -1,0 +1,12 @@
+{
+  "ticker": "TEKSCEND",
+  "source": "429A.T",
+  "period": "year",
+  "error": "list index out of range",
+  "_meta": {
+    "cached_at": "2026-07-31T14:57:28.776893",
+    "age_sec": 505240,
+    "stale": false,
+    "refreshing": false
+  }
+}

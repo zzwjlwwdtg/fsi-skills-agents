@@ -1,0 +1,52 @@
+{
+  "ticker": "FUJIKURA",
+  "source_stock": "5803.T",
+  "direction": "上修",
+  "revision_type": "upward",
+  "magnitude": "大",
+  "last_update": "2026-06-18",
+  "next_earnings": "2026-08-07",
+  "guidance_note": "FY2027/3 通期 売上 1兆4,620億円(+17.6%)、営業利益 3,100億円(+46.9%)、経常利益 3,160億円(+45.0%)、純利益 2,290億円(+46.8% vs 前回予想)",
+  "revision_reason": "生成AI普及に伴うデータセンタ向け需要が想定を大幅超過。営業利益予想 2,110億円→3,100億円(+990億円)、純利益 1,560億円→2,290億円(+730億円)へ 発表35日で再上方修正",
+  "market_reaction": "高",
+  "confidence": "high",
+  "source_verified": true,
+  "source_status": "claude_websearch",
+  "generated_at": "2026-08-05T23:55:45.142963+00:00",
+  "sources": [
+    {
+      "url": "https://kabutan.jp/news/?b=k202606180003",
+      "type": "news",
+      "title": "フジクラ【5803】、今期経常を45％上方修正・最高益予想を上乗せ"
+    },
+    {
+      "url": "https://www.diamond.co.jp/zai/articles/-/693",
+      "type": "news",
+      "title": "フジクラが業績予想の上方修正を発表！ 2027年3月期の営業利益を前回予想比46.9％増に修正"
+    }
+  ],
+  "source_via": "claude_cli_websearch",
+  "analyst_consensus": {
+    "n_analysts": 11,
+    "recommendation": "buy",
+    "forward_eps": 302.84,
+    "trailing_eps": 94.87,
+    "eps_growth_pct": 219.2,
+    "forward_pe": 16.75,
+    "trailing_pe": 53.47,
+    "target_mean": 7174.55,
+    "target_high": 9300.0,
+    "target_low": 4500.0,
+    "target_upside_pct": 41.4,
+    "revenue_growth_pct": 22.0,
+    "earnings_growth_pct": 41.2,
+    "next_earnings": "2026-08-07",
+    "source": "yfinance analyst aggregation"
+  },
+  "_meta": {
+    "cached_at": "2026-08-06T08:56:37.087795",
+    "age_sec": 8492,
+    "stale": false,
+    "refreshing": false
+  }
+}
