@@ -4,7 +4,7 @@
   "anomaly": {
     "detected": true,
     "reason": "8/6 14:45 7.57× 均值 · 主动卖 ¥1.81億 (@¥3460.0)",
-    "score": 0.8899999999999999,
+    "score": 0.8999999999999999,
     "peak_bars": [
       {
         "time": "14:45",
@@ -18,7 +18,7 @@
         "date": "2026-08-06"
       }
     ],
-    "day_ratio": 1.69,
+    "day_ratio": 1.7,
     "trading_date": "2026-08-06",
     "date_short": "8/6",
     "net_bias": "sell",
@@ -43,7 +43,7 @@
             "date": "2026-08-06"
           }
         ],
-        "day_ratio": 1.69,
+        "day_ratio": 1.7,
         "day_chg_pct": 2.21,
         "day_open": 3400.0,
         "day_close": 3475.0,
@@ -127,7 +127,7 @@
             "date": "2026-08-04"
           }
         ],
-        "day_ratio": 0.99,
+        "day_ratio": 0.98,
         "day_chg_pct": 1.97,
         "day_open": 3050.0,
         "day_close": 3110.0,
@@ -189,7 +189,7 @@
             "date": "2026-07-31"
           }
         ],
-        "day_ratio": 0.9,
+        "day_ratio": 0.89,
         "day_chg_pct": 3.62,
         "day_open": 2987.0,
         "day_close": 3095.0,
@@ -254,8 +254,8 @@
   "asof": "2026-08-06 15:20 JST",
   "source": "yfinance_intraday",
   "_meta": {
-    "cached_at": "2026-08-06T15:41:46.147158",
-    "age_sec": 101,
+    "cached_at": "2026-08-06T17:31:24.439385",
+    "age_sec": 194,
     "stale": false,
     "refreshing": false
   }

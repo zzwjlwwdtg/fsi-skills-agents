@@ -4,9 +4,9 @@
   "anomaly": {
     "detected": false,
     "reason": "",
-    "score": 0.030000000000000027,
+    "score": 0.040000000000000036,
     "peak_bars": [],
-    "day_ratio": 1.03,
+    "day_ratio": 1.04,
     "trading_date": "2026-08-06",
     "date_short": "8/6",
     "net_bias": "neutral",
@@ -19,19 +19,19 @@
         "trading_date": "2026-08-06",
         "date_short": "8/6",
         "peak_bars": [],
-        "day_ratio": 1.03,
-        "day_chg_pct": -1.25,
+        "day_ratio": 1.04,
+        "day_chg_pct": -1.14,
         "day_open": 4385.0,
-        "day_close": 4330.0,
+        "day_close": 4335.0,
         "net_bias": "neutral",
         "buy_shares": 0,
         "sell_shares": 0,
         "buy_value_oku": 0,
         "sell_value_oku": 0,
         "full_bias": "sell",
-        "full_up_shares": 350100,
+        "full_up_shares": 363900,
         "full_down_shares": 565000,
-        "full_up_value_oku": 15.22,
+        "full_up_value_oku": 15.82,
         "full_down_value_oku": 24.47
       },
       {
@@ -146,8 +146,8 @@
   "asof": "2026-08-06 15:20 JST",
   "source": "yfinance_intraday",
   "_meta": {
-    "cached_at": "2026-08-06T15:41:46.493334",
-    "age_sec": 101,
+    "cached_at": "2026-08-06T17:31:24.518523",
+    "age_sec": 194,
     "stale": false,
     "refreshing": false
   }

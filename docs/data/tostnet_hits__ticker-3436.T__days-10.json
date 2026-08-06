@@ -1,11 +1,11 @@
 {
-  "ticker": "8306.T",
+  "ticker": "3436.T",
   "days": 10,
   "hits": [],
   "count": 0,
   "_meta": {
-    "cached_at": "2026-08-06T12:29:25.469074",
-    "age_sec": 18313,
+    "cached_at": "2026-08-06T17:24:31.656980",
+    "age_sec": 607,
     "stale": false,
     "refreshing": false
   }

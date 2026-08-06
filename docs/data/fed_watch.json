@@ -1,15 +1,13 @@
 {
   "current_target_range": "3.50-3.75",
-  "as_of_date": "2026-08-05",
   "meetings": [
     {
       "date": "2026-09-16",
       "days_until": 41,
       "probabilities": {
         "hike_25": 62,
-        "hold": 36,
-        "hike_50": 1,
-        "cut_25": 1
+        "hold": 35,
+        "hike_50": 3
       },
       "most_likely": "hike_25",
       "consensus_direction": "hawkish_lean"
@@ -18,19 +16,21 @@
       "date": "2026-10-28",
       "days_until": 83,
       "probabilities": {
-        "hike_25": 22,
-        "hold": 75,
-        "cut_25": 3
+        "hike_25": 38,
+        "hold": 50,
+        "hike_50": 10,
+        "cut_25": 2
       },
       "most_likely": "hold",
-      "consensus_direction": "mild_hawkish_lean"
+      "consensus_direction": "hawkish_lean"
     },
     {
       "date": "2026-12-16",
       "days_until": 132,
       "probabilities": {
-        "hike_25": 25,
-        "hold": 68,
+        "hike_25": 30,
+        "hold": 55,
+        "hike_50": 8,
         "cut_25": 7
       },
       "most_likely": "hold",
@@ -40,42 +40,46 @@
       "date": "2027-01-27",
       "days_until": 174,
       "probabilities": {
-        "hike_25": 15,
-        "hold": 73,
-        "cut_25": 12
+        "hike_25": 22,
+        "hold": 55,
+        "cut_25": 20,
+        "hike_50": 3
       },
       "most_likely": "hold",
       "consensus_direction": "neutral"
     }
   ],
-  "implied_terminal_rate": "3.75-4.00",
-  "implied_terminal_date": "2026-Q4/2027-Q1",
-  "commentary": "市场定价 2026 年内约 1 次加息（+25bps，9 月概率最高 ~62%），路径预期年底逼近 4.00%，2027 上半年维持不变；此为通胀反弹（能源驱动）下 hawkish 再定价，与 6 月点阵图明显不同。",
+  "implied_terminal_rate": "4.00-4.25",
+  "implied_terminal_date": "2026-Q4",
+  "commentary": "Higher-for-longer priced in: after 7/29 hold at 3.50-3.75%, futures lean ~62% toward a 25bp hike in September on sticky inflation + hot NFP, with terminal near 4.00-4.25% by year-end; first cut not priced until 2027-H1.",
   "sources": [
     {
-      "url": "https://www.cmegroup.com/markets/interest-rates/cme-fedwatch-tool.html",
-      "type": "cme_fedwatch"
-    },
-    {
       "url": "https://growbeansprout.com/tools/fedwatch",
-      "type": "aggregator"
+      "type": "cme_fedwatch_mirror"
     },
     {
       "url": "https://centralbank.watch/federal-reserve/",
-      "type": "aggregator"
+      "type": "cme_fedwatch_mirror"
     },
     {
-      "url": "https://rateprobability.com/fed",
-      "type": "aggregator"
+      "url": "https://www.cnbc.com/2026/07/23/fed-interest-rate-odds-oil-jobless-claims.html",
+      "type": "news"
+    },
+    {
+      "url": "https://streetstats.finance/rates/fedfunds",
+      "type": "futures_curve"
+    },
+    {
+      "url": "https://www.cmegroup.com/markets/interest-rates/cme-fedwatch-tool.html",
+      "type": "cme_fedwatch"
     }
   ],
   "confidence": "medium",
-  "notes": "9 月 FOMC 加息 25bp 概率 61.9% (CME FedWatch 官方，2026-08-04 快照) 为硬数据；10/12 月及 2027-01 概率为基于综合利率路径（Oct ~3.8%、年底 ~4.0%、mid-2027 near 4%）的推断估计，非 CME 官方逐次读数。WebFetch 未授权，未能直接抓 cmegroup.com 原始数值——建议下次授予权限或改用官方 FedWatch API 获取精确逐次概率。",
   "source_via": "claude_cli_websearch",
-  "fetched_at": "2026-08-06T05:43:05+00:00",
+  "fetched_at": "2026-08-06T07:45:10+00:00",
   "_meta": {
-    "cached_at": "2026-08-06T14:43:05.558460",
-    "age_sec": 3622,
+    "cached_at": "2026-08-06T16:45:10.048475",
+    "age_sec": 2968,
     "stale": false,
     "refreshing": false
   }

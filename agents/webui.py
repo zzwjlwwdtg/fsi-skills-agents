@@ -1215,6 +1215,7 @@ TICKER_TO_FUNDAMENTAL_STOCK = {
     "TEKSCEND": "429A.T",   # TEKSCEND PHOTOMASK — 光罩制造，TSMC 关键工艺供应
     "ARE":      "5857.T",   # ARE Holdings (旧 Asahi Holdings) — 贵金属回收（金/银/铂），半导体/urban mining 概念
     "MUFG":     "8306.T",   # 三菱 UFJ 金融集团 — 日本最大银行，日本加息受益股
+    "SUMCO":    "3436.T",   # SUMCO 胜高 — 硅晶圆全球 #2（信越化学后），300mm wafer 供 TSMC/Samsung/Intel，AI 芯片上游
 }
 
 # 日股关注列表（不参与 orchestrator scan，只在 dashboard 单独展示）
@@ -1235,6 +1236,8 @@ JP_WATCH_LIST = [
      "thesis": "日本最大银行（总资产约 400+ 兆日元）· 日元利率上升带来 NII 增益 · 全球业务分散",
      "fundamental_profile": "bank", "show_supply_chain": False,
      "thesis_fit": _jp_thesis_fit("MUFG")},
+    {"ticker": "SUMCO",    "symbol": "3436.T", "name_zh": "胜高",     "name_en": "SUMCO",
+     "thesis": "硅晶圆全球 #2（信越化学后）· 300mm wafer 供 TSMC/Samsung/Intel · AI 芯片上游原材料 · 12 吋产能瓶颈受益"},
 ]
 
 
