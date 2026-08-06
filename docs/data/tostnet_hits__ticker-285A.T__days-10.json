@@ -49,20 +49,12 @@
       "volume": 78700,
       "value_oku": 50.6,
       "sheet": "Tost50億円"
-    },
-    {
-      "date": "20260721",
-      "trade_time": "15:56",
-      "price": 61060.0,
-      "volume": 300000,
-      "value_oku": 183.2,
-      "sheet": "Tost50億円"
     }
   ],
-  "count": 7,
+  "count": 6,
   "_meta": {
-    "cached_at": "2026-08-06T06:29:16.357468",
-    "age_sec": 18064,
+    "cached_at": "2026-08-06T12:29:25.469074",
+    "age_sec": 8307,
     "stale": false,
     "refreshing": false
   }

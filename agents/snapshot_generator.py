@@ -46,6 +46,8 @@ GLOBAL_ENDPOINTS = [
     "/api/oil",
     "/api/banners",       # trump + gold sentiment banners (公开衍生信号)
     "/api/hmm",           # market regime detection (bull_low_vol/crisis/…) 公开市场信号
+    "/api/bond_monitor",  # 美债 yields + TIPS + GLD 20d correlation + anomaly
+    "/api/fed_watch",     # CME FedWatch 加息预期 (Claude+WebFetch 抓)
     "/api/ai_analysis",
     "/api/ticker_options",
     "/api/ticker_ai",

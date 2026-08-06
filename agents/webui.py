@@ -2027,6 +2027,36 @@ def api_tostnet_hits(ticker: str, days: int = 10) -> dict:
     return _cached(f"tostnet_{tk}_{days}", ttl_sec=6*3600, compute_fn=_compute)
 
 
+def api_bond_monitor() -> dict:
+    """美债 yields + TIPS 实际利率 + GLD 20d 相关性 + 异常波动。缓存 15 min。"""
+    def _compute():
+        try:
+            from bond_monitor import get_bond_monitor
+            return get_bond_monitor()
+        except Exception as e:
+            return {"error": str(e)[:200]}
+    return _cached("bond_monitor", ttl_sec=900, compute_fn=_compute)
+
+
+def api_fed_watch() -> dict:
+    """CME FedWatch 加息/降息预期。Claude CLI + WebFetch，缓存 2h。首次异步。"""
+    placeholder = {
+        "commentary": "Fed rate expectations 正在联网查询（Claude + WebFetch，30-90s）…",
+        "meetings": [],
+        "confidence": "computing",
+    }
+    def _compute():
+        try:
+            from fed_watch import get_fed_watch
+            return get_fed_watch()
+        except Exception as e:
+            return {"error": str(e)[:200]}
+    return _cached("fed_watch", ttl_sec=2 * 3600,
+                   compute_fn=_compute,
+                   first_call_async=True,
+                   first_call_placeholder=placeholder)
+
+
 def api_capital_flow(ticker: str) -> dict:
     """大单/散户资金流向。US → moomoo super/big/mid/small；JP → yfinance 5min 量能异常代理。
 
@@ -2985,6 +3015,10 @@ class Handler(BaseHTTPRequestHandler):
                 tk = qs.get("ticker", [""])[0]
                 d  = int(qs.get("days", ["10"])[0])
                 self._json(api_tostnet_hits(tk, days=d))
+            elif path == "/api/bond_monitor":
+                self._json(api_bond_monitor())
+            elif path == "/api/fed_watch":
+                self._json(api_fed_watch())
             else:
                 self.send_error(404, f"route not found: {path}")
         except Exception as e:

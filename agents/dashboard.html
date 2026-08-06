@@ -213,6 +213,14 @@
   </div>
 </div>
 
+<!-- Row 1.7: 美债 & 加息预期 & FRED 图表 -->
+<div class="grid">
+  <div class="card">
+    <h2 title="美债收益率 + TIPS 实际利率 + GLD 20d 相关性 + FRED 图表 + CME FedWatch 加息预期">🏛 美债 & Fed 政策路径 <small id="bond-freshness">Bond & Rate Watch</small></h2>
+    <div id="bond-monitor"></div>
+  </div>
+</div>
+
 <!-- Row 2: 2 banner 情绪卡 -->
 <div class="grid g3">
   <div class="card">
@@ -1072,6 +1080,169 @@ async function loadBanners() {
   loadOil();
 }
 
+// 美债 + Fed policy path 卡渲染
+async function loadBondMonitor() {
+  const el = document.getElementById('bond-monitor');
+  if (!el) return;
+  const b = await fetchJson('/api/bond_monitor');
+  const bondFresh = document.getElementById('bond-freshness');
+  if (bondFresh) bondFresh.innerHTML = 'Bond & Rate Watch ' + metaHint(b && b._meta);
+  if (!b || b.error) { el.innerHTML = `<small style="color:var(--muted)">美债数据不可用: ${(b && b.error) || '-'}</small>`; return; }
+  const y = b.yields || {};
+  const spreads = b.spreads || {};
+  const corr = b.gld_correlation || {};
+
+  const fmtBps = (v) => v == null ? '-' : (v >= 0 ? '+' : '') + v.toFixed(1) + 'bps';
+  const bpsClass = (v) => v == null ? 'muted' : (v > 5 ? 'bad' : (v < -5 ? 'ok' : 'muted'));   // yield UP = bond DOWN, 用红
+  const zBadge = (z) => {
+    if (z == null) return '';
+    const abs = Math.abs(z);
+    if (abs >= 2) return `<span class="badge ${abs >= 3 ? 'bad' : 'warn'}" style="font-size:9px" title="${z}σ 单日变化">${z >= 0 ? '+' : ''}${z}σ</span>`;
+    return `<span style="color:var(--muted); font-size:9px">${z >= 0 ? '+' : ''}${z}σ</span>`;
+  };
+
+  // Yield 表：一行一个 tenor
+  const yieldRows = [
+    ['3m',       '3M 短端'],
+    ['2y',       '2Y 前端'],
+    ['5y',       '5Y 中段'],
+    ['10y',      '10Y 名义'],
+    ['30y',      '30Y 长端'],
+    ['tips_10y', '🎯 10Y TIPS 实际'],
+  ].filter(([k]) => y[k] && !y[k].error).map(([k, label]) => {
+    const m = y[k];
+    return `<div style="display:grid; grid-template-columns:1.3fr 0.7fr 0.6fr 0.6fr 0.4fr; gap:6px; padding:2px 4px; font-size:10.5px; border-bottom:1px solid rgba(255,255,255,0.03)">
+      <span title="${m.source} · ${m.asof}">${label}</span>
+      <span style="text-align:right"><b>${m.value}%</b></span>
+      <span class="${bpsClass(m.chg_1d_bps)}" title="1 日变化" style="text-align:right">${fmtBps(m.chg_1d_bps)}</span>
+      <span class="${bpsClass(m.chg_20d_bps)}" title="20 日变化" style="text-align:right">${fmtBps(m.chg_20d_bps)}</span>
+      <span style="text-align:right">${zBadge(m.z_score_20d)}</span>
+    </div>`;
+  }).join('');
+
+  // 2s10s 利差 + regime
+  const sp = spreads['2s10s'] || {};
+  const spRegimeCls = { '深度倒挂':'bad', '轻微倒挂':'bad', '曲线平坦':'warn', '正常':'muted', '陡峭化':'ok' }[sp.regime] || 'muted';
+  const spreadHtml = sp.value != null ? `
+    <div style="font-size:10.5px; margin-top:5px; padding:4px 6px; background:rgba(255,255,255,0.02); border-radius:2px">
+      <b>2s10s 利差</b>: <b>${(sp.value * 100).toFixed(0)} bps</b>
+      <span class="badge ${spRegimeCls}" style="font-size:9px">${sp.regime}</span>
+      <span style="color:var(--muted); font-size:9px">· 20d 变化 ${fmtBps(sp.chg_20d_bps)}</span>
+    </div>` : '';
+
+  // GLD correlation
+  const corrRegimeCls = { 'normal_hedge':'ok', 'weak_hedge':'warn', 'aligned':'warn', 'broken':'bad', 'unknown':'muted' }[corr.regime] || 'muted';
+  const corrHtml = corr.regime ? `
+    <div style="font-size:10.5px; margin-top:5px; padding:4px 6px; background:rgba(255,201,54,0.05); border-left:2px solid #d29922; border-radius:2px">
+      <b>🥇 GLD hedge 状态</b>: <span class="badge ${corrRegimeCls}" style="font-size:9px">${corr.regime}</span>
+      <div style="color:var(--muted); font-size:10px; margin-top:2px">${corr.reason || ''}</div>
+      <div style="display:flex; gap:12px; margin-top:3px; font-size:10px">
+        <span>vs TIPS 实际利率: <b>${corr.vs_tips_10y != null ? corr.vs_tips_10y : '-'}</b> <small class="muted">(-1 = 完美对冲)</small></span>
+        <span>vs 10Y 名义: <b>${corr.vs_10y != null ? corr.vs_10y : '-'}</b></span>
+      </div>
+    </div>` : '';
+
+  // Anomaly alerts
+  const anomHtml = (b.anomalies || []).length ? `
+    <div style="font-size:10.5px; margin-top:5px">
+      ${(b.anomalies || []).map(a => `<div style="padding:3px 6px; margin-bottom:2px; background:${a.severity === 'high' ? 'rgba(248,81,73,0.10)' : 'rgba(210,153,34,0.08)'}; border-left:2px solid ${a.severity === 'high' ? 'var(--bad)' : 'var(--warn)'}; border-radius:2px">
+        ⚡ <b class="${a.severity === 'high' ? 'bad' : 'warn'}">${a.reason}</b>
+      </div>`).join('')}
+    </div>` : '';
+
+  // FRED PNG charts (直接嵌入官方图，每日自动更新，零维护)
+  const fredCharts = `
+    <details style="margin-top:6px; padding-top:5px; border-top:1px dashed var(--border)">
+      <summary style="cursor:pointer; list-style:none; font-size:10px; color:var(--muted)">📊 <b style="color:#58a6ff">FRED 官方走势图</b> <small>▼ 展开加载 · 每日自动更新</small></summary>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:5px">
+        <div>
+          <div style="font-size:9px; color:var(--muted); margin-bottom:2px">10Y 名义收益率 (DGS10)</div>
+          <img src="https://fred.stlouisfed.org/graph/fredgraph.png?id=DGS10&cosd=2024-01-01&width=400&height=200" style="width:100%; border-radius:4px" loading="lazy" alt="10Y yield"/>
+        </div>
+        <div>
+          <div style="font-size:9px; color:var(--muted); margin-bottom:2px">10Y TIPS 实际利率 (DFII10) — 黄金核心驱动</div>
+          <img src="https://fred.stlouisfed.org/graph/fredgraph.png?id=DFII10&cosd=2024-01-01&width=400&height=200" style="width:100%; border-radius:4px" loading="lazy" alt="TIPS real yield"/>
+        </div>
+        <div>
+          <div style="font-size:9px; color:var(--muted); margin-bottom:2px">2s10s 利差 (T10Y2Y) — 衰退指标</div>
+          <img src="https://fred.stlouisfed.org/graph/fredgraph.png?id=T10Y2Y&cosd=2024-01-01&width=400&height=200" style="width:100%; border-radius:4px" loading="lazy" alt="2s10s spread"/>
+        </div>
+        <div>
+          <div style="font-size:9px; color:var(--muted); margin-bottom:2px">Fed 政策利率上限 (DFEDTARU)</div>
+          <img src="https://fred.stlouisfed.org/graph/fredgraph.png?id=DFEDTARU&cosd=2024-01-01&width=400&height=200" style="width:100%; border-radius:4px" loading="lazy" alt="Fed policy rate"/>
+        </div>
+      </div>
+    </details>`;
+
+  // Fed rate expectations (async 拉，先放 placeholder，稍后 loadFedWatch 填)
+  const fedHtml = `
+    <div style="margin-top:6px; padding-top:5px; border-top:1px dashed var(--border)">
+      <div style="font-size:10.5px; color:var(--muted)"><b style="color:#58a6ff">📅 CME FedWatch 加息/降息预期</b> <small>(Claude+Web, 缓存 2h)</small></div>
+      <div id="fed-watch-body" style="margin-top:3px; font-size:10px; color:var(--muted)">🔄 加载中...</div>
+    </div>`;
+
+  el.innerHTML = `
+    <div style="font-size:11px; color:var(--muted); margin-bottom:4px">
+      收益率快照 · <span style="color:var(--muted); font-size:9px">asof ${b.asof || '-'}</span>
+    </div>
+    <div style="display:grid; grid-template-columns:1.3fr 0.7fr 0.6fr 0.6fr 0.4fr; gap:6px; padding:2px 4px; font-size:9px; color:var(--muted); border-bottom:1px solid var(--border)">
+      <span>Tenor</span><span style="text-align:right">当前</span><span style="text-align:right">1d</span><span style="text-align:right">20d</span><span style="text-align:right">z</span>
+    </div>
+    ${yieldRows}
+    ${spreadHtml}
+    ${corrHtml}
+    ${anomHtml}
+    ${fedHtml}
+    ${fredCharts}
+  `;
+
+  // 异步拉 Fed 预期
+  loadFedWatch();
+}
+
+async function loadFedWatch() {
+  const el = document.getElementById('fed-watch-body');
+  if (!el) return;
+  const f = await fetchJson('/api/fed_watch');
+  if (!f || f.error) { el.innerHTML = `<span style="color:var(--warn)">⚠ ${(f && f.error) || '拉取失败'}</span>`; return; }
+  if (f.confidence === 'computing') {
+    el.innerHTML = `<span style="color:var(--muted)">${f.commentary || '首次查询中，请刷新'}</span>`;
+    return;
+  }
+  const meetings = f.meetings || [];
+  if (!meetings.length) {
+    el.innerHTML = `<span style="color:var(--muted)">${f.commentary || '数据不足'}</span>`;
+    return;
+  }
+  const ACT_ZH = { hold: '维持', cut_25: '降 25', cut_50: '降 50', hike_25: '加 25', hike_50: '加 50' };
+  const ACT_CLS = { hold: 'muted', cut_25: 'ok', cut_50: 'ok', hike_25: 'bad', hike_50: 'bad' };
+  const meetingRows = meetings.slice(0, 4).map(m => {
+    const probs = m.probabilities || {};
+    const parts = Object.entries(probs)
+      .sort((a, b) => b[1] - a[1])
+      .filter(([_, v]) => v >= 1)
+      .map(([k, v]) => `<span class="${ACT_CLS[k] || 'muted'}">${ACT_ZH[k] || k} ${v}%</span>`)
+      .join(' · ');
+    return `<div style="display:grid; grid-template-columns:auto 1fr; gap:8px; padding:2px 0; font-size:10px">
+      <span><b>${m.date}</b>${m.days_until != null ? ` <small class="muted">T-${m.days_until}</small>` : ''}</span>
+      <span>${parts}</span>
+    </div>`;
+  }).join('');
+  const terminalHtml = f.implied_terminal_rate
+    ? `<div style="font-size:10px; margin-top:3px; color:var(--muted)">隐含终点利率: <b class="ok">${f.implied_terminal_rate}%</b> ${f.implied_terminal_date ? `by ${f.implied_terminal_date}` : ''}</div>`
+    : '';
+  const commentaryHtml = f.commentary
+    ? `<div style="font-size:10px; margin-top:3px; padding:3px 6px; background:rgba(88,166,255,0.05); border-radius:2px; color:var(--fg)"><b>💡 ${f.commentary}</b></div>`
+    : '';
+  el.innerHTML = `
+    <div style="font-size:10px; color:var(--muted); margin-bottom:3px">当前利率区间: <b class="ok">${f.current_target_range || '-'}%</b></div>
+    ${meetingRows}
+    ${terminalHtml}
+    ${commentaryHtml}
+    ${f.source_via ? `<div style="font-size:9px; color:var(--muted); margin-top:3px">🤖 ${f.source_via}</div>` : ''}
+  `;
+}
+
 async function loadOil() {
   const o = await fetchJson('/api/oil');
   const oilFresh = $('oil-freshness');
@@ -1797,7 +1968,8 @@ async function loadAll() {
   const promises = [
     loadHealth(), loadSectors(), loadBanners(),
     loadSignals(), loadAI(), loadEvents(), loadJPWatch(),
-    loadHmm(),   // 市场大周期是公开信号（非 owner-only）
+    loadHmm(),          // 市场大周期是公开信号（非 owner-only）
+    loadBondMonitor(),  // 美债 + Fed 政策路径（公开衍生信号）
   ];
   // Owner-only endpoints skip in static mode
   if (!window.STATIC_SNAPSHOT_MODE) {
