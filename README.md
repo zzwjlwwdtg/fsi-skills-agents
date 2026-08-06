@@ -11,6 +11,13 @@ Targets leveraged and single-name US equities (**TQQQ / SOXL / DRAM / MULL / GLD
 
 ## Dashboard Preview
 
+**🌐 Live public snapshot (read-only): https://zzwjlwwdtg.github.io/quant-trading-framework/**
+
+Auto-refreshed every 30 min from local webui via `agents/snapshot_generator.py`.
+Owner-only panels (positions / NAV / trade log) are stripped; all other cards
+(signals, capital flow, options walls, JP guidance, Ichimoku, ToSTNeT verification)
+are visible. Not investment advice — educational demo of the framework.
+
 WebUI (`webui.bat` → http://127.0.0.1:8080) — zero-dependency `http.server` + single-page dashboard covering NAV, sector regimes, Trump sentiment, gold/oil macro, event calendar, and per-ticker cards with signals + option walls + Claude analysis.
 
 ![Dashboard overview](docs/dashboard-full.png)

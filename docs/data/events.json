@@ -1,0 +1,72 @@
+{
+  "events": [
+    {
+      "date": "2026-08-07",
+      "days": 1,
+      "event": "NFP Release",
+      "impact": "high"
+    },
+    {
+      "date": "2026-08-12",
+      "days": 6,
+      "event": "CPI Release",
+      "impact": "high"
+    },
+    {
+      "date": "2026-08-13",
+      "days": 7,
+      "event": "PPI Release",
+      "impact": "high"
+    },
+    {
+      "date": "2026-08-14",
+      "days": 8,
+      "event": "Retail Sales",
+      "impact": "high"
+    },
+    {
+      "date": "2026-08-26",
+      "days": 20,
+      "event": "NVDA Earnings (est)",
+      "impact": "high"
+    },
+    {
+      "date": "2026-08-29",
+      "days": 23,
+      "event": "PCE Release (核心 PCE >0.25% m/m = bond thesis invalidate)",
+      "impact": "critical"
+    },
+    {
+      "date": "2026-09-04",
+      "days": 29,
+      "event": "NFP Release",
+      "impact": "high"
+    },
+    {
+      "date": "2026-09-09",
+      "days": 34,
+      "event": "CPI Release",
+      "impact": "high"
+    },
+    {
+      "date": "2026-09-10",
+      "days": 35,
+      "event": "PPI Release",
+      "impact": "high"
+    },
+    {
+      "date": "2026-09-15",
+      "days": 40,
+      "event": "Retail Sales",
+      "impact": "high"
+    },
+    {
+      "date": "2026-09-15",
+      "days": 40,
+      "event": "FOMC Decision",
+      "impact": "high"
+    }
+  ],
+  "today": "2026-08-06",
+  "days_ahead": 45
+}

@@ -1,0 +1,61 @@
+{
+  "ticker": "429A.T",
+  "source_stock": "429A.T",
+  "period": "year",
+  "years": [
+    "2023",
+    "2024",
+    "2025",
+    "2026"
+  ],
+  "croic": [
+    0.0,
+    48.19,
+    13.08,
+    -3.64
+  ],
+  "financial_debt": [
+    0.0,
+    0.0,
+    798.0,
+    1460.0
+  ],
+  "ccc": [
+    14.1,
+    9.5,
+    13.0,
+    31.6
+  ],
+  "piotroski": [
+    null,
+    4,
+    6,
+    6
+  ],
+  "piotroski_max": 9,
+  "cf_available": true,
+  "is_jp": true,
+  "pbr": 2.42,
+  "per": 16.53,
+  "roe_pct": 17.15,
+  "div_yield_pct": 1.62,
+  "equity_ratio": [
+    70.0,
+    72.5,
+    69.4,
+    75.6
+  ],
+  "latest": {
+    "croic": -3.64,
+    "fin_debt": 1460.0,
+    "ccc": 31.6,
+    "piotroski": 6,
+    "equity_ratio": 75.6
+  },
+  "_meta": {
+    "cached_at": "2026-08-06T11:05:24.531100",
+    "age_sec": 0,
+    "stale": false,
+    "refreshing": false
+  }
+}

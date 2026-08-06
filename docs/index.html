@@ -102,8 +102,16 @@
     color: var(--muted); font-size: 11px; border-top: 1px solid var(--border); }
   body.static-snapshot .static-footer { display: block; }
 </style>
+<script>
+  window.STATIC_SNAPSHOT_MODE = true;
+  window.SNAPSHOT_META = {"generated_at": "2026-08-06T11:06:25", "endpoints_ok": 80, "endpoints_fail": 0};
+  document.addEventListener('DOMContentLoaded', () => {
+    const el = document.getElementById('snapshot-ts');
+    if (el && window.SNAPSHOT_META) el.textContent = window.SNAPSHOT_META.generated_at;
+  });
+</script>
 </head>
-<body>
+<body class="static-snapshot">
 
 <!-- Static snapshot mode banner (仅 GitHub Pages 显示) -->
 <div class="static-banner">

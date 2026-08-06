@@ -1,0 +1,24 @@
+{
+  "ticker": "AMAT",
+  "flow": {
+    "super_net": -10647425.1,
+    "big_net": -29221922.577000003,
+    "mid_net": -7739611.325999998,
+    "small_net": -43540967.37900001,
+    "total_net": -91149926.38199998,
+    "smart_pct": -0.12343373848109868
+  },
+  "anomaly": {
+    "detected": false,
+    "reason": "",
+    "score": 0.0
+  },
+  "asof": "2026-08-05 19:59:38",
+  "source": "moomoo",
+  "_meta": {
+    "cached_at": "2026-08-06T11:02:42.452291",
+    "age_sec": 155,
+    "stale": false,
+    "refreshing": false
+  }
+}

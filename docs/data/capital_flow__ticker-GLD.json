@@ -1,0 +1,24 @@
+{
+  "ticker": "GLD",
+  "flow": {
+    "super_net": 57404079.69399999,
+    "big_net": 35052217.393999994,
+    "mid_net": 1863893.4029999971,
+    "small_net": -34086602.6279999,
+    "total_net": 60233587.863000154,
+    "smart_pct": 0.04070133624867253
+  },
+  "anomaly": {
+    "detected": false,
+    "reason": "",
+    "score": 0.0
+  },
+  "asof": "2026-08-05 19:59:37",
+  "source": "moomoo",
+  "_meta": {
+    "cached_at": "2026-08-06T11:02:42.469339",
+    "age_sec": 155,
+    "stale": false,
+    "refreshing": false
+  }
+}

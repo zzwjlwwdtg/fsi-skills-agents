@@ -1,0 +1,24 @@
+{
+  "ticker": "GOOGL",
+  "flow": {
+    "super_net": -21345776.007999986,
+    "big_net": -106589403.412,
+    "mid_net": 57663126.72199994,
+    "small_net": 9372932.807999969,
+    "total_net": -60899119.89000034,
+    "smart_pct": -0.028987086627699908
+  },
+  "anomaly": {
+    "detected": false,
+    "reason": "",
+    "score": 0.0
+  },
+  "asof": "2026-08-05 19:59:57",
+  "source": "moomoo",
+  "_meta": {
+    "cached_at": "2026-08-06T11:02:42.451786",
+    "age_sec": 155,
+    "stale": false,
+    "refreshing": false
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "ticker": "285A.T",
+  "days": 10,
+  "hits": [
+    {
+      "date": "20260731",
+      "trade_time": "15:33",
+      "price": 47500.0,
+      "volume": 200000,
+      "value_oku": 95.0,
+      "sheet": "Tost50億円"
+    },
+    {
+      "date": "20260731",
+      "trade_time": "15:34",
+      "price": 46510.0,
+      "volume": 565000,
+      "value_oku": 262.8,
+      "sheet": "Tost50億円"
+    },
+    {
+      "date": "20260731",
+      "trade_time": "15:55",
+      "price": 48476.25,
+      "volume": 142300,
+      "value_oku": 69.0,
+      "sheet": "Tost50億円"
+    },
+    {
+      "date": "20260724",
+      "trade_time": "15:43",
+      "price": 56010.0,
+      "volume": 92900,
+      "value_oku": 52.0,
+      "sheet": "Tost50億円"
+    },
+    {
+      "date": "20260724",
+      "trade_time": "15:43",
+      "price": 56010.0,
+      "volume": 213600,
+      "value_oku": 119.6,
+      "sheet": "Tost50億円"
+    },
+    {
+      "date": "20260722",
+      "trade_time": "16:26",
+      "price": 64270.0,
+      "volume": 78700,
+      "value_oku": 50.6,
+      "sheet": "Tost50億円"
+    },
+    {
+      "date": "20260721",
+      "trade_time": "15:56",
+      "price": 61060.0,
+      "volume": 300000,
+      "value_oku": 183.2,
+      "sheet": "Tost50億円"
+    }
+  ],
+  "count": 7,
+  "_meta": {
+    "cached_at": "2026-08-06T06:29:16.357468",
+    "age_sec": 16629,
+    "stale": false,
+    "refreshing": false
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "ticker": "429A.T",
+  "days": 10,
+  "hits": [],
+  "count": 0,
+  "_meta": {
+    "cached_at": "2026-08-06T06:29:16.376363",
+    "age_sec": 16629,
+    "stale": false,
+    "refreshing": false
+  }
+}

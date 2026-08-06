@@ -1,0 +1,35 @@
+{
+  "exists": true,
+  "tickers": {
+    "AAPL": "- 综合: 信号弱空 conf=1 但期权 C/P=1.97 + gamma_up 挤压于 $307.5 call wall（距spot 0.07%），期权强多背离；基本面 CROIC 72% + Piotroski 8/9 极强，借款 $986亿需留意\n- 攻防: 攻位 $307.5 call wall 一步之遥（0.07%），突破即加速；防位 $300 put wall 弱（2.37%），下方无实质护盘\n- 警示: Put/Call OI=0.2 严重失衡叠加 RSI=35 超卖但空信号占优，出现技术看空 vs 期权看多 divergence，观望不追",
+    "AMAT": "- 综合: 信号弱空 conf=1 + C/P=0.96 均衡 + max_pain_gravity 中性挤压，无方向共振；基本面 CROIC 从 48%→28.88% 连续两年下滑，Piotroski 6/9 中性偏弱\n- 攻防: 攻位 $570 call wall 远（5.48%）不易触及；防位 $500 put wall 中等强度距 7.47%，中期缓冲带清晰但短线无支撑\n- 警示: Put/Call OI=0.3 失衡 + CROIC 明显退化，趋势性走弱，不建议加仓",
+    "DRAM": "- 综合: 信号弱空 conf=1 但 C/P=2.07 看多偏热，$50 put wall OI=59534 极重（真实机构对冲底仓），非空头押跌；基本面 CROIC 2.98% 弱、借款 $115亿高，Piotroski 6/9 中性\n- 攻防: 攻位 $60 call wall 弱（9.67%）无磁吸；防位 $50 put wall 极强（8.61%），下方护盘扎实\n- 警示: Put/Call OI=7.4 极度失衡但属机构护底而非看空，持仓可放心；短线技术弱，不追高",
+    "GOOGL": "- 综合: 信号持仓观望 conf=4 + C/P=1.95 偏多，$390 call/$375 put 双 wall 强 + 无挤压 → 窄幅震荡区间成型；基本面 CROIC 从 24%→17% 明显退化（触发 Q3 thesis invalidation 观察），Piotroski 6/9\n- 攻防: 攻位 $390 call wall（2.35%）为磁吸上沿；防位 $375 put wall（1.58%）近且强，2% 波动带内做区间高抛低吸\n- 警示: CROIC 4 年连降需盯 Q3 capex 指引，突破 $390 或跌破 $375 均视为区间失效",
+    "KLAC": "- 综合: 信号缺失但期权 C/P=5.72 + gamma_up 挤压于 $196 call wall（距spot 0.58%），期权明确看多且临界突破；基本面 CROIC 44% + Piotroski 8/9 强\n- 攻防: 攻位 $196 call wall 贴身（0.58%）突破即 gamma 加速；防位 $190 put wall 中等（2.5%），回踩有支撑\n- 警示: 信号数据缺失需补齐，仅凭期权攻位偏乐观 → 明确机会但小仓试探即可",
+    "MSFT": "- 综合: 信号持仓观望 conf=3 + C/P=0.95 均衡 + 无挤压，方向不明；基本面 CROIC 从 32%→20% 4 年连降，Piotroski 5/9 偏弱\n- 攻防: 攻位 $500 call wall 中等（2.09%）为心理关口；防位 $460 put wall 强（6.08%），中期底部但短线无护盘\n- 警示: RSI=78.7 极度超买 + CROIC 连降，Put/Call OI=3.9 大概率廉价保险而非恐慌，高位不追",
+    "MULL": "- 综合: 信号关注买入 conf=2 + C/P=3.05 + gamma_up 挤压于 $920 call wall（距spot 0.31%）→ 期权强多共振；基本面 CROIC 2.98% 弱、借款 $115亿高需警惕\n- 攻防: 攻位 $920 call wall 贴身（0.31%）突破即加速上冲；防位 $850 put wall 中等（7.32%），下方缓冲弱\n- 警示: 期权信号强但基本面差，属短线 gamma 交易机会，不宜转中长线",
+    "NBIS": "- 综合: 信号警示 conf=1（空占优）但 C/P=11.22 + put_break 挤压于 $220 put wall（距spot 1.48%）→ 极端看跌方向共振；基本面 CROIC -72.99% 极差、CCC -1880 天异常\n- 攻防: 攻位 $240 call wall 中等（7.48%）远；防位 $220 put wall 强但一旦破位 put_break 即触发下杀加速\n- 警示: 期权空信号 + 基本面崩坏 + put_break 挤压三重共振，明确高风险，避免抄底",
+    "NVDA": "- 综合: 信号减仓 conf=1 + 多3/空4 分歧 + C/P=3.17 情绪热但无挤压，攻防两 wall 均强 → 上下夹击窄幅；基本面 CROIC 从 76%→62% 首现回落，Piotroski 仅 4/9 走弱\n- 攻防: 攻位 $225 call wall 强（1.76%）压制；防位 $210 put wall 强（5.02%），$210-225 区间内震荡\n- 警示: 空信号占优 + Piotroski 4/9 + CROIC 回落，符合 Q3 avoid semi thesis，减仓方向不变",
+    "SOXL": "- 综合: 信号警示 conf=1（空占优）+ C/P=1.7 均衡 + 无挤压，方向弱；基本面借用 NVDA（CROIC 回落、Piotroski 4/9 弱）\n- 攻防: 攻位 $550 call wall 强（2.49%）；防位 $530 put wall 中等（1.24%）贴身，短线破位即加速\n- 警示: 半导体板块符合 avoid semi thesis，杠杆 ETF 不宜逆势",
+    "TQQQ": "- 综合: 信号警示 conf=1 但 QQQ 期权 C/P=2.42 + put_break 挤压于 $720 put wall（距spot 0.75%）→ 期权看多但 put wall 一线临界危险；基本面借用 NVDA 走弱\n- 攻防: 攻位 $740 call wall 强（2.01%）压制；防位 $720 put wall 中等且贴身（0.75%），破位即 put_break 加速下杀\n- 警示: put_break 挤压叠加 QQQ 关键 $720 一线，短线杠杆持仓设硬止损",
+    "TSLA": "- 综合: 信号警示 conf=1（空占优）+ C/P=2.58 情绪逆势偏多 + put_break 挤压于 $320 put wall（距spot 1.42%），空信号+put_break 方向共振向下；基本面 CROIC 8.35% 弱、Piotroski 5/9\n- 攻防: 攻位 $350 call wall 远（7.82%）反弹空间被压；防位 $320 put wall 中等贴身（1.42%），破位即触发 put_break 加速\n- 警示: RSI=26 极度超卖但 put_break 临界，divergence 明显，反弹不追、破位不接"
+  },
+  "sources": {
+    "AAPL": "live",
+    "AMAT": "live",
+    "DRAM": "live",
+    "GOOGL": "live",
+    "KLAC": "live",
+    "MSFT": "live",
+    "MULL": "live",
+    "NBIS": "live",
+    "NVDA": "live",
+    "SOXL": "live",
+    "TQQQ": "live",
+    "TSLA": "live"
+  },
+  "live_state": "cached",
+  "live_generated": "2026-08-05T19:51:37.023539+00:00",
+  "snapshot_path": "ai_analysis_snapshot_20260805_222654.md",
+  "snapshot_mtime": "2026-08-05T22:26:54.969674"
+}

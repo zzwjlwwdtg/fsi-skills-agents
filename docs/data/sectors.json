@@ -1,0 +1,59 @@
+{
+  "sectors": [
+    {
+      "key": "SPY",
+      "zh": "大盘 S&P500",
+      "linked": "参考",
+      "price": 769.79,
+      "pct_5d": 5.53,
+      "pct_20d": 3.27,
+      "dist_ma20": 2.86,
+      "trend": "up",
+      "regime": "strong",
+      "regime_zh": "强势"
+    },
+    {
+      "key": "QQQ",
+      "zh": "纳斯达克 100",
+      "linked": "TQQQ 3x",
+      "price": 717.3,
+      "pct_5d": 8.4,
+      "pct_20d": 0.82,
+      "dist_ma20": 2.34,
+      "trend": "up",
+      "regime": "neutral",
+      "regime_zh": "中性"
+    },
+    {
+      "key": "SMH",
+      "zh": "半导体 SMH",
+      "linked": "SOXL 3x / DRAM / MULL",
+      "price": 569.7,
+      "pct_5d": 12.99,
+      "pct_20d": -3.93,
+      "dist_ma20": 0.43,
+      "trend": "up",
+      "regime": "neutral",
+      "regime_zh": "中性"
+    },
+    {
+      "key": "GLD",
+      "zh": "黄金 GLD",
+      "linked": "GLD 1x",
+      "price": 389.64,
+      "pct_5d": 5.0,
+      "pct_20d": 4.06,
+      "dist_ma20": 4.4,
+      "trend": "up",
+      "regime": "strong",
+      "regime_zh": "强势"
+    }
+  ],
+  "ts": "2026-08-06T02:01:12.833446+00:00",
+  "_meta": {
+    "cached_at": "2026-08-06T11:01:12.834447",
+    "age_sec": 245,
+    "stale": false,
+    "refreshing": false
+  }
+}
