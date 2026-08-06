@@ -718,11 +718,29 @@ async function loadCapitalFlowOnDemand(ticker, containerId) {
     const anomDays  = days.filter(d => (d.peak_bars||[]).length >= 1);
     const buyDays   = days.filter(d => d.net_bias === 'buy');
     const sellDays  = days.filter(d => d.net_bias === 'sell');
+    const thr = anom.thresholds || { ratio_min: 5.0, value_oku_min: 1.0 };
     const topSummary = `<div style="font-size:10px; margin:3px 0; color:var(--fg)">
-      <b>近 ${days.length} 日</b>: ${anomDays.length} 日有 ≥3× 异动
-      · ${buyDays.length > 0 ? `<span class="ok">📈 ${buyDays.length} 日买主导</span>` : ''}
+      <b>近 ${days.length} 日</b>: ${anomDays.length} 日有大单
+      <span style="color:var(--muted); font-size:9px" title="双重门槛：5min bar 成交量 ≥${thr.ratio_min}× 同时段均值 AND 金额 ≥¥${thr.value_oku_min}億">(≥${thr.ratio_min}× & ≥¥${thr.value_oku_min}億)</span>
+      ${buyDays.length > 0 ? ` · <span class="ok">📈 ${buyDays.length} 日买主导</span>` : ''}
       ${sellDays.length > 0 ? ` · <span class="bad">📉 ${sellDays.length} 日卖主导</span>` : ''}
     </div>`;
+
+    // 大单精选：5 日 top 3 强 bar（按 ratio × 金额综合评分）—— 一眼看到本周重点
+    const highlights = anom.highlights || [];
+    const highlightsHtml = highlights.length ? `
+      <div style="font-size:10px; margin:5px 0; padding:5px 8px; background:rgba(88,166,255,0.05); border-left:2px solid #58a6ff; border-radius:2px">
+        <b style="color:#58a6ff">⭐ 5 日大单精选 (top ${highlights.length})</b>
+        <div style="display:grid; grid-template-columns:auto auto auto auto auto; gap:2px 8px; margin-top:3px; font-size:10px">
+          ${highlights.map(h => `
+            <span><b>${h.date_short} ${h.time}</b></span>
+            <span class="${h.ratio >= 10 ? 'bad' : (h.ratio >= 7 ? 'warn' : 'muted')}"><b>${h.ratio.toFixed(1)}×</b></span>
+            <span class="${h.chg_pct > 0 ? 'ok' : (h.chg_pct < 0 ? 'bad' : 'muted')}">${h.chg_pct >= 0 ? '+' : ''}${h.chg_pct}%</span>
+            <span><b>¥${h.value_oku}億</b></span>
+            <span class="${dirCls[h.direction]}">${dirIcon[h.direction]}</span>
+          `).join('')}
+        </div>
+      </div>` : '';
 
     // 每日一个小 section：最近一日展开，其余折叠
     const renderDay = (day, isTop) => {
@@ -774,7 +792,15 @@ async function loadCapitalFlowOnDemand(ticker, containerId) {
       </details>`;
     };
 
-    bodyHtml = topSummary + days.map((d, i) => renderDay(d, i === 0)).join('');
+    // 拆强/弱两组：有 anomaly OR 有强 full_bias 才单独显示 <details> 卡；其余压缩成一行
+    const strongDays = days.filter(d => (d.peak_bars||[]).length >= 1 || (d.full_bias && d.full_bias !== 'neutral') || (d.net_bias && d.net_bias !== 'neutral'));
+    const quietDays  = days.filter(d => !strongDays.includes(d));
+    const quietSummary = quietDays.length ? `
+      <div style="font-size:10px; color:var(--muted); margin-top:4px; padding:3px 6px; background:rgba(255,255,255,0.02); border-radius:2px">
+        📅 其余 ${quietDays.length} 日无大单 · 全日均衡: ${quietDays.map(d => `${d.date_short} (${d.day_chg_pct >= 0 ? '+' : ''}${d.day_chg_pct}%)`).join(' · ')}
+      </div>` : '';
+
+    bodyHtml = topSummary + highlightsHtml + strongDays.map((d, i) => renderDay(d, i === 0)).join('') + quietSummary;
     bodyHtml += `<div id="tostnet-${ticker.replace(/\./g,'_')}" style="font-size:10px; color:var(--muted); margin-top:4px; border-top:1px solid var(--border); padding-top:4px">🔍 查 JPX ToSTNeT 印证…</div>`;
   }
 

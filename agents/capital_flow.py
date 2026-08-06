@@ -133,14 +133,22 @@ def _fetch_jp_flow(ticker: str) -> Optional[dict]:
     daily_totals = df.groupby("date")["Volume"].sum()
     daily_avg = float(daily_totals.tail(20).mean()) if len(daily_totals) else 0
 
+    # 大单信号阈值（去噪）：
+    #   ratio ≥ 5× 均量（原 3× 太松，小盘容易触发）
+    #   value_oku ≥ 1.0 億円 (~$0.7M) 剔除小碎单
+    # 前端渲染的 "异常 bar" 全部满足此双门槛
+    RATIO_MIN = 5.0
+    VALUE_OKU_MIN = 1.0
+
     def _analyze_one_day(day_df, date_str: str) -> dict:
         """给定一天的 5min bars → 该日的 anomaly + aggregate summary。"""
-        anomaly_bars = day_df[
-            (day_df["vol_ratio"] >= 3.0) & (day_df["Volume"] >= 10_000)
+        # 初筛：vol_ratio ≥ RATIO_MIN & 最低成交量
+        raw_bars = day_df[
+            (day_df["vol_ratio"] >= RATIO_MIN) & (day_df["Volume"] >= 10_000)
         ].sort_values("vol_ratio", ascending=False)
 
         peak_bars = []
-        for ts, row in anomaly_bars.head(8).iterrows():
+        for ts, row in raw_bars.head(8).iterrows():
             o = float(row["Open"])
             c = float(row["Close"])
             chg_pct = (c - o) / o * 100 if o > 0 else 0
@@ -151,6 +159,10 @@ def _fetch_jp_flow(ticker: str) -> Optional[dict]:
             else:
                 direction = "flat"
             vol = int(row["Volume"])
+            value_oku = round(vol * c / 1e8, 2)
+            # 二筛：金额 ≥ ¥1億 才算大单
+            if value_oku < VALUE_OKU_MIN:
+                continue
             peak_bars.append({
                 "time":      ts.strftime("%H:%M"),
                 "vol":       vol,
@@ -159,7 +171,8 @@ def _fetch_jp_flow(ticker: str) -> Optional[dict]:
                 "price":     round(c, 2),
                 "chg_pct":   round(chg_pct, 2),
                 "direction": direction,
-                "value_oku": round(vol * c / 1e8, 2),
+                "value_oku": value_oku,
+                "date":      date_str,           # 让 highlights 反溯来源日
             })
 
         buy_shares  = sum(b["vol"] for b in peak_bars if b["direction"] == "buy")
@@ -233,6 +246,14 @@ def _fetch_jp_flow(ticker: str) -> Optional[dict]:
     if not days_out:
         return None
 
+    # 大单精选：从 5 日全部 anomaly bars 里挑 top 3（按 ratio × value_oku 综合评分）
+    all_bars = []
+    for d in days_out:
+        for b in d.get("peak_bars", []):
+            score = b["ratio"] * b["value_oku"]   # 简单综合分：既大又异常
+            all_bars.append({**b, "_score": round(score, 2), "date_short": d["date_short"]})
+    highlights = sorted(all_bars, key=lambda x: x["_score"], reverse=True)[:3]
+
     top_day = days_out[0]   # 最近一日 = 顶层 backward-compat 字段
     detected = bool(len(top_day["peak_bars"]) >= 1 or top_day["day_ratio"] >= 1.8)
     reason = ""
@@ -263,6 +284,10 @@ def _fetch_jp_flow(ticker: str) -> Optional[dict]:
             "sell_value_oku": top_day["sell_value_oku"],
             # 新增：5 日历史，前端可展开对比
             "days":         days_out,
+            # 5 日大单精选（top 3 by ratio*value_oku）
+            "highlights":   highlights,
+            # 阈值参数（前端展示 tooltip）
+            "thresholds":   {"ratio_min": RATIO_MIN, "value_oku_min": VALUE_OKU_MIN},
         },
         "asof":   df.index.max().strftime("%Y-%m-%d %H:%M %Z"),
         "source": "yfinance_intraday",
