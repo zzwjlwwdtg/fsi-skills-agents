@@ -1,5 +1,5 @@
 {
-  "asof": "2026-08-06T14:41",
+  "asof": "2026-08-06T15:27",
   "yields": {
     "10y": {
       "value": 0.462,
@@ -210,8 +210,8 @@
   },
   "anomalies": [],
   "_meta": {
-    "cached_at": "2026-08-06T14:41:37.493114",
-    "age_sec": 375,
+    "cached_at": "2026-08-06T15:27:56.099340",
+    "age_sec": 390,
     "stale": false,
     "refreshing": false
   }

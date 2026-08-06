@@ -104,7 +104,7 @@
 </style>
 <script>
   window.STATIC_SNAPSHOT_MODE = true;
-  window.SNAPSHOT_META = {"generated_at": "2026-08-06T14:47:53", "endpoints_ok": 84, "endpoints_fail": 0};
+  window.SNAPSHOT_META = {"generated_at": "2026-08-06T15:34:26", "endpoints_ok": 84, "endpoints_fail": 0};
   document.addEventListener('DOMContentLoaded', () => {
     const el = document.getElementById('snapshot-ts');
     if (el && window.SNAPSHOT_META) el.textContent = window.SNAPSHOT_META.generated_at;
@@ -194,6 +194,14 @@
 </dl>
 </div>
 </details>
+
+<!-- Row 0: Claude 综合分析（顶部 TL;DR 结构化卡） -->
+<div class="grid">
+  <div class="card" style="border-left:3px solid #58a6ff">
+    <h2 title="Claude CLI 综合解读 — 结构化 TL;DR + 可展开完整分析">🎯 Claude 综合分析 <small id="ai-mtime"></small></h2>
+    <div id="ai-analysis"></div>
+  </div>
+</div>
 
 <!-- Row 1: NAV / HMM / 事件日历（原 System Health + Options Risk 已换成事件日历，orchestrator 状态在页脚 log 里看） -->
 <div class="grid g4">
@@ -285,15 +293,11 @@
   </div>
 </div>
 
-<!-- Row 5: 持仓 + AI 分析 -->
-<div class="grid g2">
-  <div class="card owner-only">
+<!-- Row 5: 持仓（AI 分析已移到 Row 0 顶部） -->
+<div class="grid owner-only">
+  <div class="card">
     <h2 title="从 trader_state.json 读的每标的仓位状态。C=核心仓 S=卫星仓，L1/L2/L3=金字塔加仓层">持仓 & 状态 <small>当前持仓</small></h2>
     <div id="positions"></div>
-  </div>
-  <div class="card">
-    <h2 title="Claude CLI 综合解读。snap.bat 或 orchestrator 跑 morning/review 时更新">Claude 综合分析 <small id="ai-mtime"></small></h2>
-    <div id="ai-analysis" class="analysis"></div>
   </div>
 </div>
 
@@ -1846,13 +1850,114 @@ async function loadLog() {
   el.scrollTop = el.scrollHeight;
 }
 
+// 从 Claude ai_analysis markdown 提取结构化 TL;DR
+function parseClaudeAnalysis(rawContent) {
+  const clean = (rawContent || '').replace(/\x1b\[[0-9;]*m/g, '');
+  // 全景 intro: 第一段 (在第一个 ## heading 之前，去掉两个 # 元数据 header)
+  const introMatch = clean.match(/^(?:#[^\n]*\n\n){1,2}([\s\S]+?)(?=\n---|\n## \d)/);
+  const intro = introMatch ? introMatch[1].trim() : '';
+  // 各 ## N. 标题 section 提取
+  const sections = {};
+  const secRe = /^## \d+\.\s+([^\n]+)\n([\s\S]+?)(?=\n---|\n## \d|\n?$)/gm;
+  let m;
+  while ((m = secRe.exec(clean)) !== null) {
+    sections[m[1].trim()] = m[2].trim();
+  }
+  return { intro, sections, raw: clean };
+}
+
+// 从 markdown 段落里提取 bullet lines (- **XXX** ... 或 - XXX)
+function extractBullets(text, maxLen = 5) {
+  const lines = (text || '').split('\n');
+  const bullets = [];
+  for (const ln of lines) {
+    const bm = ln.match(/^\s*[-·*]\s+(.+)/);
+    if (bm) bullets.push(bm[1].trim());
+    if (bullets.length >= maxLen) break;
+  }
+  return bullets;
+}
+
+// 高亮 bullet 里的 ticker + 关键数字（价格/百分比）
+function highlightBullet(t) {
+  if (!t) return '';
+  // strip [依据: ...] refs
+  t = t.replace(/\[依据:[^\]]+\]/g, '').trim();
+  // Bold 已有 **TICKER**
+  return t.replace(/\*\*([^*]+)\*\*/g, '<b style="color:#79c0ff">$1</b>');
+}
+
 async function loadAI() {
   const a = await fetchJson('/api/ai_analysis');
-  if (!a || !a.exists) { $('ai-analysis').innerHTML = '<small>暂无 AI 分析。跑 snap.bat 生成</small>'; return; }
-  $('ai-mtime').textContent = '· ' + (a.mtime || '').slice(5,16);
-  // Strip ANSI codes (from console output)
-  const clean = (a.content || '').replace(/\x1b\[[0-9;]*m/g, '');
-  $('ai-analysis').innerHTML = marked.parse(clean);
+  const container = document.getElementById('ai-analysis');
+  const mtimeEl = document.getElementById('ai-mtime');
+  if (!container) return;
+  if (!a || !a.exists) {
+    container.innerHTML = '<small style="color:var(--muted)">暂无 AI 分析。跑 snap.bat 生成 (owner side)</small>';
+    return;
+  }
+  if (mtimeEl) mtimeEl.textContent = '· ' + (a.mtime || '').slice(5, 16);
+
+  const { intro, sections, raw } = parseClaudeAnalysis(a.content);
+  // 尝试匹配各类 section (Claude 输出格式变化时容错)
+  const secByKey = (k) => Object.entries(sections).find(([n]) => n.includes(k))?.[1] || '';
+  const secExec  = secByKey('执行建议');
+  const secEvent = secByKey('事件') || secByKey('重大');
+  const secShort = secByKey('短线') || secByKey('机会');
+  const secWinRate = secByKey('胜率') || secByKey('回测');
+
+  const execBullets  = extractBullets(secExec, 6);
+  const eventBullets = extractBullets(secEvent, 4);
+  const shortBullets = extractBullets(secShort, 3);
+
+  // intro 通常 1-2 句话，取前 400 字符
+  const introShort = intro.length > 400 ? intro.slice(0, 400) + '…' : intro;
+
+  container.innerHTML = `
+    <div style="font-size:11px; line-height:1.55">
+
+      ${introShort ? `<div style="padding:8px 10px; background:rgba(88,166,255,0.06); border-left:3px solid #58a6ff; border-radius:3px; margin-bottom:8px">
+        <b style="color:#58a6ff">📝 全景</b>
+        <div style="margin-top:3px; color:var(--fg)">${highlightBullet(marked.parseInline(introShort))}</div>
+      </div>` : ''}
+
+      <div style="display:grid; grid-template-columns:2fr 1fr; gap:10px; margin-bottom:8px">
+
+        ${execBullets.length ? `<div style="padding:6px 10px; background:rgba(63,185,80,0.05); border-left:3px solid #3fb950; border-radius:3px">
+          <b style="color:#3fb950">📋 执行建议</b> <small style="color:var(--muted); font-size:9px">(top ${execBullets.length})</small>
+          <ul style="margin:3px 0 0 0; padding-left:16px; font-size:10.5px; line-height:1.5">
+            ${execBullets.map(b => `<li style="margin-bottom:2px">${highlightBullet(marked.parseInline(b))}</li>`).join('')}
+          </ul>
+        </div>` : ''}
+
+        ${eventBullets.length ? `<div style="padding:6px 10px; background:rgba(210,153,34,0.05); border-left:3px solid #d29922; border-radius:3px">
+          <b style="color:#d29922">📅 关键事件</b>
+          <ul style="margin:3px 0 0 0; padding-left:16px; font-size:10.5px; line-height:1.5">
+            ${eventBullets.map(b => `<li style="margin-bottom:2px">${highlightBullet(marked.parseInline(b))}</li>`).join('')}
+          </ul>
+        </div>` : ''}
+
+      </div>
+
+      ${shortBullets.length ? `<div style="padding:6px 10px; background:rgba(248,81,73,0.05); border-left:3px solid #f85149; border-radius:3px; margin-bottom:8px">
+        <b style="color:#f85149">⚡ 短线机会 (15min)</b>
+        <ul style="margin:3px 0 0 0; padding-left:16px; font-size:10.5px; line-height:1.5">
+          ${shortBullets.map(b => `<li style="margin-bottom:2px">${highlightBullet(marked.parseInline(b))}</li>`).join('')}
+        </ul>
+      </div>` : ''}
+
+      <details data-details-key="ai-full" ontoggle="rememberDetailsState(this)">
+        <summary style="cursor:pointer; list-style:none; font-size:10px; color:var(--muted); padding:5px; border:1px dashed var(--border); border-radius:3px; text-align:center">
+          📖 展开完整分析 (${Object.keys(sections).length} 章 · ${(raw.length / 1000).toFixed(1)}K 字)
+        </summary>
+        <div class="analysis" style="margin-top:8px; padding:10px; background:rgba(255,255,255,0.02); border-radius:4px">
+          ${marked.parse(raw)}
+        </div>
+      </details>
+
+    </div>
+  `;
+  restoreDetailsState();
 }
 
 const SECTOR_REGIME_CLS = {

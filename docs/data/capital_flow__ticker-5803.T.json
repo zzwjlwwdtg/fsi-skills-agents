@@ -62,7 +62,7 @@
         "date": "2026-08-06"
       }
     ],
-    "day_ratio": 1.14,
+    "day_ratio": 1.32,
     "trading_date": "2026-08-06",
     "date_short": "8/6",
     "net_bias": "sell",
@@ -131,26 +131,26 @@
             "date": "2026-08-06"
           }
         ],
-        "day_ratio": 1.14,
-        "day_chg_pct": -4.06,
+        "day_ratio": 1.32,
+        "day_chg_pct": -4.76,
         "day_open": 4833.0,
-        "day_close": 4637.0,
+        "day_close": 4603.0,
         "net_bias": "sell",
         "buy_shares": 3958700,
         "sell_shares": 11506900,
         "buy_value_oku": 189.54,
         "sell_value_oku": 544.39,
         "full_bias": "sell",
-        "full_up_shares": 15292000,
-        "full_down_shares": 29488200,
-        "full_up_value_oku": 719.78,
-        "full_down_value_oku": 1382.68
+        "full_up_shares": 19291800,
+        "full_down_shares": 33223400,
+        "full_up_value_oku": 904.14,
+        "full_down_value_oku": 1554.07
       },
       {
         "trading_date": "2026-08-05",
         "date_short": "8/5",
         "peak_bars": [],
-        "day_ratio": 1.08,
+        "day_ratio": 1.07,
         "day_chg_pct": 5.34,
         "day_open": 4830.0,
         "day_close": 5088.0,
@@ -169,7 +169,7 @@
         "trading_date": "2026-08-04",
         "date_short": "8/4",
         "peak_bars": [],
-        "day_ratio": 1.25,
+        "day_ratio": 1.23,
         "day_chg_pct": 5.64,
         "day_open": 4400.0,
         "day_close": 4648.0,
@@ -207,7 +207,7 @@
         "trading_date": "2026-07-31",
         "date_short": "7/31",
         "peak_bars": [],
-        "day_ratio": 1.7,
+        "day_ratio": 1.69,
         "day_chg_pct": -1.02,
         "day_open": 4210.0,
         "day_close": 4167.0,
@@ -269,11 +269,11 @@
       "value_oku_min": 1.0
     }
   },
-  "asof": "2026-08-06 14:30 JST",
+  "asof": "2026-08-06 15:10 JST",
   "source": "yfinance_intraday",
   "_meta": {
-    "cached_at": "2026-08-06T14:46:54.955730",
-    "age_sec": 57,
+    "cached_at": "2026-08-06T15:30:55.801066",
+    "age_sec": 210,
     "stale": false,
     "refreshing": false
   }
