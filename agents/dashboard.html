@@ -187,7 +187,15 @@
 </div>
 </details>
 
-<!-- Row 0: Claude 综合分析（顶部 TL;DR 结构化卡） -->
+<!-- Row 0a: 系统自动挂单（最优先 —— 落地到实际价位的具体动作） -->
+<div class="grid">
+  <div class="card" style="border-left:3px solid #f85149; background:linear-gradient(180deg, rgba(248,81,73,0.03) 0%, transparent 60%)">
+    <h2 title="Claude 输出的结构化目标 → paper_trader 挂 GTC 限价 + broker SELL STOP。这是系统实际在执行的动作。">⚡ 系统自动挂单 · Auto Orders <small id="ai-targets-mtime"></small></h2>
+    <div id="ai-targets"></div>
+  </div>
+</div>
+
+<!-- Row 0b: Claude 综合分析（结构化 TL;DR） -->
 <div class="grid">
   <div class="card" style="border-left:3px solid #58a6ff">
     <h2 title="Claude CLI 综合解读 — 结构化 TL;DR + 可展开完整分析">🎯 Claude 综合分析 <small id="ai-mtime"></small></h2>
@@ -1842,6 +1850,87 @@ async function loadLog() {
   el.scrollTop = el.scrollHeight;
 }
 
+// 系统自动挂单展示 —— 从 /api/ai_targets 读结构化 JSON, paper_trader 用此挂单
+async function loadAITargets() {
+  const el = document.getElementById('ai-targets');
+  const mtimeEl = document.getElementById('ai-targets-mtime');
+  if (!el) return;
+  const t = await fetchJson('/api/ai_targets');
+  if (!t || !t.exists) {
+    el.innerHTML = '<small style="color:var(--muted)">暂无自动挂单目标 (需 owner 端 snap.bat 运行)</small>';
+    return;
+  }
+  if (mtimeEl) mtimeEl.textContent = '· 生成 ' + (t.ts || '').slice(5, 16);
+
+  const ACT_META = {
+    watch_buy: { zh: '关注买入', color: '#3fb950', bg: 'rgba(63,185,80,0.08)', icon: '🟢' },
+    buy:       { zh: '立即买入', color: '#3fb950', bg: 'rgba(63,185,80,0.18)', icon: '🟢' },
+    hold:      { zh: '维持',     color: '#7d8590', bg: 'rgba(125,133,144,0.05)', icon: '⚪' },
+    skip:      { zh: '不操作',   color: '#7d8590', bg: 'rgba(125,133,144,0.05)', icon: '⚫' },
+    sell:      { zh: '卖出',     color: '#f85149', bg: 'rgba(248,81,73,0.10)', icon: '🔴' },
+    reduce:    { zh: '减仓',     color: '#d29922', bg: 'rgba(210,153,34,0.10)', icon: '🟡' },
+  };
+  const cleanTk = (raw) => (raw || '').replace(/^(US|JP|HK|SH|SZ)\./,'');
+
+  const rows = (t.targets || []).map(tg => {
+    const act = ACT_META[tg.action] || ACT_META.hold;
+    const isActive = tg.entry_ref !== null && tg.action !== 'skip' && tg.action !== 'hold';
+    const potentialUpside = (tg.target_ref && tg.entry_ref)
+      ? ((tg.target_ref - tg.entry_ref) / tg.entry_ref * 100)
+      : null;
+    const stopDist = (tg.stop_ref && tg.entry_ref)
+      ? ((tg.stop_ref - tg.entry_ref) / tg.entry_ref * 100)
+      : null;
+    const rr = (potentialUpside && stopDist) ? Math.abs(potentialUpside / stopDist) : null;
+
+    return `<div style="display:grid; grid-template-columns:auto 90px 100px 90px 90px 65px 1fr; gap:8px; padding:6px 8px; align-items:center; background:${act.bg}; border-radius:3px; margin-bottom:3px; font-size:11px">
+      <span style="min-width:70px"><b style="color:#79c0ff; font-size:12.5px">${cleanTk(tg.ticker)}</b></span>
+      <span><span class="badge" style="font-size:9px; background:${act.color}; color:#0d1117">${act.icon} ${act.zh}</span></span>
+      <span title="限价挂单价 (等回踩到才买)">
+        ${isActive
+          ? `<b style="color:var(--fg); font-size:12px">$${tg.entry_ref}</b> <small style="color:var(--muted); font-size:9px">${tg.use_limit ? 'LIMIT' : 'MKT'}</small>`
+          : '<span class="muted">—</span>'}
+      </span>
+      <span title="broker 端 SELL STOP 触发价 (跌破自动止损)">
+        ${tg.stop_ref
+          ? `<b class="bad" style="font-size:11px">$${tg.stop_ref}</b> <small style="color:var(--muted); font-size:9px">${stopDist ? stopDist.toFixed(1) + '%' : ''}</small>`
+          : '<span class="muted">—</span>'}
+      </span>
+      <span title="第一目标位 (参考, paper_trader 暂不用于自动止盈)">
+        ${tg.target_ref
+          ? `<b class="ok" style="font-size:11px">$${tg.target_ref}</b> <small style="color:var(--muted); font-size:9px">${potentialUpside ? '+' + potentialUpside.toFixed(1) + '%' : ''}</small>`
+          : '<span class="muted">—</span>'}
+      </span>
+      <span title="风险回报比 (target 涨幅 / stop 跌幅)">
+        ${rr ? `<b style="color:${rr >= 2 ? '#3fb950' : (rr >= 1 ? '#d29922' : '#f85149')}">R:R ${rr.toFixed(1)}</b>` : '<span class="muted">—</span>'}
+      </span>
+      <span style="color:var(--muted); font-size:10px; line-height:1.4">${tg.notes || ''}</span>
+    </div>`;
+  }).join('');
+
+  const activeCount = (t.targets || []).filter(x => x.action !== 'skip' && x.action !== 'hold').length;
+  const totalCount = (t.targets || []).length;
+
+  el.innerHTML = `
+    <div style="font-size:10.5px; color:var(--muted); margin-bottom:6px">
+      <b class="ok">${activeCount}</b> / ${totalCount} 只挂单 · 数据源: <code style="font-size:9.5px">${t.path || ''}</code>
+    </div>
+    <div style="display:grid; grid-template-columns:auto 90px 100px 90px 90px 65px 1fr; gap:8px; padding:3px 8px; font-size:9.5px; color:var(--muted); border-bottom:1px solid var(--border); margin-bottom:4px">
+      <span style="min-width:70px">Ticker</span>
+      <span>Action</span>
+      <span>入场价 (limit)</span>
+      <span>止损 (broker stop)</span>
+      <span>目标 (参考)</span>
+      <span>R:R</span>
+      <span>决策理由</span>
+    </div>
+    ${rows}
+    <div style="font-size:9px; color:var(--muted); margin-top:6px; padding:4px 6px; background:rgba(255,255,255,0.02); border-radius:2px">
+      <b>逻辑</b>: paper_trader 收到 orchestrator BUY/WATCH_BUY 信号 → 读此 JSON → 挂 <b>GTC 限价</b> @ 入场价（如挂 LIMIT）+ <b>broker SELL STOP</b> @ 止损价（orchestrator 离线也生效）。<code>skip/hold</code> 直接跳过。
+    </div>
+  `;
+}
+
 // 从 Claude ai_analysis markdown 提取结构化 TL;DR
 function parseClaudeAnalysis(rawContent) {
   const clean = (rawContent || '').replace(/\x1b\[[0-9;]*m/g, '');
@@ -2072,7 +2161,8 @@ async function loadOptionWalls() {
 async function loadAll() {
   const promises = [
     loadHealth(), loadSectors(), loadBanners(),
-    loadSignals(), loadAI(), loadEvents(), loadJPWatch(),
+    loadSignals(), loadAI(), loadAITargets(),  // AI targets 与 analysis 同源
+    loadEvents(), loadJPWatch(),
     loadHmm(),          // 市场大周期是公开信号（非 owner-only）
     loadBondMonitor(),  // 美债 + Fed 政策路径（公开衍生信号）
   ];

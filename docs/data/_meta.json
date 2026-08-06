@@ -1,11 +1,12 @@
 {
-  "generated_at_utc": "2026-08-06T06:34:26+00:00",
-  "generated_at_local": "2026-08-06T15:34:26",
-  "endpoints_ok": 84,
+  "generated_at_utc": "2026-08-06T06:43:28+00:00",
+  "generated_at_local": "2026-08-06T15:43:28",
+  "endpoints_ok": 85,
   "endpoints_fail": 0,
-  "elapsed_sec": 0.6,
+  "elapsed_sec": 0.5,
   "saved_files": [
     "ai_analysis.json",
+    "ai_targets.json",
     "banners.json",
     "bond_monitor.json",
     "capital_flow__ticker-285A.T.json",

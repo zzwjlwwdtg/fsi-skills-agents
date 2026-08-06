@@ -2027,6 +2027,29 @@ def api_tostnet_hits(ticker: str, days: int = 10) -> dict:
     return _cached(f"tostnet_{tk}_{days}", ttl_sec=6*3600, compute_fn=_compute)
 
 
+def api_ai_targets() -> dict:
+    """读最新 signals/ai_targets_<date>.json — Claude 输出的结构化交易目标。
+
+    paper_trader 用这个数据自动挂 GTC 限价 + broker SELL STOP。
+    对外展示 = 让访客看到"系统实际在挂什么价"，比 markdown analysis 更直观。
+    """
+    files = sorted(SIGNALS_DIR.glob("ai_targets_*.json"),
+                   key=lambda p: p.stat().st_mtime, reverse=True)
+    if not files:
+        return {"exists": False}
+    latest = files[0]
+    try:
+        content = json.loads(latest.read_text(encoding="utf-8"))
+        return {
+            "exists":  True,
+            "path":    latest.name,
+            "mtime":   datetime.fromtimestamp(latest.stat().st_mtime).isoformat(),
+            **content,
+        }
+    except Exception as e:
+        return {"exists": False, "error": str(e)}
+
+
 def api_bond_monitor() -> dict:
     """美债 yields + TIPS 实际利率 + GLD 20d 相关性 + 异常波动。缓存 15 min。"""
     def _compute():
@@ -3015,6 +3038,8 @@ class Handler(BaseHTTPRequestHandler):
                 tk = qs.get("ticker", [""])[0]
                 d  = int(qs.get("days", ["10"])[0])
                 self._json(api_tostnet_hits(tk, days=d))
+            elif path == "/api/ai_targets":
+                self._json(api_ai_targets())
             elif path == "/api/bond_monitor":
                 self._json(api_bond_monitor())
             elif path == "/api/fed_watch":

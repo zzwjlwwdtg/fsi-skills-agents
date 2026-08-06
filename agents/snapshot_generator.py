@@ -49,6 +49,7 @@ GLOBAL_ENDPOINTS = [
     "/api/bond_monitor",  # 美债 yields + TIPS + GLD 20d correlation + anomaly
     "/api/fed_watch",     # CME FedWatch 加息预期 (Claude+WebFetch 抓)
     "/api/ai_analysis",
+    "/api/ai_targets",    # Claude 结构化交易目标 (paper_trader 用来挂 GTC 限价 + SELL STOP)
     "/api/ticker_options",
     "/api/ticker_ai",
     "/api/events",
