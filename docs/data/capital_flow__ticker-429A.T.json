@@ -6,7 +6,7 @@
     "reason": "",
     "score": 0.0,
     "peak_bars": [],
-    "day_ratio": 0.44,
+    "day_ratio": 0.45,
     "trading_date": "2026-08-06",
     "date_short": "8/6",
     "net_bias": "neutral",
@@ -19,10 +19,10 @@
         "trading_date": "2026-08-06",
         "date_short": "8/6",
         "peak_bars": [],
-        "day_ratio": 0.44,
-        "day_chg_pct": -2.39,
+        "day_ratio": 0.45,
+        "day_chg_pct": -2.74,
         "day_open": 4385.0,
-        "day_close": 4280.0,
+        "day_close": 4265.0,
         "net_bias": "neutral",
         "buy_shares": 0,
         "sell_shares": 0,
@@ -30,9 +30,9 @@
         "sell_value_oku": 0,
         "full_bias": "sell",
         "full_up_shares": 110300,
-        "full_down_shares": 265600,
+        "full_down_shares": 276100,
         "full_up_value_oku": 4.78,
-        "full_down_value_oku": 11.47
+        "full_down_value_oku": 11.92
       },
       {
         "trading_date": "2026-08-05",
@@ -145,11 +145,11 @@
       }
     ]
   },
-  "asof": "2026-08-06 10:55 JST",
+  "asof": "2026-08-06 11:00 JST",
   "source": "yfinance_intraday",
   "_meta": {
-    "cached_at": "2026-08-06T11:13:43.350174",
-    "age_sec": 265,
+    "cached_at": "2026-08-06T11:18:50.294234",
+    "age_sec": 228,
     "stale": false,
     "refreshing": false
   }

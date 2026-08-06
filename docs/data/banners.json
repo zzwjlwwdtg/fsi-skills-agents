@@ -1,0 +1,86 @@
+{
+  "exists": true,
+  "snapshot_path": "snapshot_20260728_145208.txt",
+  "snapshot_mtime": "2026-07-28T14:52:08.956498",
+  "trump": {
+    "posts": 27,
+    "direction": "bullish",
+    "magnitude": "medium",
+    "score": 22,
+    "event_counts": {
+      "MARKET": 1,
+      "DOMESTIC_POLICY": 6,
+      "NOISE": 5,
+      "MEDIA_ATTACK": 1
+    },
+    "breaking": [],
+    "summary": {
+      "text": "Trump 抨击民主党候选人及密歇根选举舞弊，Bessent 上 CNBC；政治攻击为主，市场情绪中性偏负。",
+      "state": "cached",
+      "post_ids": [
+        "117043300198873853",
+        "117043133534824966",
+        "117041037772264187"
+      ]
+    }
+  },
+  "gold_macro": {
+    "direction": "bearish",
+    "score": -2,
+    "conf": "10/10",
+    "factors": [
+      {
+        "arrow": "▼",
+        "name": "实际利率",
+        "direction": "bearish",
+        "weight": 3,
+        "value": "2.43",
+        "trend": "rising"
+      },
+      {
+        "arrow": "·",
+        "name": "美元指数",
+        "direction": "neutral",
+        "weight": 1,
+        "value": "101.56",
+        "trend": "flat"
+      },
+      {
+        "arrow": "·",
+        "name": "10Y名义利率",
+        "direction": "neutral",
+        "weight": 0,
+        "value": "4.69",
+        "trend": "flat"
+      },
+      {
+        "arrow": "▲",
+        "name": "Fed 资产负债表",
+        "direction": "bullish",
+        "weight": 1,
+        "value": null,
+        "trend": "expanding"
+      },
+      {
+        "arrow": "·",
+        "name": "WTI 原油",
+        "direction": "neutral",
+        "weight": 0,
+        "value": "84.38",
+        "trend": "flat"
+      },
+      {
+        "arrow": "·",
+        "name": "FOMC 政策",
+        "direction": "neutral",
+        "weight": 0,
+        "value": null,
+        "trend": null
+      }
+    ]
+  },
+  "options_risk": {
+    "level": "low",
+    "days_to_witching": 52
+  }
+}

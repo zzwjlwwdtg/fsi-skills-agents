@@ -104,7 +104,7 @@
 </style>
 <script>
   window.STATIC_SNAPSHOT_MODE = true;
-  window.SNAPSHOT_META = {"generated_at": "2026-08-06T11:18:09", "endpoints_ok": 80, "endpoints_fail": 0};
+  window.SNAPSHOT_META = {"generated_at": "2026-08-06T11:22:39", "endpoints_ok": 81, "endpoints_fail": 0};
   document.addEventListener('DOMContentLoaded', () => {
     const el = document.getElementById('snapshot-ts');
     if (el && window.SNAPSHOT_META) el.textContent = window.SNAPSHOT_META.generated_at;
@@ -312,7 +312,7 @@ const sideCls = a => {
 async function fetchJson(url) {
   if (window.STATIC_SNAPSHOT_MODE) {
     // 私人 endpoint 直接返 null（面板会显示 owner-only 或直接空）
-    const PRIVATE = ['/api/positions', '/api/trades', '/api/log', '/api/nav', '/api/hmm', '/api/banners', '/api/trump_verify'];
+    const PRIVATE = ['/api/positions', '/api/trades', '/api/log', '/api/nav', '/api/hmm', '/api/trump_verify'];
     if (PRIVATE.some(p => url.startsWith(p))) return { error: 'owner_only' };
     // /api/xxx?ticker=Y&days=Z → data/xxx__Y__d10.json
     let path = url.replace(/^\//, '');

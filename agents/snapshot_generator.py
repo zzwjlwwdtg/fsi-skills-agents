@@ -44,6 +44,7 @@ GLOBAL_ENDPOINTS = [
     "/api/signals",
     "/api/sectors",
     "/api/oil",
+    "/api/banners",       # trump + gold sentiment banners (公开信息，Claude 解析结果)
     "/api/ai_analysis",
     "/api/ticker_options",
     "/api/ticker_ai",
@@ -65,7 +66,7 @@ PER_TICKER_ENDPOINTS = {
 # 私人 endpoints — 明确跳过
 PRIVATE_ENDPOINTS = {
     "/api/nav", "/api/positions", "/api/trades", "/api/log",
-    "/api/hmm", "/api/banners", "/api/benchmark", "/api/trump_verify",
+    "/api/hmm", "/api/benchmark", "/api/trump_verify",
 }
 
 
