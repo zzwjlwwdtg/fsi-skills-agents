@@ -664,51 +664,79 @@ async function loadCapitalFlowOnDemand(ticker, containerId) {
         · 占总成交 ${((flow.smart_pct || 0)*100).toFixed(1)}%
       </div>`;
   }
-  // JP 分支：peak bars 表 + 方向 + 买卖 bias 汇总
+  // JP 分支：多日历史 + 每日 peak bars + 方向 + 净流向 badge
   else if (r.source === 'yfinance_intraday') {
-    const peaks = anom.peak_bars || [];
-    const dayRatio = anom.day_ratio;
     const dirIcon = { buy: '📈', sell: '📉', flat: '➡' };
     const dirCls  = { buy: 'ok',  sell: 'bad', flat: 'muted' };
-    // 汇总 badge：买卖 bias（≥2:1 才判定方向）
-    const bias = anom.net_bias;
-    const biasBadge = bias === 'buy'
-      ? `<span class="badge ok" style="font-size:9px">📈 净买入主导 ${anom.buy_value_oku}億 vs ${anom.sell_value_oku}億</span>`
-      : (bias === 'sell'
-        ? `<span class="badge bad" style="font-size:9px">📉 净卖出主导 ${anom.sell_value_oku}億 vs ${anom.buy_value_oku}億</span>`
-        : (peaks.length ? `<span class="badge muted" style="font-size:9px">⚖ 买卖平衡 买${anom.buy_value_oku}億 卖${anom.sell_value_oku}億</span>` : ''));
+    const days    = anom.days || (anom.peak_bars ? [{
+      trading_date: anom.trading_date, date_short: anom.date_short,
+      peak_bars: anom.peak_bars, day_ratio: anom.day_ratio,
+      net_bias: anom.net_bias, buy_value_oku: anom.buy_value_oku,
+      sell_value_oku: anom.sell_value_oku,
+    }] : []);
 
-    const tradingDate = anom.trading_date || '';
-    const dateShort   = anom.date_short   || (tradingDate ? tradingDate.slice(5).replace('-','/') : '');
-    if (peaks.length) {
-      bodyHtml = `
-        <div style="font-size:10px; margin:3px 0; display:flex; align-items:center; gap:5px; flex-wrap:wrap">
-          <span class="badge info" style="font-size:9px" title="所有异常 bar 均来自此交易日（JP timezone）">📅 交易日 ${tradingDate}</span>
-          <b>异常 bar</b> ${peaks.length} 个 (≥3× 均量)
-          ${biasBadge}
-        </div>
-        <div style="display:grid; grid-template-columns:auto auto auto auto auto; gap:2px 8px; font-size:10px; line-height:1.4">
+    // 汇总近 N 日：几天有异动 / 主导方向
+    const anomDays  = days.filter(d => (d.peak_bars||[]).length >= 1);
+    const buyDays   = days.filter(d => d.net_bias === 'buy');
+    const sellDays  = days.filter(d => d.net_bias === 'sell');
+    const topSummary = `<div style="font-size:10px; margin:3px 0; color:var(--fg)">
+      <b>近 ${days.length} 日</b>: ${anomDays.length} 日有 ≥3× 异动
+      · ${buyDays.length > 0 ? `<span class="ok">📈 ${buyDays.length} 日买主导</span>` : ''}
+      ${sellDays.length > 0 ? ` · <span class="bad">📉 ${sellDays.length} 日卖主导</span>` : ''}
+    </div>`;
+
+    // 每日一个小 section：最近一日展开，其余折叠
+    const renderDay = (day, isTop) => {
+      const peaks = day.peak_bars || [];
+      const dayRatio = day.day_ratio;
+      const dayChg = day.day_chg_pct;
+      const bias = day.net_bias;
+      const biasBadge = bias === 'buy'
+        ? `<span class="badge ok" style="font-size:9px">📈 净买 ¥${day.buy_value_oku}億 vs ¥${day.sell_value_oku}億</span>`
+        : (bias === 'sell'
+          ? `<span class="badge bad" style="font-size:9px">📉 净卖 ¥${day.sell_value_oku}億 vs ¥${day.buy_value_oku}億</span>`
+          : (peaks.length ? `<span class="badge muted" style="font-size:9px">⚖ 平衡</span>` : ''));
+      // 全日 tick-rule bias（不只 anomaly，对齐"主力"定义）
+      const fullBiasBadge = day.full_bias === 'buy'
+        ? `<span class="badge ok" style="font-size:8px" title="全日全部 5min bar 涨跌成交额比 ≥1.5:1">全日净买 ¥${day.full_up_value_oku}億 vs ¥${day.full_down_value_oku}億</span>`
+        : (day.full_bias === 'sell'
+          ? `<span class="badge bad" style="font-size:8px" title="全日全部 5min bar 涨跌成交额比 ≥1.5:1">全日净卖 ¥${day.full_down_value_oku}億 vs ¥${day.full_up_value_oku}億</span>`
+          : '');
+      const dayChgBadge = dayChg != null
+        ? `<span class="badge ${dayChg > 0 ? 'ok' : (dayChg < 0 ? 'bad' : 'muted')}" style="font-size:9px">日K ${dayChg >= 0 ? '+' : ''}${dayChg}%</span>`
+        : '';
+
+      const tableRows = peaks.length ? `
+        <div style="display:grid; grid-template-columns:auto auto auto auto auto; gap:2px 8px; font-size:10px; line-height:1.4; margin-top:3px">
           <span style="color:var(--muted); font-size:9px">时刻</span>
           <span style="color:var(--muted); font-size:9px; text-align:right">倍数</span>
           <span style="color:var(--muted); font-size:9px; text-align:right">涨跌</span>
           <span style="color:var(--muted); font-size:9px; text-align:right">金额</span>
           <span style="color:var(--muted); font-size:9px">方向</span>
           ${peaks.slice(0, 6).map(p => `
-            <span title="${tradingDate} ${p.time}"><b>${dateShort} ${p.time}</b></span>
+            <span title="${day.trading_date} ${p.time}"><b>${p.time}</b></span>
             <span style="text-align:right" class="${p.ratio >= 8 ? 'bad' : (p.ratio >= 5 ? 'warn' : 'muted')}"><b>${p.ratio.toFixed(1)}×</b></span>
             <span style="text-align:right" class="${p.chg_pct > 0 ? 'ok' : (p.chg_pct < 0 ? 'bad' : 'muted')}">${p.chg_pct >= 0 ? '+' : ''}${p.chg_pct}%</span>
             <span style="text-align:right"><b>¥${p.value_oku}億</b></span>
-            <span class="${dirCls[p.direction]}" title="close-open 判定：>0.1% 主动买 · <-0.1% 主动卖">${dirIcon[p.direction]}</span>
+            <span class="${dirCls[p.direction]}" title="close-open >0.1% 主动买 · <-0.1% 主动卖">${dirIcon[p.direction]}</span>
           `).join('')}
-        </div>
-      `;
-    } else {
-      bodyHtml = `<div style="font-size:10px; color:var(--muted); margin:3px 0">${tradingDate || '今日'}无 ≥3× 均量的 5min bar</div>`;
-    }
-    bodyHtml += `<div style="border-top:1px solid var(--border); padding-top:3px; font-size:10px; margin-top:4px">
-      当日总量: <b class="${dayRatio >= 1.5 ? 'ok' : (dayRatio < 0.8 ? 'bad' : 'muted')}">${dayRatio}×</b> 20 日日均
-    </div>
-    <div id="tostnet-${ticker.replace(/\./g,'_')}" style="font-size:10px; color:var(--muted); margin-top:3px">🔍 查 JPX ToSTNeT 印证…</div>`;
+        </div>` : `<div style="font-size:9px; color:var(--muted); margin-top:2px">无 ≥3× 均量 bar</div>`;
+
+      return `<details ${isTop ? 'open' : ''} style="border-top:1px dashed var(--border); margin-top:4px; padding-top:3px">
+        <summary style="cursor:pointer; list-style:none; font-size:10px; display:flex; align-items:center; gap:4px; flex-wrap:wrap">
+          <b style="color:#58a6ff">📅 ${day.trading_date}</b>
+          ${dayChgBadge}
+          <span style="color:var(--muted); font-size:9px">总量 ${dayRatio}×</span>
+          <span style="color:var(--muted); font-size:9px">${peaks.length} 异常 bar</span>
+          ${biasBadge}
+          ${fullBiasBadge}
+        </summary>
+        ${tableRows}
+      </details>`;
+    };
+
+    bodyHtml = topSummary + days.map((d, i) => renderDay(d, i === 0)).join('');
+    bodyHtml += `<div id="tostnet-${ticker.replace(/\./g,'_')}" style="font-size:10px; color:var(--muted); margin-top:4px; border-top:1px solid var(--border); padding-top:4px">🔍 查 JPX ToSTNeT 印证…</div>`;
   }
 
   el.innerHTML = `

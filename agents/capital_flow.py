@@ -129,92 +129,140 @@ def _fetch_jp_flow(ticker: str) -> Optional[dict]:
     df["baseline_vol"] = baseline
     df["vol_ratio"] = df["Volume"] / df["baseline_vol"].replace(0, float("nan"))
 
-    # 今日的 bars（本日日本时间日期）
-    today_jp = df.index.max().strftime("%Y-%m-%d")
-    today = df[df["date"] == today_jp].copy()
-    if today.empty:
-        # 若非交易日/盘外时段，用最近有数据的一天
-        latest_date = df["date"].max()
-        today = df[df["date"] == latest_date].copy()
-    # 交易日（异常 bar 全部来自这一天，UI 需明确显示）
-    trading_date = today["date"].iloc[0] if not today.empty else today_jp
+    # 计算 daily 均量（用来算每天的 day_ratio）
+    daily_totals = df.groupby("date")["Volume"].sum()
+    daily_avg = float(daily_totals.tail(20).mean()) if len(daily_totals) else 0
 
-    # 异常 bar：ratio ≥ 3 且成交量 ≥ 10 * 1000（避免小盘噪音）
-    anomaly_bars = today[
-        (today["vol_ratio"] >= 3.0) & (today["Volume"] >= 10_000)
-    ].sort_values("vol_ratio", ascending=False)
+    def _analyze_one_day(day_df, date_str: str) -> dict:
+        """给定一天的 5min bars → 该日的 anomaly + aggregate summary。"""
+        anomaly_bars = day_df[
+            (day_df["vol_ratio"] >= 3.0) & (day_df["Volume"] >= 10_000)
+        ].sort_values("vol_ratio", ascending=False)
 
-    peak_bars = []
-    for ts, row in anomaly_bars.head(8).iterrows():
-        o = float(row["Open"])
-        c = float(row["Close"])
-        chg_pct = (c - o) / o * 100 if o > 0 else 0
-        # 方向：主动买 = close>open 拉升，主动卖 = close<open 压价
-        if chg_pct > 0.10:
-            direction = "buy"
-        elif chg_pct < -0.10:
-            direction = "sell"
-        else:
-            direction = "flat"
-        vol = int(row["Volume"])
-        value_yen = vol * c
-        peak_bars.append({
-            "time":      ts.strftime("%H:%M"),
-            "vol":       vol,
-            "ratio":     round(float(row["vol_ratio"]), 2),
-            "open":      round(o, 2),
-            "price":     round(c, 2),  # keep 'price'=close for backward compat
-            "chg_pct":   round(chg_pct, 2),
-            "direction": direction,
-            "value_oku": round(value_yen / 1e8, 2),   # 億円 (JP notional unit)
-        })
+        peak_bars = []
+        for ts, row in anomaly_bars.head(8).iterrows():
+            o = float(row["Open"])
+            c = float(row["Close"])
+            chg_pct = (c - o) / o * 100 if o > 0 else 0
+            if chg_pct > 0.10:
+                direction = "buy"
+            elif chg_pct < -0.10:
+                direction = "sell"
+            else:
+                direction = "flat"
+            vol = int(row["Volume"])
+            peak_bars.append({
+                "time":      ts.strftime("%H:%M"),
+                "vol":       vol,
+                "ratio":     round(float(row["vol_ratio"]), 2),
+                "open":      round(o, 2),
+                "price":     round(c, 2),
+                "chg_pct":   round(chg_pct, 2),
+                "direction": direction,
+                "value_oku": round(vol * c / 1e8, 2),
+            })
 
-    # 汇总：按方向拆分股数 → 买/卖比
-    buy_shares  = sum(b["vol"] for b in peak_bars if b["direction"] == "buy")
-    sell_shares = sum(b["vol"] for b in peak_bars if b["direction"] == "sell")
-    buy_value_oku  = round(sum(b["value_oku"] for b in peak_bars if b["direction"] == "buy"), 2)
-    sell_value_oku = round(sum(b["value_oku"] for b in peak_bars if b["direction"] == "sell"), 2)
-    net_bias = "neutral"
-    if buy_shares >= sell_shares * 2 and buy_shares >= 20_000:
-        net_bias = "buy"
-    elif sell_shares >= buy_shares * 2 and sell_shares >= 20_000:
-        net_bias = "sell"
+        buy_shares  = sum(b["vol"] for b in peak_bars if b["direction"] == "buy")
+        sell_shares = sum(b["vol"] for b in peak_bars if b["direction"] == "sell")
+        buy_value  = round(sum(b["value_oku"] for b in peak_bars if b["direction"] == "buy"), 2)
+        sell_value = round(sum(b["value_oku"] for b in peak_bars if b["direction"] == "sell"), 2)
+        net_bias = "neutral"
+        if buy_shares >= sell_shares * 2 and buy_shares >= 20_000:
+            net_bias = "buy"
+        elif sell_shares >= buy_shares * 2 and sell_shares >= 20_000:
+            net_bias = "sell"
 
-    # 今日 total volume vs 20 日日均
-    daily_total_today = float(today["Volume"].sum())
-    daily_avg = df.groupby("date")["Volume"].sum().tail(20).mean()
-    day_ratio = daily_total_today / daily_avg if daily_avg > 0 else 0
+        # 该日全部 bar 的 tick-rule 净方向（不只 anomaly，用于对齐"主力流出"这种定义）
+        day_up_bars   = day_df[day_df["Close"] > day_df["Open"]]
+        day_down_bars = day_df[day_df["Close"] < day_df["Open"]]
+        full_up_value   = round(float((day_up_bars["Volume"]   * day_up_bars["Close"]).sum())   / 1e8, 2)
+        full_down_value = round(float((day_down_bars["Volume"] * day_down_bars["Close"]).sum()) / 1e8, 2)
+        full_up_shares   = int(day_up_bars["Volume"].sum())
+        full_down_shares = int(day_down_bars["Volume"].sum())
+        full_bias = "neutral"
+        if full_up_value >= full_down_value * 1.5:
+            full_bias = "buy"
+        elif full_down_value >= full_up_value * 1.5:
+            full_bias = "sell"
 
-    detected = bool(len(peak_bars) >= 1 or day_ratio >= 1.8)
-    # 日期 short form for UI badge, e.g. "8/5"
-    try:
-        d = datetime.strptime(trading_date, "%Y-%m-%d")
-        date_short = f"{d.month}/{d.day}"
-    except Exception:
-        date_short = trading_date
+        # 日 K 涨跌
+        day_open  = float(day_df.iloc[0]["Open"])
+        day_close = float(day_df.iloc[-1]["Close"])
+        day_chg_pct = round((day_close / day_open - 1) * 100, 2) if day_open > 0 else 0
+
+        day_total_vol = float(day_df["Volume"].sum())
+        day_ratio = float(round(day_total_vol / daily_avg, 2)) if daily_avg > 0 else 0
+
+        try:
+            d = datetime.strptime(date_str, "%Y-%m-%d")
+            date_short = f"{d.month}/{d.day}"
+        except Exception:
+            date_short = date_str
+
+        return {
+            "trading_date":   date_str,
+            "date_short":     date_short,
+            "peak_bars":      peak_bars,
+            "day_ratio":      day_ratio,
+            "day_chg_pct":    day_chg_pct,
+            "day_open":       round(day_open, 2),
+            "day_close":      round(day_close, 2),
+            # anomaly-only aggregates
+            "net_bias":       net_bias,
+            "buy_shares":     buy_shares,
+            "sell_shares":    sell_shares,
+            "buy_value_oku":  buy_value,
+            "sell_value_oku": sell_value,
+            # full-day tick-rule aggregates (all bars, 更贴近 app 的"主力"定义)
+            "full_bias":            full_bias,
+            "full_up_shares":       full_up_shares,
+            "full_down_shares":     full_down_shares,
+            "full_up_value_oku":    full_up_value,
+            "full_down_value_oku":  full_down_value,
+        }
+
+    # 最近 N 个交易日（不足则有多少给多少）
+    n_days = 5
+    unique_dates = sorted(df["date"].unique(), reverse=True)[:n_days]
+    days_out = []
+    for dstr in unique_dates:
+        day_df = df[df["date"] == dstr].copy()
+        if day_df.empty:
+            continue
+        days_out.append(_analyze_one_day(day_df, dstr))
+    if not days_out:
+        return None
+
+    top_day = days_out[0]   # 最近一日 = 顶层 backward-compat 字段
+    detected = bool(len(top_day["peak_bars"]) >= 1 or top_day["day_ratio"] >= 1.8)
     reason = ""
-    if peak_bars:
-        top = peak_bars[0]
-        dir_zh = {"buy": "主动买", "sell": "主动卖", "flat": "换手"}[top["direction"]]
-        reason = f"{date_short} {top['time']} {top['ratio']}× 均值 · {dir_zh} ¥{top['value_oku']}億 (@¥{top['price']})"
-    elif day_ratio >= 1.8:
-        reason = f"{date_short} 当日总量 {day_ratio:.2f}× 20 日日均"
+    if top_day["peak_bars"]:
+        top_bar = top_day["peak_bars"][0]
+        dir_zh = {"buy": "主动买", "sell": "主动卖", "flat": "换手"}[top_bar["direction"]]
+        reason = (f"{top_day['date_short']} {top_bar['time']} {top_bar['ratio']}× 均值 · "
+                  f"{dir_zh} ¥{top_bar['value_oku']}億 (@¥{top_bar['price']})")
+    elif top_day["day_ratio"] >= 1.8:
+        reason = f"{top_day['date_short']} 当日总量 {top_day['day_ratio']:.2f}× 20 日日均"
 
     return {
-        "flow": None,   # yfinance 无 broker 分类，无法拆 super/big/mid/small
+        "flow": None,
         "anomaly": {
             "detected":     detected,
             "reason":       reason,
-            "score":        float(min((max(day_ratio - 1, 0) + len(peak_bars) * 0.2), 1.0)),
-            "peak_bars":    peak_bars,
-            "day_ratio":    float(round(day_ratio, 2)),
-            "trading_date": trading_date,   # YYYY-MM-DD, UI 前端明确显示
-            "date_short":   date_short,     # MM/DD 短标签
-            "net_bias":     net_bias,
-            "buy_shares":   buy_shares,
-            "sell_shares":  sell_shares,
-            "buy_value_oku":  buy_value_oku,
-            "sell_value_oku": sell_value_oku,
+            "score":        float(min((max(top_day["day_ratio"] - 1, 0)
+                                       + len(top_day["peak_bars"]) * 0.2), 1.0)),
+            # backward-compat: 顶层字段 = 最近一日（原有 UI 无缝）
+            "peak_bars":    top_day["peak_bars"],
+            "day_ratio":    top_day["day_ratio"],
+            "trading_date": top_day["trading_date"],
+            "date_short":   top_day["date_short"],
+            "net_bias":     top_day["net_bias"],
+            "buy_shares":   top_day["buy_shares"],
+            "sell_shares":  top_day["sell_shares"],
+            "buy_value_oku":  top_day["buy_value_oku"],
+            "sell_value_oku": top_day["sell_value_oku"],
+            # 新增：5 日历史，前端可展开对比
+            "days":         days_out,
         },
         "asof":   df.index.max().strftime("%Y-%m-%d %H:%M %Z"),
         "source": "yfinance_intraday",
