@@ -3583,7 +3583,7 @@
   "data_source": "yfinance",
   "_meta": {
     "cached_at": "2026-08-06T11:19:50.763668",
-    "age_sec": 168,
+    "age_sec": 281,
     "stale": false,
     "refreshing": false
   }

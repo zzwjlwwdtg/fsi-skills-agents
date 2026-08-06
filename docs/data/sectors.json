@@ -49,11 +49,11 @@
       "regime_zh": "强势"
     }
   ],
-  "ts": "2026-08-06T02:17:31.168711+00:00",
+  "ts": "2026-08-06T02:22:39.368787+00:00",
   "_meta": {
-    "cached_at": "2026-08-06T11:17:31.170222",
-    "age_sec": 307,
-    "stale": true,
-    "refreshing": true
+    "cached_at": "2026-08-06T11:22:39.369303",
+    "age_sec": 112,
+    "stale": false,
+    "refreshing": false
   }
 }

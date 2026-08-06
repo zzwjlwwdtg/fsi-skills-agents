@@ -193,7 +193,7 @@
     <h2 title="账户净值：现金 + 持仓市值。DD = 从最高点回撤%">NAV <small>账户净值 & 回撤</small></h2>
     <div id="nav-summary"></div>
   </div>
-  <div class="card owner-only">
+  <div class="card">
     <h2 title="Hidden Markov Model 判定的市场大周期。bull_low_vol=温和牛 / crisis=危机">HMM Meta-Regime <small>市场大周期</small></h2>
     <div id="hmm"></div>
   </div>
@@ -304,7 +304,7 @@ const sideCls = a => {
 async function fetchJson(url) {
   if (window.STATIC_SNAPSHOT_MODE) {
     // 私人 endpoint 直接返 null（面板会显示 owner-only 或直接空）
-    const PRIVATE = ['/api/positions', '/api/trades', '/api/log', '/api/nav', '/api/hmm', '/api/trump_verify'];
+    const PRIVATE = ['/api/positions', '/api/trades', '/api/log', '/api/nav', '/api/trump_verify'];
     if (PRIVATE.some(p => url.startsWith(p))) return { error: 'owner_only' };
     // /api/xxx?ticker=Y&days=Z → data/xxx__Y__d10.json
     let path = url.replace(/^\//, '');
@@ -1771,10 +1771,11 @@ async function loadAll() {
   const promises = [
     loadHealth(), loadSectors(), loadBanners(),
     loadSignals(), loadAI(), loadEvents(), loadJPWatch(),
+    loadHmm(),   // 市场大周期是公开信号（非 owner-only）
   ];
   // Owner-only endpoints skip in static mode
   if (!window.STATIC_SNAPSHOT_MODE) {
-    promises.push(loadNav(), loadHmm(), loadPositions(), loadTrades(), loadLog());
+    promises.push(loadNav(), loadPositions(), loadTrades(), loadLog());
   }
   await Promise.all(promises);
 }
