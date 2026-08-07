@@ -1,15 +1,14 @@
 {
   "current_target_range": "3.50-3.75",
-  "as_of": "2026-08-06",
   "meetings": [
     {
       "date": "2026-09-16",
       "days_until": 40,
       "probabilities": {
+        "hold": 36,
         "hike_25": 62,
-        "hold": 34,
         "hike_50": 2,
-        "cut_25": 2
+        "cut_25": 0
       },
       "most_likely": "hike_25",
       "consensus_direction": "hawkish_lean"
@@ -18,10 +17,10 @@
       "date": "2026-10-28",
       "days_until": 82,
       "probabilities": {
-        "hold": 55,
-        "hike_25": 38,
-        "cut_25": 4,
-        "hike_50": 3
+        "hold": 52,
+        "hike_25": 43,
+        "hike_50": 3,
+        "cut_25": 2
       },
       "most_likely": "hold",
       "consensus_direction": "hawkish_lean"
@@ -30,55 +29,54 @@
       "date": "2026-12-09",
       "days_until": 124,
       "probabilities": {
-        "hold": 50,
-        "hike_25": 42,
-        "cut_25": 5,
-        "hike_50": 3
+        "hold": 58,
+        "hike_25": 37,
+        "hike_50": 2,
+        "cut_25": 3
       },
       "most_likely": "hold",
       "consensus_direction": "hawkish_lean"
     },
     {
-      "date": "2027-01-28",
-      "days_until": 174,
+      "date": "2027-01-27",
+      "days_until": 173,
       "probabilities": {
-        "hold": 45,
-        "hike_25": 40,
-        "hike_50": 10,
-        "cut_25": 5
+        "hold": 62,
+        "hike_25": 28,
+        "hike_50": 2,
+        "cut_25": 8
       },
       "most_likely": "hold",
-      "consensus_direction": "hawkish"
+      "consensus_direction": "neutral"
     }
   ],
-  "implied_terminal_rate": "4.00-4.25",
-  "implied_terminal_date": "2027-Q2",
-  "commentary": "市场明显 hawkish：定价 2026 年内 1-2 次加息（9月加息概率~62%），路径由当前 3.63% 升至年底~4.0%，2027 中期终点利率 4.00-4.25%。与年初普遍预期降息完全反转，反映通胀粘性上行风险。",
+  "implied_terminal_rate": "3.75-4.00",
+  "implied_terminal_date": "2027-Q1",
+  "commentary": "市场从 2025 年的降息叙事转为 2026 hawkish 加息定价——CME 显示 9 月 FOMC 61.9% 概率加息 25bp，Fed funds 曲线定价路径 2026-10 到 mid-2027 稳定在 ~4.00% 区域后小幅回落。只有 9 月会议为 CME 直取数据，10/12/2027-01 概率基于曲线路径外推，中度置信度。",
   "sources": [
     {
       "url": "https://www.cmegroup.com/markets/interest-rates/cme-fedwatch-tool.html",
       "type": "cme_fedwatch"
     },
     {
-      "url": "https://growbeansprout.com/tools/fedwatch",
-      "type": "aggregator"
-    },
-    {
-      "url": "https://www.investing.com/central-banks/fed-rate-monitor",
-      "type": "aggregator"
-    },
-    {
       "url": "https://centralbank.watch/federal-reserve/",
-      "type": "aggregator"
+      "type": "centralbank_watch_mirror"
+    },
+    {
+      "url": "https://growbeansprout.com/tools/fedwatch",
+      "type": "fedwatch_aggregator"
+    },
+    {
+      "url": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm",
+      "type": "fomc_calendar"
     }
   ],
   "confidence": "medium",
-  "notes": "WebFetch 未获授权，未能直读 CME FedWatch 原始表格；数字来自 Aug 4-6 搜索快照综合推断，9月会议概率有直接引用（62% hike_25），10/12月及 2027年1月为路径外推估计，实际请以 CME 官方为准。",
   "source_via": "claude_cli_websearch",
-  "fetched_at": "2026-08-07T00:01:02+00:00",
+  "fetched_at": "2026-08-07T12:49:46+00:00",
   "_meta": {
-    "cached_at": "2026-08-07T09:01:02.619859",
-    "age_sec": 6693,
+    "cached_at": "2026-08-07T21:49:46.796891",
+    "age_sec": 1871,
     "stale": false,
     "refreshing": false
   }

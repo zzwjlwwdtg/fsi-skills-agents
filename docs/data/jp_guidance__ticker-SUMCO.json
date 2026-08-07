@@ -1,46 +1,46 @@
 {
   "ticker": "SUMCO",
   "source_stock": "3436.T",
-  "direction": "据え置き",
-  "revision_type": "maintained",
+  "direction": "待核验",
+  "revision_type": "unverified",
   "magnitude": "不明",
-  "last_update": "2026-05-12",
-  "next_earnings": "2026-08-12",
-  "guidance_note": "第2四半期累計連結予想: 売上高 2,134億円 (+3.9% YoY)、営業損失 77億円、経常損失 144億円、親会社株主帰属純損失 154億円。SUMCOは通期業績予想を非開示（半期のみ開示）。",
-  "revision_reason": "Q1実績: 売上 1,014.02億円 (-1.0% YoY)、営業損失 52.73億円。300mm AI向けウェーハ需要は堅調も、200mm以下の需要低迷で減収減益。5/12発表の H1 ガイダンスは据え置き、通期ガイダンス自体は開示なし。",
+  "last_update": "2026-08-06",
+  "next_earnings": "2026-11-05",
+  "guidance_note": "2026/12期 第2四半期累計実績：売上2,150億円(+4.7% YoY)、営業損失64億円、純損失129億円。第3四半期累計予想は売上3,330億円(+9.4%)、営業損失63億円、純損失128億円。通期業績予想は未開示のまま。",
+  "revision_reason": "通期予想は依然未開示のため公式な修正には該当せず。ただし前年同期の営業利益75億円→当期営業損失64億円、純利益31億円→純損失129億円と大幅な赤字転落。売上原価上昇が採算を圧迫。",
   "market_reaction": "不明",
   "confidence": "medium",
   "source_verified": true,
   "source_status": "claude_websearch",
-  "generated_at": "2026-08-06T08:53:49.439308+00:00",
+  "generated_at": "2026-08-07T08:55:12.946427+00:00",
   "sources": [
     {
-      "url": "https://www.nikkei.com/nkd/disclosure/tdnr/20260511523138/",
-      "type": "TDnet",
-      "title": "ＳＵＭＣＯ[3436]：2026年12月期 第1四半期決算短信〔日本基準〕（連結） 2026年5月12日"
+      "url": "https://www.nikkei.com/nkd/company/kessan/?scode=3436",
+      "type": "news",
+      "title": "【SUMCO】[3436]決算発表や業務・財務情報 | 日経電子版"
     }
   ],
   "source_via": "claude_cli_websearch",
   "analyst_consensus": {
     "n_analysts": 16,
-    "recommendation": "hold",
+    "recommendation": "none",
     "forward_eps": 49.23,
-    "trailing_eps": -33.53,
+    "trailing_eps": -33.67,
     "eps_growth_pct": null,
-    "forward_pe": 71.99,
+    "forward_pe": 70.49,
     "trailing_pe": null,
     "target_mean": 3626.25,
     "target_high": 6500.0,
     "target_low": 1300.0,
-    "target_upside_pct": 2.3,
+    "target_upside_pct": 4.5,
     "revenue_growth_pct": -1.0,
     "earnings_growth_pct": null,
     "next_earnings": "2026-08-06",
     "source": "yfinance analyst aggregation"
   },
   "_meta": {
-    "cached_at": "2026-08-06T17:54:43.987974",
-    "age_sec": 61072,
+    "cached_at": "2026-08-07T17:56:15.060407",
+    "age_sec": 15884,
     "stale": false,
     "refreshing": false
   }

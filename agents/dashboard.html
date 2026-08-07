@@ -1226,14 +1226,16 @@ async function loadFedWatch() {
     el.innerHTML = `<span style="color:var(--muted)">${f.commentary || '数据不足'}</span>`;
     return;
   }
-  const ACT_ZH = { hold: '维持', cut_25: '降 25', cut_50: '降 50', hike_25: '加 25', hike_50: '加 50' };
-  const ACT_CLS = { hold: 'muted', cut_25: 'ok', cut_50: 'ok', hike_25: 'bad', hike_50: 'bad' };
+  // 标签带 bp 单位 + 方向图标，避免 "加/降" 重复出现看起来一样
+  const ACT_ZH = { hike_50: '⬆⬆ +50bp', hike_25: '⬆ +25bp', hold: '➡ 维持', cut_25: '⬇ -25bp', cut_50: '⬇⬇ -50bp' };
+  const ACT_CLS = { hike_50: 'bad', hike_25: 'bad', hold: 'muted', cut_25: 'ok', cut_50: 'ok' };
+  // 按 hawkish→dovish 排序：hike_50 → hike_25 → hold → cut_25 → cut_50
+  const ACT_ORDER = ['hike_50', 'hike_25', 'hold', 'cut_25', 'cut_50'];
   const meetingRows = meetings.slice(0, 4).map(m => {
     const probs = m.probabilities || {};
-    const parts = Object.entries(probs)
-      .sort((a, b) => b[1] - a[1])
-      .filter(([_, v]) => v >= 1)
-      .map(([k, v]) => `<span class="${ACT_CLS[k] || 'muted'}">${ACT_ZH[k] || k} ${v}%</span>`)
+    const parts = ACT_ORDER
+      .filter(k => (probs[k] || 0) >= 1)
+      .map(k => `<span class="${ACT_CLS[k]}"><b>${probs[k]}%</b> ${ACT_ZH[k]}</span>`)
       .join(' · ');
     return `<div style="display:grid; grid-template-columns:auto 1fr; gap:8px; padding:2px 0; font-size:10px">
       <span><b>${m.date}</b>${m.days_until != null ? ` <small class="muted">T-${m.days_until}</small>` : ''}</span>

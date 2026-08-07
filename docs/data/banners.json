@@ -8,19 +8,20 @@
     "magnitude": "medium",
     "score": 22,
     "event_counts": {
+      "DOMESTIC_POLICY": 10,
+      "GEOPOLITICAL": 2,
       "MEDIA_ATTACK": 2,
-      "NOISE": 1,
-      "GEOPOLITICAL": 1,
-      "DOMESTIC_POLICY": 1
+      "TARIFF": 1,
+      "NOISE": 2
     },
     "breaking": [],
     "summary": {
-      "text": "Trump 秀共和党筹款优势、军火储备充足与 D.C. 治理成效，情绪偏乐观，市场影响中性偏正面。",
+      "text": "抨击选举舞弊+自夸赢伊朗战争，政治噪音为主，市场情绪中性偏避险。",
       "state": "cached",
       "post_ids": [
-        "117046722881418522",
-        "117046698987056229",
-        "117046573969365289"
+        "117054012075663349",
+        "117051823334652132",
+        "117051741714223391"
       ]
     }
   },

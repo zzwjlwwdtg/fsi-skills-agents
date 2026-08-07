@@ -2549,7 +2549,7 @@
   "data_source": "openD + yfinance fallback",
   "_meta": {
     "cached_at": "2026-08-06T23:29:07.495350",
-    "age_sec": 41008,
+    "age_sec": 82311,
     "stale": false,
     "refreshing": false
   }
