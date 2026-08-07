@@ -1,11 +1,60 @@
 {
   "ticker": "TEKSCEND",
-  "source": "429A.T",
+  "source_stock": "429A.T",
   "period": "year",
-  "error": "list index out of range",
+  "years": [
+    "2023",
+    "2024",
+    "2025",
+    "2026"
+  ],
+  "croic": [
+    0.0,
+    48.19,
+    13.08,
+    -3.64
+  ],
+  "financial_debt": [
+    0.0,
+    0.0,
+    798.0,
+    1460.0
+  ],
+  "ccc": [
+    14.1,
+    9.5,
+    13.0,
+    31.6
+  ],
+  "piotroski": [
+    null,
+    4,
+    6,
+    6
+  ],
+  "piotroski_max": 9,
+  "cf_available": true,
+  "is_jp": true,
+  "pbr": 2.05,
+  "per": 14.0,
+  "roe_pct": 17.15,
+  "div_yield_pct": 1.63,
+  "equity_ratio": [
+    70.0,
+    72.5,
+    69.4,
+    75.6
+  ],
+  "latest": {
+    "croic": -3.64,
+    "fin_debt": 1460.0,
+    "ccc": 31.6,
+    "piotroski": 6,
+    "equity_ratio": 75.6
+  },
   "_meta": {
-    "cached_at": "2026-07-31T14:57:28.776893",
-    "age_sec": 588977,
+    "cached_at": "2026-08-07T10:52:09.004104",
+    "age_sec": 27,
     "stale": false,
     "refreshing": false
   }

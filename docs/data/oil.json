@@ -1,12 +1,12 @@
 {
-  "ts": "2026-08-07T01:28:43.446955+00:00",
+  "ts": "2026-08-07T01:50:13.484320+00:00",
   "factors": [
     {
-      "arrow": "▲",
+      "arrow": "▼",
       "name": "WTI 油价",
-      "direction": "bullish",
-      "weight": 2,
-      "value": "$77.86 (20d +8.0%)",
+      "direction": "bearish",
+      "weight": 1,
+      "value": "$77.81 (20d +8.0%)",
       "hint": "美国基准油价 20 天大幅涨跌指示供需变化"
     },
     {
@@ -22,7 +22,7 @@
       "name": "美元指数 DXY",
       "direction": "neutral",
       "weight": 1,
-      "value": "99.96 (5d -0.1%)",
+      "value": "99.95 (5d -0.1%)",
       "hint": "油以美元计价，美元升值 = 油价承压。DXY 5d +2% = 利空油"
     },
     {
@@ -42,20 +42,19 @@
       "hint": "OVX = CBOE 原油 ETF 波动率指数（类似 VIX）。低=平稳利多，高=恐慌利空"
     }
   ],
-  "direction": "bullish",
-  "score": 3,
+  "direction": "neutral",
+  "score": 0,
   "notes": [
-    "油价 20d 大涨 → 通胀压力上升，利好油气板块，利空高估值成长股",
     "油价 5d 急跌 → 需求疲软信号 / 或供应过剩"
   ],
-  "price": 77.86,
-  "pct_5d": -6.85,
-  "pct_20d": 8.02,
+  "price": 77.81,
+  "pct_5d": -6.91,
+  "pct_20d": 7.95,
   "source": "WTI 期货 (CL=F) 主 + 5 因子",
   "_meta": {
-    "cached_at": "2026-08-07T10:28:45.108831",
-    "age_sec": 301,
-    "stale": true,
-    "refreshing": true
+    "cached_at": "2026-08-07T10:50:15.048594",
+    "age_sec": 140,
+    "stale": false,
+    "refreshing": false
   }
 }
