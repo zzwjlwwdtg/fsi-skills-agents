@@ -1,28 +1,23 @@
 {
   "ticker": "SUMCO",
   "source_stock": "3436.T",
-  "direction": "下修",
-  "revision_type": "downward",
-  "magnitude": "大",
+  "direction": "据え置き",
+  "revision_type": "maintained",
+  "magnitude": "不明",
   "last_update": "2026-05-12",
   "next_earnings": "2026-08-12",
-  "guidance_note": "2026/12期 第2四半期(累計)予想: 売上 2,134億円 (+3.9% YoY)、営業損失 -77億円、純損失 -154億円。通期予想は開示せず(市況不透明のため半期予想のみ)",
-  "revision_reason": "AI向け300mmシリコンウェーハは堅調も、200mm以下は需要低迷が継続。Q1で営業損失計上し、H1見通しを従前より下方修正 (H1営業損益 黒字予想 → -77億円赤字転落)",
-  "market_reaction": "中",
+  "guidance_note": "第2四半期累計連結予想: 売上高 2,134億円 (+3.9% YoY)、営業損失 77億円、経常損失 144億円、親会社株主帰属純損失 154億円。SUMCOは通期業績予想を非開示（半期のみ開示）。",
+  "revision_reason": "Q1実績: 売上 1,014.02億円 (-1.0% YoY)、営業損失 52.73億円。300mm AI向けウェーハ需要は堅調も、200mm以下の需要低迷で減収減益。5/12発表の H1 ガイダンスは据え置き、通期ガイダンス自体は開示なし。",
+  "market_reaction": "不明",
   "confidence": "medium",
   "source_verified": true,
   "source_status": "claude_websearch",
-  "generated_at": "2026-08-06T08:24:29.869103+00:00",
+  "generated_at": "2026-08-06T08:53:49.439308+00:00",
   "sources": [
     {
       "url": "https://www.nikkei.com/nkd/disclosure/tdnr/20260511523138/",
       "type": "TDnet",
       "title": "ＳＵＭＣＯ[3436]：2026年12月期 第1四半期決算短信〔日本基準〕（連結） 2026年5月12日"
-    },
-    {
-      "url": "https://www.nikkei.com/nkd/disclosure/tdnr/20260202545202/",
-      "type": "TDnet",
-      "title": "ＳＵＭＣＯ[3436]：2025年12月期 決算短信〔日本基準〕（連結） 2026年2月10日"
     }
   ],
   "source_via": "claude_cli_websearch",
@@ -30,7 +25,7 @@
     "n_analysts": 16,
     "recommendation": "hold",
     "forward_eps": 49.23,
-    "trailing_eps": -33.43,
+    "trailing_eps": -33.53,
     "eps_growth_pct": null,
     "forward_pe": 71.99,
     "trailing_pe": null,
@@ -44,8 +39,8 @@
     "source": "yfinance analyst aggregation"
   },
   "_meta": {
-    "cached_at": "2026-08-06T17:25:31.562526",
-    "age_sec": 547,
+    "cached_at": "2026-08-06T17:54:43.987974",
+    "age_sec": 59942,
     "stale": false,
     "refreshing": false
   }

@@ -1,23 +1,23 @@
 {
   "ticker": "GOOGL",
   "flow": {
-    "super_net": -21345776.007999986,
-    "big_net": -106589403.412,
-    "mid_net": 57663126.72199994,
-    "small_net": 9372932.807999969,
-    "total_net": -60899119.89000034,
-    "smart_pct": -0.028987086627699908
+    "super_net": -7946252.8010000065,
+    "big_net": -10650337.819000006,
+    "mid_net": -13945059.168000013,
+    "small_net": 94943909.01900005,
+    "total_net": 62402259.231000066,
+    "smart_pct": -0.009448837364204534
   },
   "anomaly": {
     "detected": false,
     "reason": "",
     "score": 0.0
   },
-  "asof": "2026-08-06 04:30:24",
+  "asof": "2026-08-06 19:59:55",
   "source": "moomoo",
   "_meta": {
-    "cached_at": "2026-08-06T17:30:53.855090",
-    "age_sec": 224,
+    "cached_at": "2026-08-07T10:32:16.310596",
+    "age_sec": 90,
     "stale": false,
     "refreshing": false
   }

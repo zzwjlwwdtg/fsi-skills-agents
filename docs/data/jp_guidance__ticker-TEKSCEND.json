@@ -4,20 +4,25 @@
   "direction": "上修",
   "revision_type": "upward",
   "magnitude": "中",
-  "last_update": "2026-07-31",
-  "next_earnings": "2026-08-06",
-  "guidance_note": "FY2026/3 通期 EPS 予想 261.12 円（基本）/ 256.97 円（希薄化後）；売上・営業利益・親会社株主帰属純利益すべて前回予想を上回る見通し；期末配当 54.39 → 56 円へ引上げ",
-  "revision_reason": "先端品受注堅調＋為替デリバティブ評価益が想定超；期末配当 ¥54.39 → ¥56 (+3%)、通期売上・営業利益・純利益・EPS すべて前回計画対比で上振れ",
+  "last_update": "2026-08-06",
+  "next_earnings": "2026-11-05",
+  "guidance_note": "FY2026/3 通期業績予想を上方修正：売上・営業利益・親会社株主純利益いずれも従来予想を上回る見通し、EPS も従来予想比大幅増、FY2027/3 予想 EPS 248.06円・年間配当70円",
+  "revision_reason": "先端品受注が堅調に推移＋デリバティブ評価益が想定を上回ったことにより、年間配当予想も 54.39円 → 56.00円 へ引き上げ（+2.96%）",
   "market_reaction": "不明",
   "confidence": "medium",
   "source_verified": true,
   "source_status": "claude_websearch",
-  "generated_at": "2026-08-05T23:56:15.149740+00:00",
+  "generated_at": "2026-08-06T23:57:23.850666+00:00",
   "sources": [
+    {
+      "url": "https://minkabu.jp/stock/429A/settlement",
+      "type": "news",
+      "title": "テクセンドフォトマスク (429A) : 決算情報・業績 - みんかぶ"
+    },
     {
       "url": "https://minkabu.jp/stock/429A/settlement_summary",
       "type": "news",
-      "title": "テクセンドフォトマスク (429A) 決算短信AI要約 - みんかぶ"
+      "title": "テクセンドフォトマスク (429A) : 企業情報・決算短信AI要約 - みんかぶ"
     }
   ],
   "source_via": "claude_cli_websearch",
@@ -25,22 +30,22 @@
     "n_analysts": 5,
     "recommendation": "buy",
     "forward_eps": null,
-    "trailing_eps": 257.04,
+    "trailing_eps": 256.84,
     "eps_growth_pct": null,
     "forward_pe": null,
-    "trailing_pe": 16.79,
+    "trailing_pe": 16.72,
     "target_mean": 4960.0,
     "target_high": 5300.0,
     "target_low": 4400.0,
-    "target_upside_pct": 14.9,
+    "target_upside_pct": 15.5,
     "revenue_growth_pct": 16.4,
     "earnings_growth_pct": null,
     "next_earnings": "2026-08-06",
     "source": "yfinance analyst aggregation"
   },
   "_meta": {
-    "cached_at": "2026-08-06T08:56:59.271282",
-    "age_sec": 31059,
+    "cached_at": "2026-08-07T08:58:11.542030",
+    "age_sec": 5735,
     "stale": false,
     "refreshing": false
   }

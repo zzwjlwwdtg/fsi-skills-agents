@@ -1,85 +1,84 @@
 {
   "current_target_range": "3.50-3.75",
+  "as_of": "2026-08-06",
   "meetings": [
     {
       "date": "2026-09-16",
-      "days_until": 41,
+      "days_until": 40,
       "probabilities": {
         "hike_25": 62,
-        "hold": 35,
-        "hike_50": 3
+        "hold": 34,
+        "hike_50": 2,
+        "cut_25": 2
       },
       "most_likely": "hike_25",
       "consensus_direction": "hawkish_lean"
     },
     {
       "date": "2026-10-28",
-      "days_until": 83,
+      "days_until": 82,
       "probabilities": {
+        "hold": 55,
         "hike_25": 38,
-        "hold": 50,
-        "hike_50": 10,
-        "cut_25": 2
+        "cut_25": 4,
+        "hike_50": 3
       },
       "most_likely": "hold",
       "consensus_direction": "hawkish_lean"
     },
     {
-      "date": "2026-12-16",
-      "days_until": 132,
+      "date": "2026-12-09",
+      "days_until": 124,
       "probabilities": {
-        "hike_25": 30,
-        "hold": 55,
-        "hike_50": 8,
-        "cut_25": 7
-      },
-      "most_likely": "hold",
-      "consensus_direction": "neutral_hawkish"
-    },
-    {
-      "date": "2027-01-27",
-      "days_until": 174,
-      "probabilities": {
-        "hike_25": 22,
-        "hold": 55,
-        "cut_25": 20,
+        "hold": 50,
+        "hike_25": 42,
+        "cut_25": 5,
         "hike_50": 3
       },
       "most_likely": "hold",
-      "consensus_direction": "neutral"
+      "consensus_direction": "hawkish_lean"
+    },
+    {
+      "date": "2027-01-28",
+      "days_until": 174,
+      "probabilities": {
+        "hold": 45,
+        "hike_25": 40,
+        "hike_50": 10,
+        "cut_25": 5
+      },
+      "most_likely": "hold",
+      "consensus_direction": "hawkish"
     }
   ],
   "implied_terminal_rate": "4.00-4.25",
-  "implied_terminal_date": "2026-Q4",
-  "commentary": "Higher-for-longer priced in: after 7/29 hold at 3.50-3.75%, futures lean ~62% toward a 25bp hike in September on sticky inflation + hot NFP, with terminal near 4.00-4.25% by year-end; first cut not priced until 2027-H1.",
+  "implied_terminal_date": "2027-Q2",
+  "commentary": "市场明显 hawkish：定价 2026 年内 1-2 次加息（9月加息概率~62%），路径由当前 3.63% 升至年底~4.0%，2027 中期终点利率 4.00-4.25%。与年初普遍预期降息完全反转，反映通胀粘性上行风险。",
   "sources": [
-    {
-      "url": "https://growbeansprout.com/tools/fedwatch",
-      "type": "cme_fedwatch_mirror"
-    },
-    {
-      "url": "https://centralbank.watch/federal-reserve/",
-      "type": "cme_fedwatch_mirror"
-    },
-    {
-      "url": "https://www.cnbc.com/2026/07/23/fed-interest-rate-odds-oil-jobless-claims.html",
-      "type": "news"
-    },
-    {
-      "url": "https://streetstats.finance/rates/fedfunds",
-      "type": "futures_curve"
-    },
     {
       "url": "https://www.cmegroup.com/markets/interest-rates/cme-fedwatch-tool.html",
       "type": "cme_fedwatch"
+    },
+    {
+      "url": "https://growbeansprout.com/tools/fedwatch",
+      "type": "aggregator"
+    },
+    {
+      "url": "https://www.investing.com/central-banks/fed-rate-monitor",
+      "type": "aggregator"
+    },
+    {
+      "url": "https://centralbank.watch/federal-reserve/",
+      "type": "aggregator"
     }
   ],
   "confidence": "medium",
+  "notes": "WebFetch 未获授权，未能直读 CME FedWatch 原始表格；数字来自 Aug 4-6 搜索快照综合推断，9月会议概率有直接引用（62% hike_25），10/12月及 2027年1月为路径外推估计，实际请以 CME 官方为准。",
   "source_via": "claude_cli_websearch",
-  "fetched_at": "2026-08-06T07:45:10+00:00",
+  "fetched_at": "2026-08-07T00:01:02+00:00",
   "_meta": {
-    "cached_at": "2026-08-06T16:45:10.048475",
-    "age_sec": 2968,
+    "cached_at": "2026-08-07T09:01:02.619859",
+    "age_sec": 5563,
     "stale": false,
     "refreshing": false
   }

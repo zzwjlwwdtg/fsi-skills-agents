@@ -8,19 +8,19 @@
     "magnitude": "medium",
     "score": 22,
     "event_counts": {
-      "MARKET": 1,
-      "DOMESTIC_POLICY": 6,
-      "NOISE": 5,
-      "MEDIA_ATTACK": 1
+      "MEDIA_ATTACK": 2,
+      "NOISE": 1,
+      "GEOPOLITICAL": 1,
+      "DOMESTIC_POLICY": 1
     },
     "breaking": [],
     "summary": {
-      "text": "Trump 抨击民主党候选人及密歇根选举舞弊，Bessent 上 CNBC；政治攻击为主，市场情绪中性偏负。",
+      "text": "Trump 秀共和党筹款优势、军火储备充足与 D.C. 治理成效，情绪偏乐观，市场影响中性偏正面。",
       "state": "cached",
       "post_ids": [
-        "117043300198873853",
-        "117043133534824966",
-        "117041037772264187"
+        "117046722881418522",
+        "117046698987056229",
+        "117046573969365289"
       ]
     }
   },

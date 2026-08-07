@@ -1025,9 +1025,23 @@ def _compute_supply_chain(ticker: str) -> dict:
     except Exception as e:
         return {"error": f"ai_prompt import: {e}", "ticker": ticker}
 
+    # JP 小盘冷门 ticker（如 TEKSCEND 429A / ARE 5857）Claude 单看短名认不出，
+    # 从 JP_WATCH_LIST 补 symbol/name_zh/name_en/thesis 作为上下文
+    ticker_context = f"Ticker: {ticker}"
+    for entry in JP_WATCH_LIST:
+        if entry.get("ticker") == ticker:
+            ticker_context = (
+                f"Ticker: {ticker}\n"
+                f"JP Symbol: {entry.get('symbol')}\n"
+                f"日语公司名/中文名: {entry.get('name_zh')}\n"
+                f"英文名: {entry.get('name_en')}\n"
+                f"业务定位: {entry.get('thesis','')}"
+            )
+            break
+
     prompt = (
         "你是股票供应链分析师。为下面 ticker 输出严格 JSON（无 markdown 围栏、无 preamble、无 comment）：\n\n"
-        f"Ticker: {ticker}\n\n"
+        f"{ticker_context}\n\n"
         "输出格式（严格 UTF-8 JSON, keys 用英文, values 中文说明）：\n"
         "{\n"
         '  "sector":     "行业中文名（如 半导体设计/云计算/新能源车）",\n'

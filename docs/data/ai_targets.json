@@ -1,40 +1,40 @@
 {
   "exists": true,
-  "path": "ai_targets_2026-08-05.json",
-  "mtime": "2026-08-05T22:26:54.973890",
+  "path": "ai_targets_2026-08-06.json",
+  "mtime": "2026-08-06T22:27:24.550429",
   "version": 1,
-  "ts": "2026-08-05T09:25",
-  "source_date": "2026-08-05",
+  "ts": "2026-08-06T09:26",
+  "source_date": "2026-08-06",
   "targets": [
     {
       "ticker": "US.TQQQ",
-      "action": "watch_buy",
-      "entry_ref": 72.5,
-      "stop_ref": 70.8,
-      "target_ref": 75.0,
-      "use_limit": true,
+      "action": "skip",
+      "entry_ref": null,
+      "stop_ref": null,
+      "target_ref": null,
+      "use_limit": false,
       "size_hint": "small",
-      "notes": "Call Wall $75 压顶不追高，等回踩 $72-73 且 MACD 金叉延续再入"
+      "notes": "MACD空+ADX43极强下跌+夜盘NQ-0.92%，明天NFP，观望"
     },
     {
       "ticker": "US.SOXL",
-      "action": "watch_buy",
-      "entry_ref": 131.0,
-      "stop_ref": 125.0,
-      "target_ref": 145.0,
-      "use_limit": true,
+      "action": "skip",
+      "entry_ref": null,
+      "stop_ref": null,
+      "target_ref": null,
+      "use_limit": false,
       "size_hint": "small",
-      "notes": "昨日+19.87%极端异常，等回踩 Max Pain $130 区域再小仓，止损放在 Put Wall 上方"
+      "notes": "SOX regime衰退风险+PC1 -2.82σ+ADX40.3极强下跌，不入场"
     },
     {
       "ticker": "US.DRAM",
       "action": "watch_buy",
-      "entry_ref": 55.1,
-      "stop_ref": 54.2,
-      "target_ref": 56.2,
+      "entry_ref": 53.0,
+      "stop_ref": 51.5,
+      "target_ref": 56.0,
       "use_limit": true,
       "size_hint": "small",
-      "notes": "站稳 Call Wall $55 之上试短多，跌破 MA20 $54.20 立即出"
+      "notes": "MACD金叉+15m RSI 21超卖，等回踩$53轻仓试多，跌破$51.5走"
     },
     {
       "ticker": "US.MULL",
@@ -44,17 +44,17 @@
       "target_ref": null,
       "use_limit": false,
       "size_hint": "small",
-      "notes": "MACD零轴下+ADX强趋势下跌，观望等 MU 站 $900 上方"
+      "notes": "MACD空+ADX32.1，MU未见反弹证据，观望DRAM先确认"
     },
     {
       "ticker": "US.GLD",
-      "action": "watch_buy",
-      "entry_ref": 377.5,
-      "stop_ref": 373.5,
-      "target_ref": 385.0,
-      "use_limit": true,
-      "size_hint": "small",
-      "notes": "夜盘GC+3.72%强势但技术空，等开盘gap-up后回踩$377再介入，跌破Put Wall $372清仓"
+      "action": "hold",
+      "entry_ref": null,
+      "stop_ref": null,
+      "target_ref": null,
+      "use_limit": false,
+      "size_hint": "normal",
+      "notes": "宏观偏多(Fed扩表+GC+1.21%)但ADX13.8无趋势，等PSAR翻多再进"
     }
   ]
 }

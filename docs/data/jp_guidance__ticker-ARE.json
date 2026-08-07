@@ -1,28 +1,28 @@
 {
   "ticker": "ARE",
   "source_stock": "5857.T",
-  "direction": "新指引",
-  "revision_type": "initial",
-  "magnitude": "中",
+  "direction": "待核验",
+  "revision_type": "unverified",
+  "magnitude": "不明",
   "last_update": "2026-05-01",
   "next_earnings": "2026-07-30",
-  "guidance_note": "FY2027/3 通期予想：売上 6,800 億円 (+19.3% YoY)、営業利益 410 億円 (+10.8%)、親会社帰属純利益 290 億円 (+19.0%)、年間配当 135 円 (+10 円)。",
-  "revision_reason": "FY2026/3 決算発表と同時に FY2027/3 通期を新規開示。FY2026/3 実績（売上 5,699.92 億円 +12.6%、営業利益 370.88 億円 +85.6%）を踏まえ、リサイクル金属価格・数量の拡大で 6 期ぶり最高益予想。",
+  "guidance_note": "最新確認済み通期予想は2026年3月期実績（2026-05-01短信）。FY2027初期予想の90日内公式ソースは今回検索で未確認",
+  "revision_reason": "直近確認済み修正は2026-02-03（Q3時）に通期純利 21.6億円 → 23.9億円 +11%上方修正（貴金属リサイクル価格上昇＋北米精錬fee増）、これは90日窓外",
   "market_reaction": "不明",
-  "confidence": "medium",
+  "confidence": "low",
   "source_verified": true,
   "source_status": "claude_websearch",
-  "generated_at": "2026-08-05T23:55:45.167548+00:00",
+  "generated_at": "2026-08-06T23:56:53.815848+00:00",
   "sources": [
     {
       "url": "https://www.nikkei.com/nkd/disclosure/tdnr/20260501516555/",
       "type": "TDnet",
-      "title": "ＡＲＥホールディングス[5857]：2026年３月期 決算短信〔ＩＦＲＳ〕（連結） 2026年5月1日"
+      "title": "ＡＲＥホールディングス[5857]：2026年３月期 決算短信〔ＩＦＲＳ〕（連結）2026年5月1日"
     },
     {
-      "url": "https://kabutan.jp/news/?b=k202605010041",
+      "url": "https://kabutan.jp/news/?b=k202602030055",
       "type": "news",
-      "title": "ＡＲＥホールディングス【5857】、今期最終は19％増で6期ぶり最高益、10円増配へ"
+      "title": "ＡＲＥホールディングス【5857】、今期最終を11％上方修正、配当も5円増額"
     }
   ],
   "source_via": "claude_cli_websearch",
@@ -30,22 +30,22 @@
     "n_analysts": 1,
     "recommendation": "none",
     "forward_eps": 178.8,
-    "trailing_eps": 287.22,
-    "eps_growth_pct": -37.7,
-    "forward_pe": 18.4,
-    "trailing_pe": 11.45,
+    "trailing_eps": 290.77,
+    "eps_growth_pct": -38.5,
+    "forward_pe": 19.35,
+    "trailing_pe": 11.9,
     "target_mean": 6400.0,
     "target_high": 6400.0,
     "target_low": 6400.0,
-    "target_upside_pct": 94.5,
-    "revenue_growth_pct": 39.1,
-    "earnings_growth_pct": 63.1,
+    "target_upside_pct": 85.0,
+    "revenue_growth_pct": 43.8,
+    "earnings_growth_pct": 131.4,
     "next_earnings": "2026-10-28",
     "source": "yfinance analyst aggregation"
   },
   "_meta": {
-    "cached_at": "2026-08-06T08:56:29.703934",
-    "age_sec": 31089,
+    "cached_at": "2026-08-07T08:58:11.836930",
+    "age_sec": 5735,
     "stale": false,
     "refreshing": false
   }

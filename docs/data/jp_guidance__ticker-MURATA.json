@@ -5,24 +5,19 @@
   "revision_type": "upward",
   "magnitude": "中",
   "last_update": "2026-07-31",
-  "next_earnings": "2026-10-30",
-  "guidance_note": "通期(FY2027/3)売上収益 2兆1,100億円、営業利益 4,300億円、親会社所有者帰属当期利益 3,380億円、EPS 相当年配 70円（据置）。",
-  "revision_reason": "データセンター向け MLCC 需要拡大＋為替前提 1$=150円→155円に円安見直しで、売上 1兆9,600→2兆1,100億円 (+7.7%)、営業利益 3,800→4,300億円 (+13.2%)、純利益 2,930→3,380億円 (+15.4%) を上方修正。",
+  "next_earnings": "2026-10-31",
+  "guidance_note": "通期売上収益 1兆9,600億円（+7.1% YoY）、営業利益 3,800億円（+34.8% YoY）、純利益 3,380億円（5期ぶり最高益更新へ）",
+  "revision_reason": "第1四半期の営業利益率が前年同期14.8%→19.6%へ大幅改善。通期純利予想を 2,930 → 3,380 億円（+15.4%）に上方修正、5期ぶり最高益更新見通し",
   "market_reaction": "不明",
   "confidence": "high",
   "source_verified": true,
   "source_status": "claude_websearch",
-  "generated_at": "2026-08-05T23:56:15.142222+00:00",
+  "generated_at": "2026-08-06T23:57:23.841153+00:00",
   "sources": [
     {
-      "url": "https://www.nikkei.com/nkd/disclosure/tdnr/20260730504039/",
-      "type": "TDnet",
-      "title": "村田製作所[6981]：2027年３月期 第１四半期決算短信〔ＩＦＲＳ〕（連結） 2026年7月31日"
-    },
-    {
-      "url": "https://www.nikkei.com/nkd/disclosure/tdnr/20260729501513/",
-      "type": "TDnet",
-      "title": "村田製作所[6981]：2027年３月期 第1四半期決算説明会資料 2026年7月31日"
+      "url": "https://kabutan.jp/news/?b=k202607310093",
+      "type": "news",
+      "title": "村田製作所【6981】、今期最終を15％上方修正・5期ぶり最高益更新へ"
     }
   ],
   "source_via": "claude_cli_websearch",
@@ -30,22 +25,22 @@
     "n_analysts": 17,
     "recommendation": "strong_buy",
     "forward_eps": 237.27,
-    "trailing_eps": 127.47,
-    "eps_growth_pct": 86.1,
-    "forward_pe": 33.0,
-    "trailing_pe": 61.42,
-    "target_mean": 10797.06,
+    "trailing_eps": 127.64,
+    "eps_growth_pct": 85.9,
+    "forward_pe": 31.28,
+    "trailing_pe": 58.14,
+    "target_mean": 10561.76,
     "target_high": 15750.0,
     "target_low": 4200.0,
-    "target_upside_pct": 37.9,
+    "target_upside_pct": 42.3,
     "revenue_growth_pct": 20.7,
     "earnings_growth_pct": 66.5,
     "next_earnings": "2026-10-30",
     "source": "yfinance analyst aggregation"
   },
   "_meta": {
-    "cached_at": "2026-08-06T08:56:53.842247",
-    "age_sec": 31065,
+    "cached_at": "2026-08-07T08:58:02.347983",
+    "age_sec": 5744,
     "stale": false,
     "refreshing": false
   }

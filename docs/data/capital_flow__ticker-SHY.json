@@ -1,23 +1,23 @@
 {
   "ticker": "SHY",
   "flow": {
-    "super_net": 0.0,
-    "big_net": 0.0,
-    "mid_net": 27789048.879,
-    "small_net": 8782329.243999999,
-    "total_net": 36571378.122999996,
-    "smart_pct": 0.0
+    "super_net": -47503382.88,
+    "big_net": 1241400.2999999998,
+    "mid_net": 40159493.187,
+    "small_net": 5739391.199999999,
+    "total_net": -363098.1930000037,
+    "smart_pct": -0.30902670302450397
   },
   "anomaly": {
     "detected": false,
     "reason": "",
     "score": 0.0
   },
-  "asof": "2026-08-06 04:30:03",
+  "asof": "2026-08-06 19:34:06",
   "source": "moomoo",
   "_meta": {
-    "cached_at": "2026-08-06T17:30:53.887130",
-    "age_sec": 224,
+    "cached_at": "2026-08-07T10:32:43.592402",
+    "age_sec": 62,
     "stale": false,
     "refreshing": false
   }

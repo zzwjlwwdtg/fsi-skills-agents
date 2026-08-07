@@ -1,23 +1,23 @@
 {
   "ticker": "AMAT",
   "flow": {
-    "super_net": -10647425.1,
-    "big_net": -29221922.577000003,
-    "mid_net": -7739611.325999998,
-    "small_net": -43540967.37900001,
-    "total_net": -91149926.38199998,
-    "smart_pct": -0.12343373848109868
+    "super_net": -5277504.582,
+    "big_net": -1240775.9789999984,
+    "mid_net": -892005.7420000024,
+    "small_net": -23201716.386000007,
+    "total_net": -30612002.688999996,
+    "smart_pct": -0.024262858492308116
   },
   "anomaly": {
     "detected": false,
     "reason": "",
     "score": 0.0
   },
-  "asof": "2026-08-06 04:28:57",
+  "asof": "2026-08-06 19:52:36",
   "source": "moomoo",
   "_meta": {
-    "cached_at": "2026-08-06T17:30:53.851586",
-    "age_sec": 224,
+    "cached_at": "2026-08-07T10:33:13.557041",
+    "age_sec": 32,
     "stale": false,
     "refreshing": false
   }
